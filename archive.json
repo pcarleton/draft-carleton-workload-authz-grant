@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2026-08-13T02:10:43.826286+00:00",
+  "timestamp": "2026-08-16T01:27:14.931882+00:00",
   "repo": "pcarleton/draft-carleton-workload-authz-grant",
   "labels": [
     {
@@ -49,6 +49,55 @@
       "color": "ffffff"
     }
   ],
-  "issues": [],
+  "issues": [
+    {
+      "number": 1,
+      "id": "I_kwDOTlTgBM8AAAABMywF3g",
+      "title": "Reposition away from \"profile of AIMS\" to only having \"relationship to AIMS\", and revisit Table of Contents",
+      "url": "https://github.com/pcarleton/draft-carleton-workload-authz-grant/issues/1",
+      "state": "OPEN",
+      "author": "pcarleton",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "This draft does fit the conceptual model put forward in [AIMS](https://datatracker.ietf.org/doc/draft-klrc-aiagent-auth/), however calling it a \"profile\" doesn't quite fit.\n\nThis issue is to track revising the draft to be less dependent on AIMS, so it needs:\n* to remove \"profile\" language\n* to revisit the concepts section to be able to stand by itself more readily\n\nOnce this issue is complete, the following should be true:\n* A reader does not need to read all of AIMS to make use of this draft\n* A reader familiar with AIMS should know how this draft lines up with its conceptual model of agents as workloads",
+      "createdAt": "2026-08-14T16:00:00Z",
+      "updatedAt": "2026-08-14T16:00:00Z",
+      "closedAt": null,
+      "comments": []
+    },
+    {
+      "number": 2,
+      "id": "I_kwDOTlTgBM8AAAABMy2DmQ",
+      "title": "Pick small set of standard claims",
+      "url": "https://github.com/pcarleton/draft-carleton-workload-authz-grant/issues/2",
+      "state": "OPEN",
+      "author": "pcarleton",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "We want:\n* A small set of claims that are common among implementations (target: max of 3)\n* extensibility to add more claims if a platform and resource want\n* Clearly specify which claims can be trusted for policy decisions, and clarify that others cannot\n* ability to re-use existing authz modeling where appropriate (i.e. I want this agent to have the same permissions as humans on this team)\n\nThe leading candidate is `roles`, `groups` and `entitlements` from https://datatracker.ietf.org/doc/html/rfc7643#section-4.1.2 / https://datatracker.ietf.org/doc/html/rfc9068#section-2.2.3.1\n\nIf that does end up being what we do, we need to:\n* play out an example of the agent platform giving claims like roles / groups if they're not specific to the platform\n* decide whether they need to be namespaced by FQDN (or if issuer namespacing is sufficient)\n* explain relationship to #3 ",
+      "createdAt": "2026-08-14T16:12:42Z",
+      "updatedAt": "2026-08-14T16:12:42Z",
+      "closedAt": null,
+      "comments": []
+    },
+    {
+      "number": 3,
+      "id": "I_kwDOTlTgBM8AAAABMy73zA",
+      "title": "Discuss integration points with enterprise IdP (proposal: out of scope for this draft)",
+      "url": "https://github.com/pcarleton/draft-carleton-workload-authz-grant/issues/3",
+      "state": "OPEN",
+      "author": "pcarleton",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "This draft currently aims to be as simple as possible and targeted at an agent platform issuing its own tokens, similar to how a k8s cluster has an OIDC provider that's trusted in some WIF implementations today.\n\nHowever, there is a deployment model that could make sense here where folks want their enterprise IdP to be the single source of truth into what has access into their system, e.g. to revoke an agent's access in the IdP instead of needing to go to the agent platform.\n\nThe rough shape that seems most promising here is:\n* The agent platform is trusted by the IdP to create agent identities\n* The resource authorization server trusts the IdP\n* The IdP is responsible for ensuring groups / roles / entitlements align with the organization-wide authz model\n\nThis has a few implications:\n* The agent platform needs to exchange its platform-issued token for one issued by the IdP\n* The agent platform still provides the `client_assertion` to prove the request is coming from the platform\n* the IdP *may* choose to do a SCIM operation or other lifecycle management into the resource authorization server if it needs to\n  * this implies that the token exchange may need to be asynchronous if a stateful provisioning is happening\n* the resource authorization server may want to rely on a stateful provisioning process\n \nI'm proposing this IdP-integrated deployment model can be lightly mentioned in this draft, but the WAG draft keeps \"how does the agent get its authorization grant\" out of scope.  (i.e. an IdP-integrated deployment would be in a separate draft).\n\nAlso note, this deployment model looks very similar to ID-JAG's typical model, with a small variation: rather than an id_token issued by the IdP in its token exchange, the IdP would be accepting a token from the agent platform itself (likely a WAG).  This is also related to: https://github.com/oauth-wg/oauth-identity-assertion-authz-grant/issues/73   ",
+      "createdAt": "2026-08-14T16:25:20Z",
+      "updatedAt": "2026-08-14T16:25:20Z",
+      "closedAt": null,
+      "comments": []
+    }
+  ],
   "pulls": []
 }
