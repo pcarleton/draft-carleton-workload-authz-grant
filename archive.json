@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2026-08-18T01:21:34.834821+00:00",
+  "timestamp": "2026-08-20T01:22:17.939238+00:00",
   "repo": "pcarleton/draft-carleton-workload-authz-grant",
   "labels": [
     {
@@ -62,9 +62,24 @@
       "labels": [],
       "body": "This draft does fit the conceptual model put forward in [AIMS](https://datatracker.ietf.org/doc/draft-klrc-aiagent-auth/), however calling it a \"profile\" doesn't quite fit.\n\nThis issue is to track revising the draft to be less dependent on AIMS, so it needs:\n* to remove \"profile\" language\n* to revisit the concepts section to be able to stand by itself more readily\n\nOnce this issue is complete, the following should be true:\n* A reader does not need to read all of AIMS to make use of this draft\n* A reader familiar with AIMS should know how this draft lines up with its conceptual model of agents as workloads",
       "createdAt": "2026-08-14T16:00:00Z",
-      "updatedAt": "2026-08-14T16:00:00Z",
+      "updatedAt": "2026-08-19T17:37:59Z",
       "closedAt": null,
-      "comments": []
+      "comments": [
+        {
+          "author": "arndt-s",
+          "authorAssociation": "NONE",
+          "body": "TOC proposal:\n\n1. Introduction\n2. Conventions and Terminology\n3. Concepts\n4. Workload Authorization Grant\n4.1 Trust Establishment\n4.2 Issuance\n4.3 Presentation\n4.4 Authorization and Policy\n4.5 Retirement and Lifecycle\n4. Privacy Considerations\n5. Security Considerations",
+          "createdAt": "2026-08-18T11:54:28Z",
+          "updatedAt": "2026-08-18T11:54:58Z"
+        },
+        {
+          "author": "PieterKas",
+          "authorAssociation": "NONE",
+          "body": "Nice! Great to see the Privacy Considerations in there :)\n\nBuilding on the above,  maybe we can: \n\n1. Make the **Workload Authorization Grant** section more focused and constrain it to the Grant format and processing (including claims)\n2. Move anything to do with the AS to an **Authorization Server Processing** to it's own section (allows us to focus changes for AS's in one place)\n3. Break out **Trust Establishment** as its own section (we can set the context for why it is needed with a diagram under Concepts/Overview, along with a typical mermaid diagram showing the flows e2e)? ",
+          "createdAt": "2026-08-19T17:37:59Z",
+          "updatedAt": "2026-08-19T17:37:59Z"
+        }
+      ]
     },
     {
       "number": 2,
@@ -78,9 +93,17 @@
       "labels": [],
       "body": "We want:\n* A small set of claims that are common among implementations (target: max of 3)\n* extensibility to add more claims if a platform and resource want\n* Clearly specify which claims can be trusted for policy decisions, and clarify that others cannot\n* ability to re-use existing authz modeling where appropriate (i.e. I want this agent to have the same permissions as humans on this team)\n\nThe leading candidate is `roles`, `groups` and `entitlements` from https://datatracker.ietf.org/doc/html/rfc7643#section-4.1.2 / https://datatracker.ietf.org/doc/html/rfc9068#section-2.2.3.1\n\nIf that does end up being what we do, we need to:\n* play out an example of the agent platform giving claims like roles / groups if they're not specific to the platform\n* decide whether they need to be namespaced by FQDN (or if issuer namespacing is sufficient)\n* explain relationship to #3 ",
       "createdAt": "2026-08-14T16:12:42Z",
-      "updatedAt": "2026-08-14T16:12:42Z",
+      "updatedAt": "2026-08-19T15:28:35Z",
       "closedAt": null,
-      "comments": []
+      "comments": [
+        {
+          "author": "PieterKas",
+          "authorAssociation": "NONE",
+          "body": "It may be good to elaborate on the problem we are trying to solve by picking any additional claims beyond what is defined in RFC 7523 and/or ID-JAG? What is the specific use case?\n\nMy first instinct is that we should not make any claims beyond what is needed by RFC 7523 REQUIRED in this draft. That would maximise compatibility with existing infrastructure and minimise the assumptions about the deployment. What mandatory values would we need beyond what is described already?\n\nFor the examples of roles, groups and entitlements my concern would be that values for those claims are things that may have meaning on one platform, but once you cross a trust boundary, it may have different meaning in a different domain. It also assumes a certain kind of underlying RBAC system, which although common, may not be universal.\n\nIn terms of optional claims, the three claims you describe feel like something that falls under the ID-JAG \"authorization_details\" claim and can be described in a RAR object (which may still need to be defined, but perhaps that is something that gets profiled elsewhere?).\n\nI am also curious about the choice of picking values from SCIM as claims - is there specific upside we expect from that (other than these values matching attributes provisioned for users through SICM)?",
+          "createdAt": "2026-08-19T15:28:35Z",
+          "updatedAt": "2026-08-19T15:28:35Z"
+        }
+      ]
     },
     {
       "number": 3,
