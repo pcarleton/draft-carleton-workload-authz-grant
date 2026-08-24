@@ -286,6 +286,16 @@ The assertion carries the Agent's Properties ({{properties}}), and the
 Authorization Server MUST make them available to the Resource Server's
 authorization decision.
 
+An Agent Property records what the Platform asserted when it issued the
+authorization grant.  The grant's signature authenticates that assertion;
+`iat` records when it was made, and `exp` bounds how long the grant can be
+accepted.  Those checks do not by themselves establish that a mutable
+Property remains true when the grant is presented or when an access token is
+used.  If a local authorization rule requires a Property to remain true at
+one of those later times, the deployment MUST obtain evidence current for
+that time.  Otherwise, the deployment MUST bound its exposure to stale
+Properties through the grant and access token lifetimes.
+
 Authorization Servers supporting this profile MUST
 include `urn:ietf:params:oauth:grant-type:jwt-bearer` in `grant_types_supported`
 in their metadata {{RFC8414}}.
@@ -392,7 +402,12 @@ document with an email address, distinct from both name and the opaque
 Agent Identifier; noted here, deliberately unsolved.  A Resource
 Server keeps a local, administrator-controlled mapping from Property
 predicates to permissions; possession of a Property is not itself
-authorization.  Deny semantics do not travel.  TODO: worked example.
+authorization.  Property names and values cross a trust boundary as
+issuer assertions, not as portable permission assignments.  A Resource
+Server MUST interpret them under its own issuer-scoped mapping and MUST NOT
+assume that a role, group, entitlement, or similarly named value has the
+same meaning in another issuer's domain.  Deny semantics do not travel.
+TODO: worked example.
 
 # Attribution
 
@@ -444,6 +459,15 @@ TODO: unseen agent identifiers under trusted issuers; issuer allowlist as the
 trust boundary; tenant confusion at multi-issuer Authorization Servers ({{trust}});
 bearer-assertion theft and assertion lifetime; Platform as root of trust;
 credential non-exposure to the model; automated trust establishment.
+
+Property freshness is distinct from JWT validity.  A valid signature proves
+that the Platform made the assertion, while `exp` only limits how long the
+grant may be accepted.  Neither proves that mutable runtime, posture, group,
+role, or entitlement state still holds at presentation or access time.  A
+deployment that authorizes on such state needs a current-status mechanism or
+lifetimes short enough for its risk bound.  Failure to obtain required
+current-status evidence MUST NOT be treated as evidence that the Property
+still holds.
 
 # IANA Considerations
 
