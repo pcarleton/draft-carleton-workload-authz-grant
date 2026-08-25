@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2026-08-23T01:35:04.099456+00:00",
+  "timestamp": "2026-08-25T01:23:43.392630+00:00",
   "repo": "pcarleton/draft-carleton-workload-authz-grant",
   "labels": [
     {
@@ -122,5 +122,32 @@
       "comments": []
     }
   ],
-  "pulls": []
+  "pulls": [
+    {
+      "number": 4,
+      "id": "PR_kwDOTlTgBM8AAAABA3o9Ig",
+      "title": "Clarify property assertion and freshness semantics",
+      "url": "https://github.com/pcarleton/draft-carleton-workload-authz-grant/pull/4",
+      "state": "OPEN",
+      "author": "FutureEnterprises",
+      "authorAssociation": "NONE",
+      "assignees": [],
+      "labels": [],
+      "body": "Addresses the trust-boundary portion of #2.\n\nThis change separates three facts that the current text places close together:\n\n- An Agent Property is an issuer assertion made when the grant is issued.\n- `iat` and `exp` establish the grant's age and acceptance window, not whether mutable state is still true later.\n- Roles, groups, entitlements, and similar values are interpreted through the Resource Server's issuer-scoped local mapping. They are not portable permission assignments.\n\nIf a policy requires a Property to remain true at presentation or access time, the deployment must obtain evidence current for that time. Otherwise, grant and access-token lifetimes bound the stale-claim exposure.\n\nThis does not choose the final property vocabulary, require a specific status mechanism, or add an EMILIA dependency.\n\nVerification:\n\n- `make` completed successfully.\n- The existing EMILIA WAG-to-AEB composition fixture reproduced 15 of 15 checks against the pinned WAG-00 source.\n",
+      "createdAt": "2026-08-24T23:51:02Z",
+      "updatedAt": "2026-08-24T23:51:38Z",
+      "baseRepository": "pcarleton/draft-carleton-workload-authz-grant",
+      "baseRefName": "main",
+      "baseRefOid": "13f516a5e458b89ca30f7ea47a802091dd9d4154",
+      "headRepository": "FutureEnterprises/draft-carleton-workload-authz-grant",
+      "headRefName": "futureenterprises/property-assertion-semantics",
+      "headRefOid": "d051f196fbd74bce57c87cfcd954d96eff13a204",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [],
+      "reviews": []
+    }
+  ]
 }
