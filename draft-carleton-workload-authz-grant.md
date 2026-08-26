@@ -137,30 +137,6 @@ authorization server issues are unchanged in format and semantics, and
 resource servers continue to trust their authorization server exactly as
 they do today.
 
-## Relationship to AIMS
-
-{{AIMS}} remains the base specification for anything not restated here.  This
-profile constrains {{AIMS}} as follows:
-
-| AIMS component | Here | Relationship |
-|---|---|---|
-| Identifiers (Sec. 6) | {{identity-model}} | Constrained: opaque, immutable, non-reassignable agent identifier, RECOMMENDED to be a Workload Identifier {{WIMSE-ID}}, carried as sub |
-| Credentials (Sec. 7), Authentication (Sec. 9) | {{authorization-grant}} | Constrained: {{RFC7523}} JWT authorization grant (assertion), platform-signed; no per-agent credential; client identity deliberately unspecified |
-| Credential Provisioning (Sec. 8) | {{instantiation}} | Constrained: platform-internal |
-| Authorization (Sec. 10, case 10.4.2) | {{properties}} | Added: standard property claims; by-reference trust ({{trust}}) |
-| Monitoring/Remediation (Sec. 11) | {{oi}} | TODO |
-| Policy (Sec. 12), Compliance (Sec. 13) | -- | Inherited |
-
-## Relationship to WIMSE and SPIFFE
-
-TODO.  A reader arriving from WIMSE or SPIFFE will ask where the Workload
-Identity Token and the SPIFFE ID are in this design.  Explain: why the
-assertion is an {{RFC7523}} authorization grant rather than a WIMSE WIT;
-how the Agent Identifier's RECOMMENDED {{WIMSE-ID}} URI form relates to a
-SPIFFE ID; and what changes if the Platform's issuer is backed by a
-SPIFFE/WIMSE-style workload identity plane rather than operated as a
-standalone OAuth issuer.
-
 ## Scope
 
 In scope: agents acting on their own behalf ({{AIMS}}, Section 10.4.2).  Out
@@ -202,19 +178,14 @@ Enterprise IdP:
 Customer Administrator:
 : The human who performs one-time trust establishment.
 
-# Deployment Model
+# Concepts
 
-TODO: diagram.  One-time trust establishment by the Customer Administrator
-({{trust}}); agent creation by end users with no interaction with the
-Resource Server ({{instantiation}}); per-request JWT authorization grant
-({{authorization-grant}}).
-
-# Agent Identity Model {#identity-model}
+## Agent Identity Model {#identity-model}
 
 An Agent's identity has three units: the tenancy's issuer, which signs
 assertions about the Agent; the Agent Identifier, opaque, unique within the
 issuer, immutable, and never reassigned, carried as the assertion's sub
-({{authorization-grant}}); and claims, carrying everything else
+({{workload-authorization-grant}}); and claims, carrying everything else
 ({{properties}}).  Renaming an Agent MUST NOT change its Agent Identifier.
 Resource Servers MUST NOT parse or pattern-match the Agent Identifier for
 authorization; single-agent policy is an exact match on it.
@@ -230,7 +201,31 @@ the allowlisted issuer's tenancy once, at token issuance; Resource Servers
 treat the complete identifier as an opaque, exact-match string regardless of
 form and MUST NOT derive trust from its components.
 
-# Authorization Grant {#authorization-grant}
+## Relationship to AIMS
+
+{{AIMS}} remains the base specification for anything not restated here.  This
+profile constrains {{AIMS}} as follows:
+
+| AIMS component | Here | Relationship |
+|---|---|---|
+| Identifiers (Sec. 6) | {{identity-model}} | Constrained: opaque, immutable, non-reassignable agent identifier, RECOMMENDED to be a Workload Identifier {{WIMSE-ID}}, carried as sub |
+| Credentials (Sec. 7), Authentication (Sec. 9) | {{workload-authorization-grant}} | Constrained: {{RFC7523}} JWT authorization grant (assertion), platform-signed; no per-agent credential; client identity deliberately unspecified |
+| Credential Provisioning (Sec. 8) | {{instantiation}} | Constrained: platform-internal |
+| Authorization (Sec. 10, case 10.4.2) | {{properties}} | Added: standard property claims; by-reference trust ({{trust}}) |
+| Monitoring/Remediation (Sec. 11) | {{oi}} | TODO |
+| Policy (Sec. 12), Compliance (Sec. 13) | -- | Inherited |
+
+## Relationship to WIMSE and SPIFFE
+
+TODO.  A reader arriving from WIMSE or SPIFFE will ask where the Workload
+Identity Token and the SPIFFE ID are in this design.  Explain: why the
+assertion is an {{RFC7523}} authorization grant rather than a WIMSE WIT;
+how the Agent Identifier's RECOMMENDED {{WIMSE-ID}} URI form relates to a
+SPIFFE ID; and what changes if the Platform's issuer is backed by a
+SPIFFE/WIMSE-style workload identity plane rather than operated as a
+standalone OAuth issuer.
+
+# Workload Authorization Grant
 
 The Agent obtains access tokens from the Authorization Server by
 presenting a JWT as an authorization grant per {{RFC7523}},
@@ -249,7 +244,7 @@ rather than the Platform (obtained, e.g., by token exchange {{RFC8693}} with
 the IdP).  This document intentionally leaves that composition open rather
 than fully specifying it ({{oi}}).
 
-## JWT Authorization Grant Claims {#authorization-grant-claims}
+## JWT Syntax {#authorization-grant-claims}
 
 The following claims are used within the Workload Authorization Grant JWT:
 
@@ -289,6 +284,8 @@ authorization decision.
 Authorization Servers supporting this profile MUST
 include `urn:ietf:params:oauth:grant-type:jwt-bearer` in `grant_types_supported`
 in their metadata {{RFC8414}}.
+
+## Presentation
 
 {{fig-token-request}} shows an example token request (with extra line
 breaks for display purposes only):
@@ -335,7 +332,14 @@ sender-constrained access tokens, or attestation-based client authentication
 {{ATTEST-CLIENT-AUTH}} (Platform as client attester, agent instance signs the
 PoP JWT) if agent instances hold keys.
 
-# Trust Establishment {#trust}
+# Deployment
+
+TODO: diagram.  One-time trust establishment by the Customer Administrator
+({{trust}}); agent creation by end users with no interaction with the
+Resource Server ({{instantiation}}); per-request JWT authorization grant
+({{workload-authorization-grant}}).
+
+## Trust Establishment {#trust}
 
 The Customer Administrator once records, at the Authorization Server, an
 allowlist entry binding one issuer to one tenancy: the issuer identifier, from which
@@ -361,7 +365,7 @@ An Agent Identifier is unique within its issuer, not globally: policy and
 audit records are keyed on the (iss, sub) pair, or on the complete URI-form
 identifier, which carries the tenancy in its authority component.
 
-# Agent Instantiation {#instantiation}
+## Agent Instantiation {#instantiation}
 
 Creating an Agent is Platform-internal and MUST NOT require any
 ahead-of-time interaction with the Resource Server, the Authorization
@@ -379,7 +383,7 @@ projection MUST NOT be required ahead of time: performing it just in time,
 including synchronously during first token issuance, is acceptable.  TODO:
 BYO-IdP deployment model.
 
-# Agent Properties and Authorization {#properties}
+## Agent Properties and Authorization {#properties}
 
 TODO.  Initial standard property claims: name, a human-readable display
 name as in an OpenID Connect ID Token {{OIDC-CORE}} (mutable, and never a
@@ -394,13 +398,13 @@ Server keeps a local, administrator-controlled mapping from Property
 predicates to permissions; possession of a Property is not itself
 authorization.  Deny semantics do not travel.  TODO: worked example.
 
-# Attribution
+## Attribution
 
 TODO.  The Authorization Server logs jti at token issuance; Resource
 Servers log the Agent Identifier (sub) and referenced Properties; internal fan-out via {{TXN-TOKENS}} rather than
 forwarding the access token.
 
-# Retirement and Lifecycle {#lifecycle}
+## Retirement and Lifecycle {#lifecycle}
 
 Retirement is expressed by cessation: the Platform stops signing assertions
 for a retired Agent, so residual access is bounded by the remaining lifetime
@@ -424,7 +428,7 @@ does not manage its downstream effects.
   URI-form Agent Identifiers ({{identity-model}}) carry the tenancy inside
   the identifier for this case, but the residual gap is unassessed.
 - Proof-of-possession: the authorization grant is bearer; see
-  {{authorization-grant}}.
+  {{workload-authorization-grant}}.
 - Issuer placement: issuer operated by the Platform versus by the Enterprise
   IdP, with the Platform obtaining assertions by token exchange {{RFC8693}}
   with the IdP; client authentication is redundant in the former case and
@@ -437,6 +441,8 @@ does not manage its downstream effects.
 - Addressing: whether an Agent needs a human-usable, "@"-referenceable
   address (to share a resource with an agent the way one shares with an
   email address), distinct from the display name and the Agent Identifier.
+
+# Privacy Considerations
 
 # Security Considerations
 
