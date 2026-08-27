@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2026-08-25T01:23:43.392630+00:00",
+  "timestamp": "2026-08-27T08:15:04.038121+00:00",
   "repo": "pcarleton/draft-carleton-workload-authz-grant",
   "labels": [
     {
@@ -93,7 +93,7 @@
       "labels": [],
       "body": "We want:\n* A small set of claims that are common among implementations (target: max of 3)\n* extensibility to add more claims if a platform and resource want\n* Clearly specify which claims can be trusted for policy decisions, and clarify that others cannot\n* ability to re-use existing authz modeling where appropriate (i.e. I want this agent to have the same permissions as humans on this team)\n\nThe leading candidate is `roles`, `groups` and `entitlements` from https://datatracker.ietf.org/doc/html/rfc7643#section-4.1.2 / https://datatracker.ietf.org/doc/html/rfc9068#section-2.2.3.1\n\nIf that does end up being what we do, we need to:\n* play out an example of the agent platform giving claims like roles / groups if they're not specific to the platform\n* decide whether they need to be namespaced by FQDN (or if issuer namespacing is sufficient)\n* explain relationship to #3 ",
       "createdAt": "2026-08-14T16:12:42Z",
-      "updatedAt": "2026-08-19T15:28:35Z",
+      "updatedAt": "2026-08-26T15:39:18Z",
       "closedAt": null,
       "comments": [
         {
@@ -102,6 +102,13 @@
           "body": "It may be good to elaborate on the problem we are trying to solve by picking any additional claims beyond what is defined in RFC 7523 and/or ID-JAG? What is the specific use case?\n\nMy first instinct is that we should not make any claims beyond what is needed by RFC 7523 REQUIRED in this draft. That would maximise compatibility with existing infrastructure and minimise the assumptions about the deployment. What mandatory values would we need beyond what is described already?\n\nFor the examples of roles, groups and entitlements my concern would be that values for those claims are things that may have meaning on one platform, but once you cross a trust boundary, it may have different meaning in a different domain. It also assumes a certain kind of underlying RBAC system, which although common, may not be universal.\n\nIn terms of optional claims, the three claims you describe feel like something that falls under the ID-JAG \"authorization_details\" claim and can be described in a RAR object (which may still need to be defined, but perhaps that is something that gets profiled elsewhere?).\n\nI am also curious about the choice of picking values from SCIM as claims - is there specific upside we expect from that (other than these values matching attributes provisioned for users through SICM)?",
           "createdAt": "2026-08-19T15:28:35Z",
           "updatedAt": "2026-08-19T15:28:35Z"
+        },
+        {
+          "author": "pcarleton",
+          "authorAssociation": "OWNER",
+          "body": "Summary of a related discussion with @PieterKas and @arndt-s and where I'd like to take this issue:\n\n**What the claims are for.** The motivating case is \"this agent gets roughly my team's permissions\". The mapping from platform-asserted claims to resource-side permissions is intended to be explicit and happen when the trust relationship is established (an admin maps the `team-foobar` group claim to the permissions already defined for team-foobar in the resource server); it is never implicit (the enterprise-IdP case in #3 may be the exception). A small set of common claim names makes that mapping UI consistent across agent platforms: pick \"roles\" from a list rather than type a key/value and hope there is no typo. None of these claims would be required.\n\n**Why SCIM**: Underlying assumption: the permissions an agent needs in order to be useful look more like a user's than a service account's, hence leaning on SCIM's modeling (groups / roles / entitlements). Pieter's pushback: those names assume RBAC (there is a whole *-BAC universe), and ID-JAG puts this kind of information in `authorization_details` (RAR), and keeps it optional.\n\nOptions discussed:\n1. Specify no claims.\n2. Specify only that authorization-bearing information goes in `authorization_details`; everything else is informational (debug / audit helpers).\n3. Recommend a few common optional claims (groups, roles, entitlements) with worked examples of how they map.\n4. Full namespacing (URNs / issuer-qualified claim names). Nobody is pushing for this.\n\nAgreement so far: (2) over (1), as long as it is optional. Open question from Pieter: is there an existing RAR type we could reuse rather than define one, and would MCP then use these values for a stronger conformance/interop requirement?\n\nArndt's point, which I agree with: resource servers need to know which claims can be relied on for authorization decisions \u2014 platform-controlled vs admin-controlled vs user-controlled. Without this, you can run into issues like with github actions where a resource assumes a platform is asserting something important in a claim (like repo name + branch), but in fact that claim is user-controlled, leading to accidentally performing actions that were meant to only happen off of the main branch of a repo.\n\nTwo shapes were floated: a verified / non-verified split of claim sets (the OSW idea), or a flat rule that every claim in the assertion MUST be asserted by the issuer (simpler, harder to enforce and platforms have incentives to let customers inject claims). `authorization_details` is itself a clear \"this is auth-bearing\" marker, which is part of the appeal of (2).\n\nProposed direction for -01:\n- Normative floor = (2): authorization-bearing information, if present, goes in `authorization_details` (RFC 9396); the grant itself carries no scope unless the token request asks for one (RFC 7523 \u00a72.1).\n- A short RECOMMENDED, optional claim set per (3), each with a worked example of the explicit mapping step.\n- Text distinguishing platform-asserted claims from customer-injected ones, so a Resource AS never treats an unverified claim as auth-bearing by accident.\n- Nothing in (4)\n\nIn general, this spec is aiming to be the minimum viable spec for this step of the exchange, so all of these we'll want to be optional.",
+          "createdAt": "2026-08-26T15:39:18Z",
+          "updatedAt": "2026-08-26T15:39:18Z"
         }
       ]
     },
@@ -118,6 +125,22 @@
       "body": "This draft currently aims to be as simple as possible and targeted at an agent platform issuing its own tokens, similar to how a k8s cluster has an OIDC provider that's trusted in some WIF implementations today.\n\nHowever, there is a deployment model that could make sense here where folks want their enterprise IdP to be the single source of truth into what has access into their system, e.g. to revoke an agent's access in the IdP instead of needing to go to the agent platform.\n\nThe rough shape that seems most promising here is:\n* The agent platform is trusted by the IdP to create agent identities\n* The resource authorization server trusts the IdP\n* The IdP is responsible for ensuring groups / roles / entitlements align with the organization-wide authz model\n\nThis has a few implications:\n* The agent platform needs to exchange its platform-issued token for one issued by the IdP\n* The agent platform still provides the `client_assertion` to prove the request is coming from the platform\n* the IdP *may* choose to do a SCIM operation or other lifecycle management into the resource authorization server if it needs to\n  * this implies that the token exchange may need to be asynchronous if a stateful provisioning is happening\n* the resource authorization server may want to rely on a stateful provisioning process\n \nI'm proposing this IdP-integrated deployment model can be lightly mentioned in this draft, but the WAG draft keeps \"how does the agent get its authorization grant\" out of scope.  (i.e. an IdP-integrated deployment would be in a separate draft).\n\nAlso note, this deployment model looks very similar to ID-JAG's typical model, with a small variation: rather than an id_token issued by the IdP in its token exchange, the IdP would be accepting a token from the agent platform itself (likely a WAG).  This is also related to: https://github.com/oauth-wg/oauth-identity-assertion-authz-grant/issues/73   ",
       "createdAt": "2026-08-14T16:25:20Z",
       "updatedAt": "2026-08-14T16:25:20Z",
+      "closedAt": null,
+      "comments": []
+    },
+    {
+      "number": 6,
+      "id": "I_kwDOTlTgBM8AAAABOX8E0w",
+      "title": "Discuss: deployment model considerations for issuer count != 1",
+      "url": "https://github.com/pcarleton/draft-carleton-workload-authz-grant/issues/6",
+      "state": "OPEN",
+      "author": "jtrochet-openai",
+      "authorAssociation": "NONE",
+      "assignees": [],
+      "labels": [],
+      "body": "Hello,\n\nI work at and make decisions for OpenAI in relation to the identity and authorization semantics of its internal platforms. I'm strongly aligned with the draft specification as-is, but I believe it's important for the standard to explicitly consider tenancies that accept multiple issuers and make recommendations for unambiguous behavior under those conditions.\n\nFor enterprises at medium to large scale, it's frequently the case for multiple compute environments to exist, each hosting its own credential issuer. Explicitly condoning multi-issuer configuration will allow enterprises of this scale to integrate with WAG-implementing service providers without the need to host specific infrastructure for credential fan-in.\n\nSimultaneously, for relatively-small enterprises, the operational cost of reliably self-hosting a single issuer can be prohibitive. My expectation is that customers at this scale will host agentic workloads in cloud providers. Workload credentials issued by those cloud providers are already in common use through unstandardized federated credential flows, and their use for agentic workloads is a logical extension for these small enterprises. These small enterprises may have infrastructure spanning multiple cloud providers, each with their own issuer.\n\nBoth of these cases assume that WAG will be used with credentials issued to specific compute, rather than credentials issued by inference providers such as OpenAI itself. However, if industry practice converges on inference providers acting as the Agent Platform (and credential issuer), supporting multiple providers remains important by enabling the capability for enterprises to use different inference providers in different situations.\n\nIn sum, I believe that enterprise use cases across the spectrum of possible scales will be best-served by having the WAG standard explicitly contemplate multi-issuer use cases. I believe that the number of issuers that will be required by most use cases will remain small, however, and a mechanism for configuration beyond the Customer Administrator manually configuring each issuer in each tenancy does not need to be contemplated.\n\nIf multiple issuers are taken as a normal expectation, I recommend the specification explicitly describe best practices for avoiding inter-issuer subject namespace collisions. Here are some potential approaches, in my order of preference:\n\n- Require the use of SPIFFE IDs as subject claims, with 1:1 trust-domain-to-issuer bindings a core part of the configuration made by Customer Administrators; this minimizes the footprint within the WAG specification by inheriting SPIFFE issuance/validity behavior\n- Describe a mechanism to exclusively restrict the issuance of identities within different configured issuers, such that no two issuers may claim the same identity\n- Synthetically convert unnamespaced subject identifiers from issuer claims to namespaced identifiers, such as SPIFFE IDs, based on the metadata of the configured issuer, during token exchange\n",
+      "createdAt": "2026-08-26T17:09:56Z",
+      "updatedAt": "2026-08-26T17:19:04Z",
       "closedAt": null,
       "comments": []
     }
@@ -147,6 +170,42 @@
       "mergedBy": null,
       "mergeCommit": null,
       "comments": [],
+      "reviews": []
+    },
+    {
+      "number": 5,
+      "id": "PR_kwDOTlTgBM8AAAABBENpMQ",
+      "title": "Section re-order",
+      "url": "https://github.com/pcarleton/draft-carleton-workload-authz-grant/pull/5",
+      "state": "MERGED",
+      "author": "arndt-s",
+      "authorAssociation": "NONE",
+      "assignees": [],
+      "labels": [],
+      "body": "Proposed new table of contents:\r\n\r\n* **Concept** section for conceptual topics such as relationship to AIMS, WIMSE & SPIFFE\r\n* Dedicated **Workload Authorization Grant** section with JWT Syntax and Presentation\r\n* **Deployment** section that includes topics such as Trust Establishment, Instantiation and others. \r\n* New **Privacy considerations** section\r\n\r\nI deliberately held off any text change for now. This is related to #1.\r\n\r\n1.  Introduction\r\n1.1.  Scope\r\n2.  Conventions and Terminology\r\n3.  Concepts\r\n3.1.  Agent Identity Model\r\n3.2.  Relationship to AIMS\r\n3.3.  Relationship to WIMSE and SPIFFE\r\n4.  Workload Authorization Grant\r\n4.1.  JWT Syntax\r\n4.2.  Presentation\r\n5.  Deployment\r\n5.1.  Trust Establishment\r\n5.2.  Agent Instantiation\r\n5.3.  Agent Properties and Authorization\r\n5.4.  Attribution\r\n5.5.  Retirement and Lifecycle\r\n6.  Open Issues\r\n7.  Privacy Considerations\r\n8.  Security Considerations\r\n",
+      "createdAt": "2026-08-26T11:16:23Z",
+      "updatedAt": "2026-08-26T15:16:53Z",
+      "baseRepository": "pcarleton/draft-carleton-workload-authz-grant",
+      "baseRefName": "main",
+      "baseRefOid": "13f516a5e458b89ca30f7ea47a802091dd9d4154",
+      "headRepository": "arndt-s/draft-carleton-workload-authz-grant",
+      "headRefName": "arndt/new_toc",
+      "headRefOid": "0322c468912dbc8be52683b1e9032e987d832768",
+      "closedAt": "2026-08-26T15:16:53Z",
+      "mergedAt": "2026-08-26T15:16:53Z",
+      "mergedBy": "pcarleton",
+      "mergeCommit": {
+        "oid": "a3342d7d53f3953a871caba75b4e8d4a93a32431"
+      },
+      "comments": [
+        {
+          "author": "pcarleton",
+          "authorAssociation": "OWNER",
+          "body": "this looks great, ty!\r\n\r\nI might want to move \"relationship to AIMS\" even further down, but will tackle as part of the removal of \"profile of AIMs\" bit.",
+          "createdAt": "2026-08-26T15:16:50Z",
+          "updatedAt": "2026-08-26T15:16:50Z"
+        }
+      ],
       "reviews": []
     }
   ]
