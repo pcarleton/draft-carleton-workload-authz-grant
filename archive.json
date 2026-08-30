@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2026-08-27T08:15:04.038121+00:00",
+  "timestamp": "2026-08-30T04:25:54.735536+00:00",
   "repo": "pcarleton/draft-carleton-workload-authz-grant",
   "labels": [
     {
@@ -93,7 +93,7 @@
       "labels": [],
       "body": "We want:\n* A small set of claims that are common among implementations (target: max of 3)\n* extensibility to add more claims if a platform and resource want\n* Clearly specify which claims can be trusted for policy decisions, and clarify that others cannot\n* ability to re-use existing authz modeling where appropriate (i.e. I want this agent to have the same permissions as humans on this team)\n\nThe leading candidate is `roles`, `groups` and `entitlements` from https://datatracker.ietf.org/doc/html/rfc7643#section-4.1.2 / https://datatracker.ietf.org/doc/html/rfc9068#section-2.2.3.1\n\nIf that does end up being what we do, we need to:\n* play out an example of the agent platform giving claims like roles / groups if they're not specific to the platform\n* decide whether they need to be namespaced by FQDN (or if issuer namespacing is sufficient)\n* explain relationship to #3 ",
       "createdAt": "2026-08-14T16:12:42Z",
-      "updatedAt": "2026-08-26T15:39:18Z",
+      "updatedAt": "2026-08-27T21:40:39Z",
       "closedAt": null,
       "comments": [
         {
@@ -109,6 +109,20 @@
           "body": "Summary of a related discussion with @PieterKas and @arndt-s and where I'd like to take this issue:\n\n**What the claims are for.** The motivating case is \"this agent gets roughly my team's permissions\". The mapping from platform-asserted claims to resource-side permissions is intended to be explicit and happen when the trust relationship is established (an admin maps the `team-foobar` group claim to the permissions already defined for team-foobar in the resource server); it is never implicit (the enterprise-IdP case in #3 may be the exception). A small set of common claim names makes that mapping UI consistent across agent platforms: pick \"roles\" from a list rather than type a key/value and hope there is no typo. None of these claims would be required.\n\n**Why SCIM**: Underlying assumption: the permissions an agent needs in order to be useful look more like a user's than a service account's, hence leaning on SCIM's modeling (groups / roles / entitlements). Pieter's pushback: those names assume RBAC (there is a whole *-BAC universe), and ID-JAG puts this kind of information in `authorization_details` (RAR), and keeps it optional.\n\nOptions discussed:\n1. Specify no claims.\n2. Specify only that authorization-bearing information goes in `authorization_details`; everything else is informational (debug / audit helpers).\n3. Recommend a few common optional claims (groups, roles, entitlements) with worked examples of how they map.\n4. Full namespacing (URNs / issuer-qualified claim names). Nobody is pushing for this.\n\nAgreement so far: (2) over (1), as long as it is optional. Open question from Pieter: is there an existing RAR type we could reuse rather than define one, and would MCP then use these values for a stronger conformance/interop requirement?\n\nArndt's point, which I agree with: resource servers need to know which claims can be relied on for authorization decisions \u2014 platform-controlled vs admin-controlled vs user-controlled. Without this, you can run into issues like with github actions where a resource assumes a platform is asserting something important in a claim (like repo name + branch), but in fact that claim is user-controlled, leading to accidentally performing actions that were meant to only happen off of the main branch of a repo.\n\nTwo shapes were floated: a verified / non-verified split of claim sets (the OSW idea), or a flat rule that every claim in the assertion MUST be asserted by the issuer (simpler, harder to enforce and platforms have incentives to let customers inject claims). `authorization_details` is itself a clear \"this is auth-bearing\" marker, which is part of the appeal of (2).\n\nProposed direction for -01:\n- Normative floor = (2): authorization-bearing information, if present, goes in `authorization_details` (RFC 9396); the grant itself carries no scope unless the token request asks for one (RFC 7523 \u00a72.1).\n- A short RECOMMENDED, optional claim set per (3), each with a worked example of the explicit mapping step.\n- Text distinguishing platform-asserted claims from customer-injected ones, so a Resource AS never treats an unverified claim as auth-bearing by accident.\n- Nothing in (4)\n\nIn general, this spec is aiming to be the minimum viable spec for this step of the exchange, so all of these we'll want to be optional.",
           "createdAt": "2026-08-26T15:39:18Z",
           "updatedAt": "2026-08-26T15:39:18Z"
+        },
+        {
+          "author": "bc-pi",
+          "authorAssociation": "NONE",
+          "body": "I'm struggling to see/understand how `authorization_details` would work here and the claims* about what that claim does in ID-JAG. \n\n\\* pun intended ",
+          "createdAt": "2026-08-27T21:23:03Z",
+          "updatedAt": "2026-08-27T21:23:03Z"
+        },
+        {
+          "author": "bc-pi",
+          "authorAssociation": "NONE",
+          "body": "One (other?) potential problem with the claims from SCIM is that they aren't defined very well despite being registered\n\nhttps://datatracker.ietf.org/doc/html/rfc9068#name-registry-content-2\n\nhttps://mailarchive.ietf.org/arch/msg/jwt-reg-review/sokgjH43qzp9nK5iq-Qo4J8QFRY/ \n\nhttps://mailarchive.ietf.org/arch/msg/oauth/iJFODO2hW6rTlVV3pnJKxyRMQMU/\n\n",
+          "createdAt": "2026-08-27T21:40:39Z",
+          "updatedAt": "2026-08-27T21:40:39Z"
         }
       ]
     },
@@ -140,9 +154,48 @@
       "labels": [],
       "body": "Hello,\n\nI work at and make decisions for OpenAI in relation to the identity and authorization semantics of its internal platforms. I'm strongly aligned with the draft specification as-is, but I believe it's important for the standard to explicitly consider tenancies that accept multiple issuers and make recommendations for unambiguous behavior under those conditions.\n\nFor enterprises at medium to large scale, it's frequently the case for multiple compute environments to exist, each hosting its own credential issuer. Explicitly condoning multi-issuer configuration will allow enterprises of this scale to integrate with WAG-implementing service providers without the need to host specific infrastructure for credential fan-in.\n\nSimultaneously, for relatively-small enterprises, the operational cost of reliably self-hosting a single issuer can be prohibitive. My expectation is that customers at this scale will host agentic workloads in cloud providers. Workload credentials issued by those cloud providers are already in common use through unstandardized federated credential flows, and their use for agentic workloads is a logical extension for these small enterprises. These small enterprises may have infrastructure spanning multiple cloud providers, each with their own issuer.\n\nBoth of these cases assume that WAG will be used with credentials issued to specific compute, rather than credentials issued by inference providers such as OpenAI itself. However, if industry practice converges on inference providers acting as the Agent Platform (and credential issuer), supporting multiple providers remains important by enabling the capability for enterprises to use different inference providers in different situations.\n\nIn sum, I believe that enterprise use cases across the spectrum of possible scales will be best-served by having the WAG standard explicitly contemplate multi-issuer use cases. I believe that the number of issuers that will be required by most use cases will remain small, however, and a mechanism for configuration beyond the Customer Administrator manually configuring each issuer in each tenancy does not need to be contemplated.\n\nIf multiple issuers are taken as a normal expectation, I recommend the specification explicitly describe best practices for avoiding inter-issuer subject namespace collisions. Here are some potential approaches, in my order of preference:\n\n- Require the use of SPIFFE IDs as subject claims, with 1:1 trust-domain-to-issuer bindings a core part of the configuration made by Customer Administrators; this minimizes the footprint within the WAG specification by inheriting SPIFFE issuance/validity behavior\n- Describe a mechanism to exclusively restrict the issuance of identities within different configured issuers, such that no two issuers may claim the same identity\n- Synthetically convert unnamespaced subject identifiers from issuer claims to namespaced identifiers, such as SPIFFE IDs, based on the metadata of the configured issuer, during token exchange\n",
       "createdAt": "2026-08-26T17:09:56Z",
-      "updatedAt": "2026-08-26T17:19:04Z",
+      "updatedAt": "2026-08-27T18:03:22Z",
       "closedAt": null,
-      "comments": []
+      "comments": [
+        {
+          "author": "pcarleton",
+          "authorAssociation": "OWNER",
+          "body": "Hi @jtrochet-openai ! Thanks for reading the draft and taking the time to write this up. \n\nI very much agree we need to account for >1 issuers. My closest analogy for an \"agent platform\" is a single kubernetes cluster with it's own OIDC provider per-cluster.  In that mental model, it's very common to have multiple issuers coming into the same resource server.  If the draft makes any statements that contradict that as a possibility, let's definitely correct them. This has come up a few times, so I'm realizing I have not captured that mental model in the draft very well. We can tweak the intro and abstract to make it clearer this will be multiple issuers * multiple resources.\n\nOn the issue of `sub` overlap, I also agree with this, and came across it in my initial demo implementation (you can try it out here: https://wagd1-agent-platform.val.run/).  A naive implementation using JWT access tokens would just copy the `sub` over to the `access_token`, however the sub is only guaranteed to be unique inside 1 issuer.  I don't think we want to specify the shape of access tokens (one of the key principles here, borrowed from ID-JAG, is that the OAuth server should only need to change it's `/token` endpoint, not it's access token shape).  My current opinion is we should cover that in a security consideration (cc @arndt-s related to our previous discussion) \n\nOn the proposed approaches:\n\n1. I agree SPIFFE ID's are a good fit for `sub` here, but I don't want to require SPIFFE for this specification. I would rather we specify the requirements that we have and note that SPIFFE ID's satisfy them.  Part of the reason to keep this separate from ID-JAG was to have this spec be a small, relatively narrow and self-contained unit, and tying it into SPIFFE ID's or WIT means many more required concepts that you don't necessarily need.  Put another way: If you're already doing SPIFFE, great, you've got something that works.  If you're not already doing SPIFFE, I don't want to send you on a \"go understand SPIFFE\" quest in order to get this working.\n2. Yes agree here, this is most similar to the security consideration, and I think is the bare minimum.\n3. Similarly, I think this could go in the security consideration, because I don't want to require implementers to change their access tokens and downstream systems, but they do need to be aware of pitfalls.\n",
+          "createdAt": "2026-08-27T10:56:54Z",
+          "updatedAt": "2026-08-27T10:56:54Z"
+        },
+        {
+          "author": "jtrochet-openai",
+          "authorAssociation": "NONE",
+          "body": "I actually expect that most SP-side implementations won't take the naive \"copy the subject over\" approach\u2014most SaaS providers I'm aware of have internal subject identifiers (bound to external subject/issuer at the edge and embedded in the application database) that they'll want to use. This binding is already necessary where multiple traditional human IdPs are in use. Rather than copy the `sub` over and force their application logic to learn what that means, I suspect they'll do some sort of provision-on-demand on first token issuance, and issue tokens with the internal identifier.\n\nThis means some nice things for SPIFFE\u2014if we require SPIFFE here, then services that exchange for an internal subject will, as they do for current external subject IDs, bind the opaque SPIFFE to that subject, with only the token exchange layer needing to be aware of SPIFFE semantics. For the rare SPs that do propagate external subject IDs inward, they will already need to support relatively generic opaque subject structures, so no new SPIFFE logic is necessary inside the application. In both cases, the AS essentially encapsulates the SPIFFE-trust domain validation logic, which provides an internal guarantee of subject ID uniqueness across per-tenant configured issuers.\n\nPersonally, I increasingly believe the concepts that SPIFFE IDs encode to be part of the essential complexity of cross-issuer identity verification: if we don't incorporate them via SPIFFE (not necessarily traditional SVIDs, to be clear), then we'll still need to bring them in via, as you mentioned, a \"security consideration\" note, and we'll be relying on \"best practices\" to ensure them, rather than pointing to a standard with clear correctness criteria. \n\nIn other words, I see the \"go understand SPIFFE\" quest as being essential for someone setting up a multi-issuer architecture. If they already understand the fundamentals of why subject claims need namespacing, SPIFFE IDs will be immediately understandable. If they don't, the SPIFFE spec is instructive on why maintaining that namespacing is critical, and that instruction would need to happen anyway.",
+          "createdAt": "2026-08-27T17:48:09Z",
+          "updatedAt": "2026-08-27T18:03:22Z"
+        }
+      ]
+    },
+    {
+      "number": 7,
+      "id": "I_kwDOTlTgBM8AAAABOf4ILQ",
+      "title": "Issuer per tenancy: MUST \u2192 SHOULD, with a standard `tenant` claim",
+      "url": "https://github.com/pcarleton/draft-carleton-workload-authz-grant/issues/7",
+      "state": "OPEN",
+      "author": "pcarleton",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "-00 (Trust Establishment) says a platform serving multiple customers MUST use a distinct issuer per tenancy, because the issuer is the boundary the AS allowlist expresses. Two things push against the MUST:\n\n- A platform that already runs one issuer (one metadata document, one JWKS) would need per-tenant issuer URLs and metadata just for this grant,  the single largest piece of new surface the draft asks of a platform. (example issuers in this boat: )\n- An AS that evaluates claims can pin (issuer, tenant) exactly as precisely as it can pin an issuer, so this allows for more flexibility.\n\nCosts of allowing a `tenant` claim:\n- If we allow it ever, then every consumer needs to process it always, and a missing tenant claim when one is needed becomes a failure mode we have to consider\n- It's slightly more complicated for the admin flow to copy 2 values over (issuer + tenant claim), than just a single string (per-tenant-issuer)\n\n\nI still thing distinct issuers is the better path for someone implementing from scratch, however, I think it's worth the flexibility / matches reality more closely to allow for the tenant claim.\n\nProposal for -01:\n- Distinct issuer per tenancy becomes RECOMMENDED. A platform that shares an issuer across tenancies MUST include a `tenant` claim (single opaque, stable string) and the AS allowlist entry pins issuer + tenant.\n- Issuer metadata MUST state which mode the issuer uses. (more discussion needed here, I want to prevent the missing claim when needed causing issues)\n\nRelated: #6 (subject namespace collisions at multi-issuer ASes).",
+      "createdAt": "2026-08-27T13:12:46Z",
+      "updatedAt": "2026-08-27T17:58:28Z",
+      "closedAt": null,
+      "comments": [
+        {
+          "author": "jtrochet-openai",
+          "authorAssociation": "NONE",
+          "body": "An alternative to an explicit tenant claim would be to define a \"claim-restricting\" semantic on the issuer-tenancy binding. This would avoid encoding a specific structure for tenancy claims while allowing the Customer Administrator to make informed decisions on a per-issuer basis. You can see this architecture being used in OIDC federation between CI actions like Github workflows and cloud providers like AWS and Azure\u2014the individual configuring the integration point is expected to understand the claims supported by that particular token issuer.\n\nService providers may end up creating \"templates\" for known, very popular multitenant issuers that exercise this vocabulary\u2014for example, if a particular agentic platform is in common use, and is known to differentiate its tenancies by a particular claim, service providers could reasonably make \"which tenancies do you trust?\" part of their UI-based configuration for that particular issuer, rather than requiring Customer Administrators to configure the claim-restricting semantic exactly.",
+          "createdAt": "2026-08-27T17:55:58Z",
+          "updatedAt": "2026-08-27T17:58:28Z"
+        }
+      ]
     }
   ],
   "pulls": [
@@ -151,25 +204,35 @@
       "id": "PR_kwDOTlTgBM8AAAABA3o9Ig",
       "title": "Clarify property assertion and freshness semantics",
       "url": "https://github.com/pcarleton/draft-carleton-workload-authz-grant/pull/4",
-      "state": "OPEN",
+      "state": "MERGED",
       "author": "FutureEnterprises",
-      "authorAssociation": "NONE",
+      "authorAssociation": "CONTRIBUTOR",
       "assignees": [],
       "labels": [],
       "body": "Addresses the trust-boundary portion of #2.\n\nThis change separates three facts that the current text places close together:\n\n- An Agent Property is an issuer assertion made when the grant is issued.\n- `iat` and `exp` establish the grant's age and acceptance window, not whether mutable state is still true later.\n- Roles, groups, entitlements, and similar values are interpreted through the Resource Server's issuer-scoped local mapping. They are not portable permission assignments.\n\nIf a policy requires a Property to remain true at presentation or access time, the deployment must obtain evidence current for that time. Otherwise, grant and access-token lifetimes bound the stale-claim exposure.\n\nThis does not choose the final property vocabulary, require a specific status mechanism, or add an EMILIA dependency.\n\nVerification:\n\n- `make` completed successfully.\n- The existing EMILIA WAG-to-AEB composition fixture reproduced 15 of 15 checks against the pinned WAG-00 source.\n",
       "createdAt": "2026-08-24T23:51:02Z",
-      "updatedAt": "2026-08-24T23:51:38Z",
+      "updatedAt": "2026-08-28T14:19:52Z",
       "baseRepository": "pcarleton/draft-carleton-workload-authz-grant",
       "baseRefName": "main",
       "baseRefOid": "13f516a5e458b89ca30f7ea47a802091dd9d4154",
       "headRepository": "FutureEnterprises/draft-carleton-workload-authz-grant",
       "headRefName": "futureenterprises/property-assertion-semantics",
       "headRefOid": "d051f196fbd74bce57c87cfcd954d96eff13a204",
-      "closedAt": null,
-      "mergedAt": null,
-      "mergedBy": null,
-      "mergeCommit": null,
-      "comments": [],
+      "closedAt": "2026-08-28T14:19:52Z",
+      "mergedAt": "2026-08-28T14:19:52Z",
+      "mergedBy": "pcarleton",
+      "mergeCommit": {
+        "oid": "a5ff3aaefe2dc75d3e24244fd30104ed58f26cce"
+      },
+      "comments": [
+        {
+          "author": "pcarleton",
+          "authorAssociation": "OWNER",
+          "body": "Merging, thanks for this note! The assertion-vs-freshness distinction and the issuer-scoped-mapping point are both right and I want to call them out in.\r\n\r\nTwo notes so nothing surprises you later: the properties text is being reworked under #2, so this may move; and I will likely soften the two \"deployment MUST\" sentences to SHOULD-level guidance in Security Considerations, since \"the deployment\" isn't a wire actor the AS or RS can check.",
+          "createdAt": "2026-08-28T14:19:43Z",
+          "updatedAt": "2026-08-28T14:19:43Z"
+        }
+      ],
       "reviews": []
     },
     {
