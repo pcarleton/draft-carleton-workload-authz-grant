@@ -11,9 +11,9 @@ v: 3
 area: "sec"
 keyword:
  - agent identity
- - AIMS
  - workload identity
  - workload authorization grant
+ - jwt authorization grant
 venue:
   github: pcarleton/draft-carleton-workload-authz-grant
 
@@ -48,7 +48,6 @@ normative:
   RFC8414:
   RFC8707:
   RFC9525:
-  AIMS: I-D.klrc-aiagent-auth
   WIMSE-ID: I-D.ietf-wimse-identifier
   OIDC-DISCOVERY:
     title: OpenID Connect Discovery 1.0 incorporating errata set 2
@@ -61,6 +60,7 @@ normative:
       - ins: E. Jay
 
 informative:
+  AIMS: I-D.klrc-aiagent-auth
   RFC7591:
   RFC7523BIS: I-D.ietf-oauth-rfc7523bis
   OIDC-CORE:
@@ -88,19 +88,22 @@ informative:
 
 --- abstract
 
-This document profiles the Agent Identity Management System (AIMS)
-framework for agent platforms that host many agent instances per customer.  Each agent is identified by an
-opaque, non-reassignable agent identifier; the agent obtains access tokens by
-presenting a JWT authorization grant (RFC 7523), signed by the platform's
-per-tenancy issuer, in the assertion parameter at the authorization server protecting the
-resource server.  Trust is established once, by reference to the
-issuer's published metadata and keys; agent creation requires no per-agent
-step at the authorization server or resource server; and authorization is expressed over
-platform-asserted agent properties that resource servers map locally to
-permissions.  This profile addresses agents acting on their own behalf;
-access on behalf of a user or other principal is out of scope, though the
-design is intended to compose with existing delegation mechanisms in which
-the agent appears as the actor.
+This document defines the Workload Authorization Grant (WAG), a mechanism
+by which a workload hosted on a platform -- an AI agent being the motivating
+case -- obtains access tokens from a third party's OAuth authorization
+server without a per-workload credential or registration step.  Each
+workload is identified by an opaque, non-reassignable identifier; it obtains
+access tokens by presenting a JWT authorization grant (RFC 7523), signed by
+the platform's per-tenancy issuer, in the assertion parameter at the
+authorization server protecting the resource server.  Trust is established
+once, by reference to the issuer's published metadata and keys; workload
+creation requires no per-workload step at the authorization server or
+resource server; and authorization is expressed over platform-asserted
+properties that resource servers map locally to permissions.  This document
+addresses workloads acting on their own behalf; access on behalf of a user
+or other principal is out of scope, though the design is intended to compose
+with existing delegation mechanisms in which the workload appears as the
+actor.
 
 --- to_be_removed_note_Note_to_Readers
 
@@ -108,14 +111,14 @@ This document is an early, exploratory individual draft, published to solicit
 discussion of the deployment pattern it describes.  It is not a working group
 document, does not describe a shipped or committed design, and does not
 represent a position or roadmap of the editors' employers.  Every aspect of it
-is subject to change or withdrawal, including whether this profile should
-exist as a separate document at all.  Most sections are placeholders.  Issues
+is subject to change or withdrawal, including whether this mechanism should
+be specified in a separate document at all.  Most sections are placeholders.  Issues
 and pull requests:
 https://github.com/pcarleton/draft-carleton-workload-authz-grant.
 
 --- middle
 
-# Introduction
+# Introduction {#introduction}
 
 Agent platforms increasingly host many agent instances per customer, created
 and retired at the cadence at which the customer organizes its work -- per
@@ -123,9 +126,10 @@ channel, repository, or pipeline.  An individual agent may persist for weeks
 or months, but the person creating it is typically not the person authorized
 to provision credentials at the resource servers it will access.  Per-agent
 credentials are therefore not issued in practice, and deployments collapse to
-a single credential shared across all agents of an installation -- the pattern
-{{AIMS}}, Section 7, identifies as an antipattern -- at the cost of any
-attribution of an individual agent's actions at the resource server.
+a single credential shared across all agents of an installation -- a pattern
+the AI agent authentication and authorization framework {{AIMS}}, Section 7,
+identifies as an antipattern -- at the cost of any attribution of an
+individual agent's actions at the resource server.
 
 Existing workload identity federation {{WIMSE-ARCH}} addresses an analogous
 problem between an organization's workloads and infrastructure providers, but
@@ -133,20 +137,25 @@ its claim and policy semantics are defined per provider rather than portably,
 and it has not been applied between agent platforms and SaaS resource
 servers.  The Model Context Protocol's proposed Workload Identity Federation
 extension {{MCP-WIF}} defines the corresponding wire mechanics for MCP servers; this
-profile is intended to be interoperable with it.
+document is intended to be interoperable with it.
 
-This document specifies a profile of {{AIMS}} for that deployment pattern.
+This document specifies a mechanism for that deployment pattern, the
+Workload Authorization Grant (WAG): a platform-signed JWT authorization
+grant asserting a workload's identity and platform-asserted properties,
+presented at the token endpoint of an authorization server that has been
+configured, once, to trust the platform's issuer.  Thereafter workloads are
+accepted on first presentation with no per-workload registration step.
 Agent platforms are the motivating deployment, and the terminology
 throughout uses "Agent"; the mechanism itself is not agent-specific and
 applies to any platform hosting workloads that need federated access to
-third-party resource servers.  The mechanism is called the Workload
-Authorization Grant (WAG): a
-platform-signed JWT authorization grant asserting a workload's identity and
-platform-asserted properties.  Trust in the platform's issuer is
-established once, by reference, and thereafter agents are accepted on first
-presentation with no per-agent registration step.
+third-party resource servers.  The document is self-contained: it builds on
+the OAuth JWT authorization grant {{RFC7523}} and on published issuer
+metadata, and it can be implemented without reference to any other agent
+identity framework.  Readers arriving from the AI agent authentication
+and authorization framework {{AIMS}} will find how this mechanism relates to that document's
+conceptual model in {{aims}}.
 
-A design goal of this profile is a minimal adoption path for services that
+A design goal of this document is a minimal adoption path for services that
 already operate an OAuth deployment: supporting it requires changes only at
 the authorization server's token endpoint, which accepts the JWT
 authorization grant from allowlisted issuers.  The access tokens the
@@ -156,15 +165,15 @@ they do today.
 
 ## Scope
 
-In scope: agents acting on their own behalf ({{AIMS}}, Section 10.4.2).  Out
-of scope: on-behalf-of access, legacy integration via static credentials,
-runtime attestation, agent-to-agent protocols.  This profile deliberately
-does not specify on-behalf-of flows; the design is intended to compose with
+In scope: agents acting on their own behalf.  Out of scope: on-behalf-of
+access, legacy integration via static credentials, runtime attestation,
+agent-to-agent protocols.  This document deliberately does not specify
+on-behalf-of flows; the design is intended to compose with
 delegation mechanisms in which the agent appears as the actor rather than
 the subject (e.g., the act claim and actor_token parameter of {{RFC8693}},
 or {{IDJAG}}), and that composition is left to future documents.
 
-# Conventions and Terminology
+# Conventions and Terminology {#conventions}
 
 {::boilerplate bcp14-tagged}
 
@@ -197,6 +206,56 @@ Customer Administrator:
 
 # Concepts
 
+## Overview {#overview}
+
+Three parties take part.  The Agent Platform hosts Agents and operates,
+for each customer tenancy, an issuer that signs assertions about them.  The
+Authorization Server protects a Resource Server and issues the access tokens
+the Resource Server accepts.  The Customer Administrator is the person who
+can decide, for their tenancy, that the Authorization Server should trust
+the Platform's issuer.
+
+The mechanism has three steps, of which only the last recurs
+({{fig-overview}}):
+
+1. Trust establishment, once per tenancy ({{trust}}): the Customer
+   Administrator records at the Authorization Server that assertions from
+   the tenancy's issuer are accepted, identifying the issuer by its issuer
+   identifier.  The Authorization Server discovers the issuer's keys from
+   its published metadata; nothing is exchanged out of band.
+2. Agent instantiation, per Agent ({{instantiation}}): the Platform creates
+   an Agent and assigns it an Agent Identifier.  Nothing happens at the
+   Authorization Server or Resource Server.
+3. Token request, per access ({{workload-authorization-grant}}): the Agent
+   presents a Workload Authorization Grant -- a JWT signed by the tenancy's
+   issuer, naming the Agent as its subject and carrying the Agent's
+   Properties -- as the authorization grant in an ordinary OAuth token
+   request.  The Authorization Server validates the signature against the
+   allowlisted issuer's keys, accepts the Agent whether or not it has seen
+   the Agent Identifier before, and issues an access token whose format and
+   semantics are unchanged.
+
+~~~
+ Customer        Agent Platform        Authorization      Resource
+ Administrator   (tenancy issuer)      Server (AS)        Server (RS)
+      |                 |                   |                 |
+  (1) |--- allowlist issuer identifier ---->|                 |
+      |                 |<-- GET metadata,  |                 |
+      |                 |    JWK Set -------|                 |
+      |                 |                   |                 |
+  (2) |         [Platform creates Agent;    |                 |
+      |          nothing sent to AS or RS]  |                 |
+      |                 |                   |                 |
+  (3) |                 |-- POST /token --->|                 |
+      |                 |   grant_type=     |                 |
+      |                 |     jwt-bearer    |                 |
+      |                 |   assertion=<WAG> |                 |
+      |                 |<-- access token --|                 |
+      |                 |-- request + access token ---------->|
+      |                 |                   |                 |
+~~~
+{: #fig-overview title="Overview: one-time trust establishment, then per-request grants"}
+
 ## Agent Identity Model {#identity-model}
 
 An Agent's identity has three units: the tenancy's issuer, which signs
@@ -218,19 +277,31 @@ the allowlisted issuer's tenancy once, at token issuance; Resource Servers
 treat the complete identifier as an opaque, exact-match string regardless of
 form and MUST NOT derive trust from its components.
 
-## Relationship to AIMS
+## Relationship to AIMS {#aims}
 
-{{AIMS}} remains the base specification for anything not restated here.  This
-profile constrains {{AIMS}} as follows:
+{{AIMS}} describes a framework for authentication and authorization of AI
+agents, with a conceptual model in which agents are treated as workloads with
+identifiers, credentials, and authorization.  This document is not a
+profile of {{AIMS}} and does not depend on it: nothing in {{AIMS}} is
+normative here, and where terminology overlaps, the definitions in
+{{conventions}} govern.  This section is informative; it exists so that a
+reader who knows {{AIMS}} can see where this mechanism sits in its model.
 
-| AIMS component | Here | Relationship |
-|---|---|---|
-| Identifiers (Sec. 6) | {{identity-model}} | Constrained: opaque, immutable, non-reassignable agent identifier, RECOMMENDED to be a Workload Identifier {{WIMSE-ID}}, carried as sub |
-| Credentials (Sec. 7), Authentication (Sec. 9) | {{workload-authorization-grant}} | Constrained: {{RFC7523}} JWT authorization grant (assertion), platform-signed; no per-agent credential; client identity deliberately unspecified |
-| Credential Provisioning (Sec. 8) | {{instantiation}} | Constrained: platform-internal |
-| Authorization (Sec. 10, case 10.4.2) | {{properties}} | Added: standard property claims; by-reference trust ({{trust}}) |
-| Monitoring/Remediation (Sec. 11) | {{oi}} | TODO |
-| Policy (Sec. 12), Compliance (Sec. 13) | -- | Inherited |
+In {{AIMS}} terms, WAG is one concrete answer for the case of an agent
+acting on its own behalf ({{AIMS}}, Section 10.4.2), in which the agent is a
+hosted workload and the platform that hosts it is the authority that vouches
+for it.  The correspondences are:
+
+| AIMS concept | In this document |
+|---|---|
+| Agent identifier (Sec. 6) | The Agent Identifier ({{identity-model}}): opaque, immutable, non-reassignable, scoped to its issuer, carried as `sub` |
+| Agent credentials (Sec. 7) and authentication (Sec. 9) | No per-agent credential.  The Platform's per-tenancy issuer signs an {{RFC7523}} JWT authorization grant on the Agent's behalf ({{workload-authorization-grant}}); OAuth client identity is deliberately unspecified |
+| Credential provisioning (Sec. 8) | Platform-internal ({{instantiation}}); the Authorization Server learns of an Agent at first presentation |
+| Authorization (Sec. 10) | Platform-asserted Agent Properties mapped locally to permissions ({{properties}}), under trust established once by reference ({{trust}}) |
+| Monitoring and remediation (Sec. 11) | Attribution by (`iss`, `sub`) and `jti`; retirement by cessation ({{lifecycle}}); open items in {{oi}} |
+
+The shared-credential antipattern that {{AIMS}}, Section 7, describes is
+the deployment this mechanism is designed to replace ({{introduction}}).
 
 ## Relationship to WIMSE and SPIFFE
 
@@ -250,7 +321,7 @@ Section 2.1, issued by the Platform as a third party in the sense of
 {{RFC7521}}, Section 3.  The token request carries
 `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer`, the JWT in the
 assertion parameter, and the target resource in the resource parameter
-{{RFC8707}}.  This profile deliberately does not specify the OAuth client
+{{RFC8707}}.  This document deliberately does not specify the OAuth client
 identity or attach semantics to `client_id`.  In the simplest deployment the
 token request is made without client authentication.  Deployments MAY layer
 client authentication on top -- for example, the Platform authenticating as
@@ -275,7 +346,7 @@ The following claims are used within the Workload Authorization Grant JWT:
 `aud`:
 : REQUIRED. The value SHOULD include both the Authorization Server's
   issuer identifier and its token endpoint URL; an Authorization Server
-  supporting this profile MUST accept an assertion whose `aud` includes either
+  accepting Workload Authorization Grants MUST accept an assertion whose `aud` includes either
   value ({{RFC7523}} itself leaves the audience strings to out-of-band
   configuration).  {{RFC7523BIS}} adds the issuer identifier as an audience
   option for authorization grants (while restricting client-authentication
@@ -308,7 +379,7 @@ one of those later times, the deployment MUST obtain evidence current for
 that time.  Otherwise, the deployment MUST bound its exposure to stale
 Properties through the grant and access token lifetimes.
 
-Authorization Servers supporting this profile MUST
+Authorization Servers accepting Workload Authorization Grants MUST
 include `urn:ietf:params:oauth:grant-type:jwt-bearer` in `grant_types_supported`
 in their metadata {{RFC8414}}.
 
@@ -361,10 +432,12 @@ PoP JWT) if agent instances hold keys.
 
 # Deployment
 
-TODO: diagram.  One-time trust establishment by the Customer Administrator
-({{trust}}); agent creation by end users with no interaction with the
-Resource Server ({{instantiation}}); per-request JWT authorization grant
-({{workload-authorization-grant}}).
+{{overview}} shows the three steps end to end: one-time trust establishment
+by the Customer Administrator ({{trust}}); agent creation by end users with
+no interaction with the Resource Server ({{instantiation}}); and the
+per-request JWT authorization grant ({{workload-authorization-grant}}).
+This section specifies the first two and the authorization model that
+connects them.
 
 ## Trust Establishment {#trust}
 
@@ -380,7 +453,7 @@ and a shared issuer would move tenancy enforcement into claim evaluation at
 every Authorization Server -- including relying parties that can evaluate
 only subject and audience ({{oi}}).  The proposed MCP Workload Identity
 Federation extension {{MCP-WIF}} recommends (SHOULD) that authorization
-servers rely only on issuing keys bound to a single tenant; this profile deliberately tightens that boundary to a
+servers rely only on issuing keys bound to a single tenant; this document deliberately tightens that boundary to a
 per-tenancy issuer MUST.
 
 Multi-issuer operation is scoped by issuer throughout.  An Authorization
@@ -450,7 +523,7 @@ credential lifetimes plus ceasing issuance ({{oi}}).
 Broader lifecycle management is out of scope for this document.  In
 particular, resources that come to be owned by an Agent (documents, records,
 long-lived artifacts) need succession planning when the Agent is retired;
-this profile makes the retirement event's access consequences legible, but
+this document makes the retirement event's access consequences legible, but
 does not manage its downstream effects.
 
 # Open Issues {#oi}
@@ -503,7 +576,6 @@ This document has no IANA actions at this time; provisional claim names
 {:numbered="false"}
 
 The editors thank Pieter Kasselman, Karl McGuinness, Kevin Kelley, Emily
-Lauber, and Maxwell Gerber for discussions that shaped this document.  This
-profile builds directly on the Agent Identity Management System framework
-{{AIMS}} and would not exist without it.  Further acknowledgments will be
-added in a future revision.
+Lauber, and Maxwell Gerber for discussions that shaped this document.  The
+conceptual model of agents as workloads in {{AIMS}} informed this design.
+Further acknowledgments will be added in a future revision.
