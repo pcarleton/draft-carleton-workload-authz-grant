@@ -684,11 +684,10 @@ Table of Contents
 Acknowledgments
 
    The editors thank Pieter Kasselman, Karl McGuinness, Kevin Kelley,
-   Emily Lauber, Maxwell Gerber, and Iman of the EMILIA project for
-   discussions and contributed text that shaped this document.  This
-   profile builds directly on the Agent Identity Management System
-   framework [AIMS] and would not exist without it.  Further
-   acknowledgments will be added in a future revision.
+   Emily Lauber, and Maxwell Gerber for discussions that shaped this
+   document.  This profile builds directly on the Agent Identity
+   Management System framework [AIMS] and would not exist without it.
+   Further acknowledgments will be added in a future revision.
 
 Authors' Addresses
 
