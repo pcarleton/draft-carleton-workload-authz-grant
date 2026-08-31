@@ -22,6 +22,23 @@ author:
     fullname: Paul Carleton
     organization: Anthropic
     email: paulc@anthropic.com
+    role: editor
+ -
+    fullname: Nick Steele
+    organization: OpenAI
+    email: steele@openai.com
+ -
+    fullname: Aaron Parecki
+    organization: Okta
+    email: aaron@parecki.com
+ -
+    fullname: Arndt Schwenkschuster
+    organization: Defakto Security
+    email: arndts.ietf@gmail.com
+ -
+    fullname: Brian Campbell
+    organization: Ping Identity
+    email: bcampbell@pingidentity.com
 
 normative:
   RFC7517:
@@ -90,7 +107,7 @@ the agent appears as the actor.
 This document is an early, exploratory individual draft, published to solicit
 discussion of the deployment pattern it describes.  It is not a working group
 document, does not describe a shipped or committed design, and does not
-represent a position or roadmap of the author's employer.  Every aspect of it
+represent a position or roadmap of the editors' employers.  Every aspect of it
 is subject to change or withdrawal, including whether this profile should
 exist as a separate document at all.  Most sections are placeholders.  Issues
 and pull requests:
@@ -485,8 +502,8 @@ This document has no IANA actions at this time; provisional claim names
 # Acknowledgments
 {:numbered="false"}
 
-The author thanks Kevin Kelley, Aaron Parecki, Brian Campbell, Pieter
-Kasselman, Nick Steele, Emily Lauber, and Maxwell Gerber for discussions that shaped this
-document.  This profile builds directly on the Agent Identity Management
-System framework {{AIMS}} and would not exist without it.  Further
-acknowledgments will be added in a future revision.
+The editors thank Pieter Kasselman, Karl McGuinness, Kevin Kelley, Emily
+Lauber, and Maxwell Gerber for discussions that shaped this document.  This
+profile builds directly on the Agent Identity Management System framework
+{{AIMS}} and would not exist without it.  Further acknowledgments will be
+added in a future revision.

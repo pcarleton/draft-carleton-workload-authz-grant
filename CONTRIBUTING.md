@@ -16,6 +16,21 @@ You agree to comply with all applicable IETF policies and procedures, including,
 BCP 78, 79, the TLP, and the TLP rules regarding code components (e.g. being
 subject to a Simplified BSD License) in Contributions.
 
+## How this draft is edited
+
+The document has a small group of editors, listed on its front page.  The
+working convention is:
+
+- Propose changes by opening an issue.  Design questions, wording problems and
+  requests for new text all belong there; an issue is the unit of discussion.
+- The editors write the normative text.  Pull requests from outside the editor
+  group that change normative text (MUST/SHOULD/MAY language, claim
+  definitions, processing rules) are welcome and are reviewed as input to
+  the editors' text rather than merged as-is.  Editorial pull requests
+  (typos, references, formatting, examples) are merged directly.
+- Design decisions and the alternatives considered are recorded in
+  [decision-log.md](decision-log.md) once settled, with a pointer to the issue.
+
 ## How to Contribute
 
 Contributions can be made by creating pull requests, opening an issue, or
