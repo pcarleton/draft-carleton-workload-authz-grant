@@ -2,10 +2,17 @@
 
 
 
-Network Working Group                                        P. Carleton
+Network Working Group                                   P. Carleton, Ed.
 Internet-Draft                                                 Anthropic
-Intended status: Informational                            28 August 2026
-Expires: 1 March 2027
+Intended status: Informational                                 N. Steele
+Expires: 5 March 2027                                             OpenAI
+                                                              A. Parecki
+                                                                    Okta
+                                                      A. Schwenkschuster
+                                                        Defakto Security
+                                                             B. Campbell
+                                                           Ping Identity
+                                                        1 September 2026
 
 
                       Workload Authorization Grant
@@ -47,8 +54,8 @@ Note to Readers
    This document is an early, exploratory individual draft, published to
    solicit discussion of the deployment pattern it describes.  It is not
    a working group document, does not describe a shipped or committed
-   design, and does not represent a position or roadmap of the author's
-   employer.  Every aspect of it is subject to change or withdrawal,
+   design, and does not represent a position or roadmap of the editors'
+   employers.  Every aspect of it is subject to change or withdrawal,
    including whether this profile should exist as a separate document at
    all.  Most sections are placeholders.  Issues and pull requests:
    https://github.com/pcarleton/draft-carleton-workload-authz-grant.
@@ -68,7 +75,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 1 March 2027.
+   This Internet-Draft will expire on 5 March 2027.
 
 Copyright Notice
 
@@ -110,7 +117,7 @@ Table of Contents
      10.1.  Normative References
      10.2.  Informative References
    Acknowledgments
-   Author's Address
+   Authors' Addresses
 
 1.  Introduction
 
@@ -676,15 +683,34 @@ Table of Contents
 
 Acknowledgments
 
-   The author thanks Kevin Kelley, Aaron Parecki, Brian Campbell, Pieter
-   Kasselman, Nick Steele, Emily Lauber, and Maxwell Gerber for
-   discussions that shaped this document.  This profile builds directly
-   on the Agent Identity Management System framework [AIMS] and would
-   not exist without it.  Further acknowledgments will be added in a
-   future revision.
+   The editors thank Pieter Kasselman, Karl McGuinness, Kevin Kelley,
+   Emily Lauber, and Maxwell Gerber for discussions that shaped this
+   document.  This profile builds directly on the Agent Identity
+   Management System framework [AIMS] and would not exist without it.
+   Further acknowledgments will be added in a future revision.
 
-Author's Address
+Authors' Addresses
 
-   Paul Carleton
+   Paul Carleton (editor)
    Anthropic
    Email: paulc@anthropic.com
+
+
+   Nick Steele
+   OpenAI
+   Email: steele@openai.com
+
+
+   Aaron Parecki
+   Okta
+   Email: aaron@parecki.com
+
+
+   Arndt Schwenkschuster
+   Defakto Security
+   Email: arndts.ietf@gmail.com
+
+
+   Brian Campbell
+   Ping Identity
+   Email: bcampbell@pingidentity.com
