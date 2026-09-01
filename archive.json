@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2026-08-30T04:25:54.735536+00:00",
+  "timestamp": "2026-09-01T04:13:22.303683+00:00",
   "repo": "pcarleton/draft-carleton-workload-authz-grant",
   "labels": [
     {
@@ -185,7 +185,7 @@
       "labels": [],
       "body": "-00 (Trust Establishment) says a platform serving multiple customers MUST use a distinct issuer per tenancy, because the issuer is the boundary the AS allowlist expresses. Two things push against the MUST:\n\n- A platform that already runs one issuer (one metadata document, one JWKS) would need per-tenant issuer URLs and metadata just for this grant,  the single largest piece of new surface the draft asks of a platform. (example issuers in this boat: )\n- An AS that evaluates claims can pin (issuer, tenant) exactly as precisely as it can pin an issuer, so this allows for more flexibility.\n\nCosts of allowing a `tenant` claim:\n- If we allow it ever, then every consumer needs to process it always, and a missing tenant claim when one is needed becomes a failure mode we have to consider\n- It's slightly more complicated for the admin flow to copy 2 values over (issuer + tenant claim), than just a single string (per-tenant-issuer)\n\n\nI still thing distinct issuers is the better path for someone implementing from scratch, however, I think it's worth the flexibility / matches reality more closely to allow for the tenant claim.\n\nProposal for -01:\n- Distinct issuer per tenancy becomes RECOMMENDED. A platform that shares an issuer across tenancies MUST include a `tenant` claim (single opaque, stable string) and the AS allowlist entry pins issuer + tenant.\n- Issuer metadata MUST state which mode the issuer uses. (more discussion needed here, I want to prevent the missing claim when needed causing issues)\n\nRelated: #6 (subject namespace collisions at multi-issuer ASes).",
       "createdAt": "2026-08-27T13:12:46Z",
-      "updatedAt": "2026-08-27T17:58:28Z",
+      "updatedAt": "2026-08-31T16:15:54Z",
       "closedAt": null,
       "comments": [
         {
@@ -194,6 +194,20 @@
           "body": "An alternative to an explicit tenant claim would be to define a \"claim-restricting\" semantic on the issuer-tenancy binding. This would avoid encoding a specific structure for tenancy claims while allowing the Customer Administrator to make informed decisions on a per-issuer basis. You can see this architecture being used in OIDC federation between CI actions like Github workflows and cloud providers like AWS and Azure\u2014the individual configuring the integration point is expected to understand the claims supported by that particular token issuer.\n\nService providers may end up creating \"templates\" for known, very popular multitenant issuers that exercise this vocabulary\u2014for example, if a particular agentic platform is in common use, and is known to differentiate its tenancies by a particular claim, service providers could reasonably make \"which tenancies do you trust?\" part of their UI-based configuration for that particular issuer, rather than requiring Customer Administrators to configure the claim-restricting semantic exactly.",
           "createdAt": "2026-08-27T17:55:58Z",
           "updatedAt": "2026-08-27T17:58:28Z"
+        },
+        {
+          "author": "arndt-s",
+          "authorAssociation": "NONE",
+          "body": "One idea, similar to @jtrochet-openai's  I've floated around is to document \"required\" claims on the issuer metadata endpoint.\n\n```\n{\n   \"issuer\": \"https://agent-platform.acme.org\",                         <-- GLOBAL issuer\n   \"jwks_uri\": \"https://agent-platform.acme.org/jwks.json\",\n   \"required_assertion_claims\": [\n       \"org_id\"                       <-- not \"tenant\"\n    ]\n}\n```\n\n`required_assertion_claims` is a list of claims that are present in the assertion and MUST be checked.\n\nIf we want to support existing issuers we should also support those that don't have a `tenant` claim. For instance Entra with `tid` or Google Workspace with `hd`.",
+          "createdAt": "2026-08-31T14:10:46Z",
+          "updatedAt": "2026-08-31T14:10:59Z"
+        },
+        {
+          "author": "pcarleton",
+          "authorAssociation": "OWNER",
+          "body": "I think where we're landing:\n* we want to support IdP's that use a shared issuer\n* a `tenant` claim is one option we can recommend, but can't require given the goal of supporting existing deployments that _don't_ use `tenant`\n* we could also specify a metadata-based approach to explaining which claims define the notion of a `tenant` along with `issuer`.  (related from previous discussion: we could also use the metadata based approach for defining which claims are set by which authority, platform, admin or agent-author).\n* the fallback we'd need likely in any case is \"which claim is load-bearing is communicated out of band\", e.g. for ones that don't use tenant, you have to figure it out per issuer (e.g. knowing that Entra uses `tid`).  I don't love that mechanism, but may just be required to note, e.g. have bullets (2) & (3) be SHOULD's.\n\n@arndt-s  I think for (3), we'd want to specify that it is specifically for uniqueness, rather than just generically \"required\", right? e.g.  you might have a required \"scope\" claim, but that wouldn't be treated the same way ",
+          "createdAt": "2026-08-31T16:15:54Z",
+          "updatedAt": "2026-08-31T16:15:54Z"
         }
       ]
     }
