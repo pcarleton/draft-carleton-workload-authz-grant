@@ -5,6 +5,14 @@ Most recent first within each state. Open items are at the bottom.
 
 ## Decided
 
+### D14 — Editor group (2026-08-31)
+Nick Steele (OpenAI), Aaron Parecki (Okta), Arndt Schwenkschuster (Defakto
+Security) and Brian Campbell (Ping Identity) join Paul Carleton (editor) on
+the front page from -01, with push access to the repository. Convention
+(CONTRIBUTING.md): proposals arrive as issues; editors write normative text;
+outside pull requests to normative text are reviewed as input.
+
+
 ### D12 — Mechanism name: Workload Authorization Grant (WAG); docname draft-carleton-workload-authz-grant (2026-08-03)
 Supersedes D1 and D2. Pieter Kasselman's critique of JIF: "just-in-time"
 misleads (federation is established ahead of time; only per-workload
