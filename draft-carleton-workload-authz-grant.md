@@ -149,7 +149,7 @@ accepted on first presentation with no per-workload registration step.
 Agent platforms are the motivating deployment, and the terminology
 throughout uses "Agent"; the mechanism itself is not agent-specific and
 applies to any platform hosting workloads that need federated access to
-third-party resource servers.  The document is self-contained: it builds on
+third-party resource servers.  This document builds on
 the OAuth JWT authorization grant {{RFC7523}} and on published issuer
 metadata, and it can be implemented without reference to any other agent
 identity framework.  Readers arriving from the AI agent authentication
