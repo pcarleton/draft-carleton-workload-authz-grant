@@ -5,6 +5,24 @@ Most recent first within each state. Open items are at the bottom.
 
 ## Decided
 
+### D13 — WAG is a standalone mechanism, not a profile of AIMS (2026-08-31, closes #1)
+The draft no longer calls itself a profile of draft-klrc-aiagent-auth
+(AIMS). AIMS moves from the normative to the informative references; the
+"Relationship to AIMS" section becomes an informative correspondence table
+so that a reader who knows AIMS can place WAG in its model (agent acting on
+its own behalf, Section 10.4.2), and a new Concepts/Overview section with an
+end-to-end figure lets the document stand on its own. Rationale (issue #1
+and the 2026-08-26 adoption review): an implementer at a SaaS authorization
+server should not have to read a second draft to implement this one, and
+"profile" implied a normative dependence the text never actually used --
+every rule here is stated in terms of RFC 7523, RFC 8414 metadata and
+published JWK Sets. Alternatives: keep the profile framing and inherit AIMS
+policy/compliance sections (rejected: inheritance is exactly the dependence
+adopters objected to); drop the AIMS reference entirely (rejected: AIMS
+remains the shared vocabulary in the WIMSE/OAuth discussion and the
+correspondence is genuinely useful to that audience). The table-of-contents
+part of #1 was addressed by PR #5 (Arndt Schwenkschuster).
+
 ### D14 — Editor group (2026-08-31)
 Nick Steele (OpenAI), Aaron Parecki (Okta), Arndt Schwenkschuster (Defakto
 Security) and Brian Campbell (Ping Identity) join Paul Carleton (editor) on
