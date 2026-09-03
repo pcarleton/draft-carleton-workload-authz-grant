@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2026-09-01T04:13:22.303683+00:00",
+  "timestamp": "2026-09-03T03:35:12.629620+00:00",
   "repo": "pcarleton/draft-carleton-workload-authz-grant",
   "labels": [
     {
@@ -283,6 +283,34 @@
           "updatedAt": "2026-08-26T15:16:50Z"
         }
       ],
+      "reviews": []
+    },
+    {
+      "number": 8,
+      "id": "PR_kwDOTlTgBM8AAAABBwW2gA",
+      "title": "Add editors to the front page; document how the draft is edited",
+      "url": "https://github.com/pcarleton/draft-carleton-workload-authz-grant/pull/8",
+      "state": "MERGED",
+      "author": "pcarleton",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "Nick Steele (OpenAI), Aaron Parecki (Okta), Arndt Schwenkschuster (Defakto Security) and Brian Campbell (Ping Identity) join as editors, with Paul Carleton marked as editor. Acknowledgments updated to thank Pieter Kasselman and Karl McGuinness. CONTRIBUTING gains a short section on the working convention (issues in, editors write normative text, outside PRs to normative text reviewed as input). Decision log D14.",
+      "createdAt": "2026-09-01T13:47:08Z",
+      "updatedAt": "2026-09-01T13:47:16Z",
+      "baseRepository": "pcarleton/draft-carleton-workload-authz-grant",
+      "baseRefName": "main",
+      "baseRefOid": "a5ff3aaefe2dc75d3e24244fd30104ed58f26cce",
+      "headRepository": "pcarleton/draft-carleton-workload-authz-grant",
+      "headRefName": "editors",
+      "headRefOid": "757d45f7e3ecc77734417aaca554b768d1cb6056",
+      "closedAt": "2026-09-01T13:47:16Z",
+      "mergedAt": "2026-09-01T13:47:16Z",
+      "mergedBy": "pcarleton",
+      "mergeCommit": {
+        "oid": "210b15d16b028b27d5fc6a2c0e9096ee679ff370"
+      },
+      "comments": [],
       "reviews": []
     }
   ]
