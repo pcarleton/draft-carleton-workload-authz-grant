@@ -264,7 +264,7 @@ issuer, immutable, and never reassigned, carried as the assertion's sub
 ({{workload-authorization-grant}}); and claims, carrying everything else
 ({{properties}}).  Renaming an Agent MUST NOT change its Agent Identifier.
 Resource Servers MUST NOT parse or pattern-match the Agent Identifier for
-authorization; single-agent policy is an exact match on it.
+authorization; single-agent policy is an exact match on the sub value.
 
 The Agent Identifier MAY be, and is RECOMMENDED to be, a Workload
 Identifier URI {{WIMSE-ID}} with an opaque path; a bare opaque string is also
