@@ -208,12 +208,14 @@ Customer Administrator:
 
 ## Overview {#overview}
 
-Three parties take part.  The Agent Platform hosts Agents and operates,
-for each customer tenancy, an issuer that signs assertions about them.  The
-Authorization Server protects a Resource Server and issues the access tokens
-the Resource Server accepts.  The Customer Administrator is the person who
-can decide, for their tenancy, that the Authorization Server should trust
-the Platform's issuer.
+The mechanism involves the following parties.  The Agent Platform hosts
+Agents and operates, for each customer tenancy, an issuer that signs
+assertions about that tenancy's Agents; each Agent presents its own
+assertion to the Authorization Server.  The Authorization Server
+protects a Resource Server and issues the access tokens the Resource
+Server accepts.  The Customer Administrator holds the authority, within
+a customer tenancy, to configure the Authorization Server to trust that
+tenancy's issuer.
 
 The mechanism has three steps, of which only the last recurs
 ({{fig-overview}}):
