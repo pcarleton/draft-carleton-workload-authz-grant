@@ -91,7 +91,8 @@ informative:
 This document defines the Workload Authorization Grant (WAG), a mechanism
 by which a workload hosted on a platform -- an AI agent being the motivating
 case -- obtains access tokens from a third party's OAuth authorization
-server without a per-workload registration step.  Each
+server without requiring an administrator to perform a per-workload
+registration step.  Each
 workload is identified by an opaque, non-reassignable identifier; it obtains
 access tokens by presenting a JWT authorization grant (RFC 7523), signed by
 the platform's per-tenancy issuer, in the assertion parameter at the
