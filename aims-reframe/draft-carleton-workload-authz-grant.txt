@@ -23,18 +23,14 @@ Abstract
    This document defines the Workload Authorization Grant (WAG), a
    mechanism by which a workload hosted on a platform -- an AI agent
    being the motivating case -- obtains access tokens from a third
-   party's OAuth authorization server without an administrator
-   provisioning anything for that workload ahead of time.  An
-   administrator establishes trust in the platform's issuer once;
-   thereafter workloads can be created, and can obtain access, by people
-   who are not authorized to provision credentials at that server.  Each
-   workload is identified by an opaque, non-reassignable identifier; it
-   obtains access tokens by presenting a JWT authorization grant (RFC
-   7523) minted for it by the platform's per-tenancy issuer, in the
-   assertion parameter at the authorization server protecting the
-   resource server.  Trust is established by reference to the issuer's
-   published metadata and keys; creating a workload requires no ahead-
-   of-time step by an administrator at the authorization server or
+   party's OAuth authorization server without a per-workload
+   registration step.  Each workload is identified by an opaque, non-
+   reassignable identifier; it obtains access tokens by presenting a JWT
+   authorization grant (RFC 7523), signed by the platform's per-tenancy
+   issuer, in the assertion parameter at the authorization server
+   protecting the resource server.  Trust is established once, by
+   reference to the issuer's published metadata and keys; workload
+   creation requires no per-workload step at the authorization server or
    resource server; and authorization is expressed over platform-
    asserted properties that resource servers map locally to permissions.
    This document addresses workloads acting on their own behalf; access
@@ -310,35 +306,33 @@ Table of Contents
    is a hosted workload and the platform that hosts it is the authority
    that vouches for it.  The correspondences are:
 
-      +================+============================================+
-      | AIMS concept   | In this document                           |
-      +================+============================================+
-      | Agent          | The Agent Identifier (Section 3.2):        |
-      | identifier     | opaque, immutable, non-reassignable,       |
-      | (Sec. 6)       | scoped to its issuer, carried as sub       |
-      +----------------+--------------------------------------------+
-      | Agent          | No per-Agent provisioning step by an       |
-      | credentials    | administrator at the Authorization Server. |
-      | (Sec. 7) and   | The Platform's per-tenancy issuer signs an |
-      | authentication | [RFC7523] JWT authorization grant on the   |
-      | (Sec. 9)       | Agent's behalf (Section 4); OAuth client   |
-      |                | identity is deliberately unspecified       |
-      +----------------+--------------------------------------------+
-      | Credential     | Platform-internal (Section 5.2); the       |
-      | provisioning   | Authorization Server learns of an Agent at |
-      | (Sec. 8)       | first presentation                         |
-      +----------------+--------------------------------------------+
-      | Authorization  | Platform-asserted Agent Properties mapped  |
-      | (Sec. 10)      | locally to permissions (Section 5.3),      |
-      |                | under trust established once by reference  |
-      |                | (Section 5.1)                              |
-      +----------------+--------------------------------------------+
-      | Monitoring and | Attribution by (iss, sub) and jti;         |
-      | remediation    | retirement by cessation (Section 5.5);     |
-      | (Sec. 11)      | open items in Section 6                    |
-      +----------------+--------------------------------------------+
+    +===================+============================================+
+    | AIMS concept      | In this document                           |
+    +===================+============================================+
+    | Agent identifier  | The Agent Identifier (Section 3.2):        |
+    | (Sec. 6)          | opaque, immutable, non-reassignable,       |
+    |                   | scoped to its issuer, carried as sub       |
+    +-------------------+--------------------------------------------+
+    | Agent credentials | The Platform's per-tenancy issuer signs an |
+    | (Sec. 7) and      | [RFC7523] JWT authorization grant on the   |
+    | authentication    | Agent's behalf (Section 4); OAuth client   |
+    | (Sec. 9)          | identity is deliberately unspecified       |
+    +-------------------+--------------------------------------------+
+    | Credential        | Platform-internal (Section 5.2); the       |
+    | provisioning      | Authorization Server learns of an Agent at |
+    | (Sec. 8)          | first presentation                         |
+    +-------------------+--------------------------------------------+
+    | Authorization     | Platform-asserted Agent Properties mapped  |
+    | (Sec. 10)         | locally to permissions (Section 5.3),      |
+    |                   | under trust established once by reference  |
+    |                   | (Section 5.1)                              |
+    +-------------------+--------------------------------------------+
+    | Monitoring and    | Attribution by (iss, sub) and jti;         |
+    | remediation (Sec. | retirement by cessation (Section 5.5);     |
+    | 11)               | open items in Section 6                    |
+    +-------------------+--------------------------------------------+
 
-                                  Table 1
+                                 Table 1
 
    The shared-credential antipattern that [AIMS], Section 7, describes
    is the deployment this mechanism is designed to replace (Section 1).
