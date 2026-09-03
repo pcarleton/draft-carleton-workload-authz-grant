@@ -11,25 +11,29 @@
 <meta content="Arndt Schwenkschuster" name="author">
 <meta content="Brian Campbell" name="author">
 <meta content="
-       This document profiles the Agent Identity Management System (AIMS)
-framework for agent platforms that host many agent instances per customer.  Each agent is identified by an
-opaque, non-reassignable agent identifier; the agent obtains access tokens by
-presenting a JWT authorization grant (RFC 7523), signed by the platform's
-per-tenancy issuer, in the assertion parameter at the authorization server protecting the
-resource server.  Trust is established once, by reference to the
-issuer's published metadata and keys; agent creation requires no per-agent
-step at the authorization server or resource server; and authorization is expressed over
-platform-asserted agent properties that resource servers map locally to
-permissions.  This profile addresses agents acting on their own behalf;
-access on behalf of a user or other principal is out of scope, though the
-design is intended to compose with existing delegation mechanisms in which
-the agent appears as the actor. 
+       This document defines the Workload Authorization Grant (WAG), a mechanism
+by which a workload hosted on a platform -- an AI agent being the motivating
+case -- obtains access tokens from a third party's OAuth authorization
+server without requiring an administrator to perform a per-workload
+registration step.  Each
+workload is identified by an opaque, non-reassignable identifier; it obtains
+access tokens by presenting a JWT authorization grant (RFC 7523), signed by
+the platform's per-tenancy issuer, in the assertion parameter at the
+authorization server protecting the resource server.  Trust is established
+once, by reference to the issuer's published metadata and keys; workload
+creation requires no per-workload step at the authorization server or
+resource server; and authorization is expressed over platform-asserted
+properties that resource servers map locally to permissions.  This document
+addresses workloads acting on their own behalf; access on behalf of a user
+or other principal is out of scope, though the design is intended to compose
+with existing delegation mechanisms in which the workload appears as the
+actor. 
     " name="description">
 <meta content="xml2rfc 3.34.0" name="generator">
 <meta content="agent identity" name="keyword">
-<meta content="AIMS" name="keyword">
 <meta content="workload identity" name="keyword">
 <meta content="workload authorization grant" name="keyword">
+<meta content="jwt authorization grant" name="keyword">
 <meta content="draft-carleton-workload-authz-grant-latest" name="ietf.draft">
 <!-- Generator version information:
   xml2rfc 3.34.0
@@ -40,11 +44,11 @@ the agent appears as the actor.
     Jinja2 3.1.6
     lxml 6.1.1
     natsort 8.4.0
-    platformdirs 4.11.5
+    platformdirs 4.11.7
     pycountry 24.6.1
     PyYAML 6.0.3
     requests 2.33.1
-    wcwidth 0.8.2
+    wcwidth 0.8.3
 -->
 <link href="draft-carleton-workload-authz-grant.xml" rel="alternate" type="application/rfc+xml">
 <link href="#copyright" rel="license">
@@ -1064,7 +1068,7 @@ svg {
 </tr></thead>
 <tfoot><tr>
 <td class="left">Carleton, et al.</td>
-<td class="center">Expires 5 March 2027</td>
+<td class="center">Expires 7 March 2027</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1077,12 +1081,12 @@ svg {
 <dd class="internet-draft">draft-carleton-workload-authz-grant-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2026-09-01" class="published">1 September 2026</time>
+<time datetime="2026-09-03" class="published">3 September 2026</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Informational</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2027-03-05">5 March 2027</time></dd>
+<dd class="expires"><time datetime="2027-03-07">7 March 2027</time></dd>
 <dt class="label-authors">Authors:</dt>
 <dd class="authors">
 <div class="author">
@@ -1112,19 +1116,23 @@ svg {
 <h1 id="title">Workload Authorization Grant</h1>
 <section id="section-abstract">
       <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
-<p id="section-abstract-1">This document profiles the Agent Identity Management System (AIMS)
-framework for agent platforms that host many agent instances per customer.  Each agent is identified by an
-opaque, non-reassignable agent identifier; the agent obtains access tokens by
-presenting a JWT authorization grant (RFC 7523), signed by the platform's
-per-tenancy issuer, in the assertion parameter at the authorization server protecting the
-resource server.  Trust is established once, by reference to the
-issuer's published metadata and keys; agent creation requires no per-agent
-step at the authorization server or resource server; and authorization is expressed over
-platform-asserted agent properties that resource servers map locally to
-permissions.  This profile addresses agents acting on their own behalf;
-access on behalf of a user or other principal is out of scope, though the
-design is intended to compose with existing delegation mechanisms in which
-the agent appears as the actor.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+<p id="section-abstract-1">This document defines the Workload Authorization Grant (WAG), a mechanism
+by which a workload hosted on a platform -- an AI agent being the motivating
+case -- obtains access tokens from a third party's OAuth authorization
+server without requiring an administrator to perform a per-workload
+registration step.  Each
+workload is identified by an opaque, non-reassignable identifier; it obtains
+access tokens by presenting a JWT authorization grant (RFC 7523), signed by
+the platform's per-tenancy issuer, in the assertion parameter at the
+authorization server protecting the resource server.  Trust is established
+once, by reference to the issuer's published metadata and keys; workload
+creation requires no per-workload step at the authorization server or
+resource server; and authorization is expressed over platform-asserted
+properties that resource servers map locally to permissions.  This document
+addresses workloads acting on their own behalf; access on behalf of a user
+or other principal is out of scope, though the design is intended to compose
+with existing delegation mechanisms in which the workload appears as the
+actor.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
 </section>
 <section class="note rfcEditorRemove" id="section-note.1">
       <h2 id="name-about-this-document">
@@ -1145,8 +1153,8 @@ the agent appears as the actor.<a href="#section-abstract-1" class="pilcrow">¶<
 discussion of the deployment pattern it describes.  It is not a working group
 document, does not describe a shipped or committed design, and does not
 represent a position or roadmap of the editors' employers.  Every aspect of it
-is subject to change or withdrawal, including whether this profile should
-exist as a separate document at all.  Most sections are placeholders.  Issues
+is subject to change or withdrawal, including whether this mechanism should
+be specified in a separate document at all.  Most sections are placeholders.  Issues
 and pull requests:
 https://github.com/pcarleton/draft-carleton-workload-authz-grant.<a href="#section-note.2-2" class="pilcrow">¶</a></p>
 </section>
@@ -1169,7 +1177,7 @@ https://github.com/pcarleton/draft-carleton-workload-authz-grant.<a href="#secti
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 5 March 2027.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 7 March 2027.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1213,13 +1221,16 @@ https://github.com/pcarleton/draft-carleton-workload-authz-grant.<a href="#secti
             <p id="section-toc.1-1.3.1"><a href="#section-3" class="auto internal xref">3</a>.  <a href="#name-concepts" class="internal xref">Concepts</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.1">
-                <p id="section-toc.1-1.3.2.1.1"><a href="#section-3.1" class="auto internal xref">3.1</a>.  <a href="#name-agent-identity-model" class="internal xref">Agent Identity Model</a></p>
+                <p id="section-toc.1-1.3.2.1.1"><a href="#section-3.1" class="auto internal xref">3.1</a>.  <a href="#name-overview" class="internal xref">Overview</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.2">
-                <p id="section-toc.1-1.3.2.2.1"><a href="#section-3.2" class="auto internal xref">3.2</a>.  <a href="#name-relationship-to-aims" class="internal xref">Relationship to AIMS</a></p>
+                <p id="section-toc.1-1.3.2.2.1"><a href="#section-3.2" class="auto internal xref">3.2</a>.  <a href="#name-agent-identity-model" class="internal xref">Agent Identity Model</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.3">
-                <p id="section-toc.1-1.3.2.3.1"><a href="#section-3.3" class="auto internal xref">3.3</a>.  <a href="#name-relationship-to-wimse-and-s" class="internal xref">Relationship to WIMSE and SPIFFE</a></p>
+                <p id="section-toc.1-1.3.2.3.1"><a href="#section-3.3" class="auto internal xref">3.3</a>.  <a href="#name-relationship-to-aims" class="internal xref">Relationship to AIMS</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.4">
+                <p id="section-toc.1-1.3.2.4.1"><a href="#section-3.4" class="auto internal xref">3.4</a>.  <a href="#name-relationship-to-wimse-and-s" class="internal xref">Relationship to WIMSE and SPIFFE</a></p>
 </li>
             </ul>
 </li>
@@ -1298,27 +1309,33 @@ channel, repository, or pipeline.  An individual agent may persist for weeks
 or months, but the person creating it is typically not the person authorized
 to provision credentials at the resource servers it will access.  Per-agent
 credentials are therefore not issued in practice, and deployments collapse to
-a single credential shared across all agents of an installation -- the pattern
-<span>[<a href="#AIMS" class="cite xref">AIMS</a>]</span>, Section 7, identifies as an antipattern -- at the cost of any
-attribution of an individual agent's actions at the resource server.<a href="#section-1-1" class="pilcrow">¶</a></p>
+a single credential shared across all agents of an installation -- a pattern
+the AI agent authentication and authorization framework <span>[<a href="#AIMS" class="cite xref">AIMS</a>]</span>, Section 7,
+identifies as an antipattern -- at the cost of any attribution of an
+individual agent's actions at the resource server.<a href="#section-1-1" class="pilcrow">¶</a></p>
 <p id="section-1-2">Existing workload identity federation <span>[<a href="#WIMSE-ARCH" class="cite xref">WIMSE-ARCH</a>]</span> addresses an analogous
 problem between an organization's workloads and infrastructure providers, but
 its claim and policy semantics are defined per provider rather than portably,
 and it has not been applied between agent platforms and SaaS resource
 servers.  The Model Context Protocol's proposed Workload Identity Federation
 extension <span>[<a href="#MCP-WIF" class="cite xref">MCP-WIF</a>]</span> defines the corresponding wire mechanics for MCP servers; this
-profile is intended to be interoperable with it.<a href="#section-1-2" class="pilcrow">¶</a></p>
-<p id="section-1-3">This document specifies a profile of <span>[<a href="#AIMS" class="cite xref">AIMS</a>]</span> for that deployment pattern.
+document is intended to be interoperable with it.<a href="#section-1-2" class="pilcrow">¶</a></p>
+<p id="section-1-3">This document specifies a mechanism for that deployment pattern, the
+Workload Authorization Grant (WAG): a platform-signed JWT authorization
+grant asserting a workload's identity and platform-asserted properties,
+presented at the token endpoint of an authorization server that has been
+configured, once, to trust the platform's issuer.  Thereafter workloads are
+accepted on first presentation with no per-workload registration step.
 Agent platforms are the motivating deployment, and the terminology
 throughout uses "Agent"; the mechanism itself is not agent-specific and
 applies to any platform hosting workloads that need federated access to
-third-party resource servers.  The mechanism is called the Workload
-Authorization Grant (WAG): a
-platform-signed JWT authorization grant asserting a workload's identity and
-platform-asserted properties.  Trust in the platform's issuer is
-established once, by reference, and thereafter agents are accepted on first
-presentation with no per-agent registration step.<a href="#section-1-3" class="pilcrow">¶</a></p>
-<p id="section-1-4">A design goal of this profile is a minimal adoption path for services that
+third-party resource servers.  This document builds on
+the OAuth JWT authorization grant <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span> and on published issuer
+metadata, and it can be implemented without reference to any other agent
+identity framework.  Readers arriving from the AI agent authentication
+and authorization framework <span>[<a href="#AIMS" class="cite xref">AIMS</a>]</span> will find how this mechanism relates to that document's
+conceptual model in <a href="#aims" class="auto internal xref">Section 3.3</a>.<a href="#section-1-3" class="pilcrow">¶</a></p>
+<p id="section-1-4">A design goal of this document is a minimal adoption path for services that
 already operate an OAuth deployment: supporting it requires changes only at
 the authorization server's token endpoint, which accepts the JWT
 authorization grant from allowlisted issuers.  The access tokens the
@@ -1330,10 +1347,10 @@ they do today.<a href="#section-1-4" class="pilcrow">¶</a></p>
         <h3 id="name-scope">
 <a href="#section-1.1" class="section-number selfRef">1.1. </a><a href="#name-scope" class="section-name selfRef">Scope</a>
         </h3>
-<p id="section-1.1-1">In scope: agents acting on their own behalf (<span>[<a href="#AIMS" class="cite xref">AIMS</a>]</span>, Section 10.4.2).  Out
-of scope: on-behalf-of access, legacy integration via static credentials,
-runtime attestation, agent-to-agent protocols.  This profile deliberately
-does not specify on-behalf-of flows; the design is intended to compose with
+<p id="section-1.1-1">In scope: agents acting on their own behalf.  Out of scope: on-behalf-of
+access, legacy integration via static credentials, runtime attestation,
+agent-to-agent protocols.  This document deliberately does not specify
+on-behalf-of flows; the design is intended to compose with
 delegation mechanisms in which the agent appears as the actor rather than
 the subject (e.g., the act claim and actor_token parameter of <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>,
 or <span>[<a href="#IDJAG" class="cite xref">IDJAG</a>]</span>), and that composition is left to future documents.<a href="#section-1.1-1" class="pilcrow">¶</a></p>
@@ -1341,7 +1358,7 @@ or <span>[<a href="#IDJAG" class="cite xref">IDJAG</a>]</span>), and that compos
 </div>
 </section>
 </div>
-<div id="conventions-and-terminology">
+<div id="conventions">
 <section id="section-2">
       <h2 id="name-conventions-and-terminology">
 <a href="#section-2" class="section-number selfRef">2. </a><a href="#name-conventions-and-terminology" class="section-name selfRef">Conventions and Terminology</a>
@@ -1400,19 +1417,87 @@ the Authorization Server issues.<a href="#section-2-2.10.1" class="pilcrow">¶</
       <h2 id="name-concepts">
 <a href="#section-3" class="section-number selfRef">3. </a><a href="#name-concepts" class="section-name selfRef">Concepts</a>
       </h2>
-<div id="identity-model">
+<div id="overview">
 <section id="section-3.1">
-        <h3 id="name-agent-identity-model">
-<a href="#section-3.1" class="section-number selfRef">3.1. </a><a href="#name-agent-identity-model" class="section-name selfRef">Agent Identity Model</a>
+        <h3 id="name-overview">
+<a href="#section-3.1" class="section-number selfRef">3.1. </a><a href="#name-overview" class="section-name selfRef">Overview</a>
         </h3>
-<p id="section-3.1-1">An Agent's identity has three units: the tenancy's issuer, which signs
+<p id="section-3.1-1">The mechanism involves the following parties.  The Agent Platform hosts
+Agents and operates, for each customer tenancy, an issuer that signs
+assertions about that tenancy's Agents; each Agent presents its own
+assertion to the Authorization Server.  The Authorization Server
+protects a Resource Server and issues the access tokens the Resource
+Server accepts.  The Customer Administrator holds the authority, within
+a customer tenancy, to configure the Authorization Server to trust that
+tenancy's issuer.<a href="#section-3.1-1" class="pilcrow">¶</a></p>
+<p id="section-3.1-2">The mechanism has three steps, of which only the last recurs
+(<a href="#fig-overview" class="auto internal xref">Figure 1</a>):<a href="#section-3.1-2" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-3.1-3">
+<li id="section-3.1-3.1">
+            <p id="section-3.1-3.1.1">Trust establishment, once per tenancy (<a href="#trust" class="auto internal xref">Section 5.1</a>): the Customer
+Administrator records at the Authorization Server that assertions from
+the tenancy's issuer are accepted, identifying the issuer by its issuer
+identifier.  The Authorization Server discovers the issuer's keys from
+its published metadata; nothing is exchanged out of band.<a href="#section-3.1-3.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-3.1-3.2">
+            <p id="section-3.1-3.2.1">Agent instantiation, per Agent (<a href="#instantiation" class="auto internal xref">Section 5.2</a>): the Platform creates
+an Agent and assigns it an Agent Identifier.  Nothing happens at the
+Authorization Server or Resource Server.<a href="#section-3.1-3.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-3.1-3.3">
+            <p id="section-3.1-3.3.1">Token request, per access (<a href="#workload-authorization-grant" class="auto internal xref">Section 4</a>): the Agent
+presents a Workload Authorization Grant -- a JWT signed by the tenancy's
+issuer, naming the Agent as its subject and carrying the Agent's
+Properties -- as the authorization grant in an ordinary OAuth token
+request.  The Authorization Server validates the signature against the
+allowlisted issuer's keys, accepts the Agent whether or not it has seen
+the Agent Identifier before, and issues an access token whose format and
+semantics are unchanged.<a href="#section-3.1-3.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ol>
+<span id="name-overview-one-time-trust-est"></span><div id="fig-overview">
+<figure id="figure-1">
+          <div class="alignLeft art-text artwork" id="section-3.1-4.1">
+<pre>
+ Customer        Agent Platform        Authorization      Resource
+ Administrator   (tenancy issuer)      Server (AS)        Server (RS)
+      |                 |                   |                 |
+  (1) |--- allowlist issuer identifier ----&gt;|                 |
+      |                 |&lt;-- GET metadata,  |                 |
+      |                 |    JWK Set -------|                 |
+      |                 |                   |                 |
+  (2) |         [Platform creates Agent;    |                 |
+      |          nothing sent to AS or RS]  |                 |
+      |                 |                   |                 |
+  (3) |                 |-- POST /token ---&gt;|                 |
+      |                 |   grant_type=     |                 |
+      |                 |     jwt-bearer    |                 |
+      |                 |   assertion=&lt;WAG&gt; |                 |
+      |                 |&lt;-- access token --|                 |
+      |                 |-- request + access token ----------&gt;|
+      |                 |                   |                 |
+</pre>
+</div>
+<figcaption><a href="#figure-1" class="selfRef">Figure 1</a>:
+<a href="#name-overview-one-time-trust-est" class="selfRef">Overview: one-time trust establishment, then per-request grants</a>
+          </figcaption></figure>
+</div>
+</section>
+</div>
+<div id="identity-model">
+<section id="section-3.2">
+        <h3 id="name-agent-identity-model">
+<a href="#section-3.2" class="section-number selfRef">3.2. </a><a href="#name-agent-identity-model" class="section-name selfRef">Agent Identity Model</a>
+        </h3>
+<p id="section-3.2-1">An Agent's identity has three units: the tenancy's issuer, which signs
 assertions about the Agent; the Agent Identifier, opaque, unique within the
 issuer, immutable, and never reassigned, carried as the assertion's sub
 (<a href="#workload-authorization-grant" class="auto internal xref">Section 4</a>); and claims, carrying everything else
 (<a href="#properties" class="auto internal xref">Section 5.3</a>).  Renaming an Agent <span class="bcp14">MUST NOT</span> change its Agent Identifier.
 Resource Servers <span class="bcp14">MUST NOT</span> parse or pattern-match the Agent Identifier for
-authorization; single-agent policy is an exact match on it.<a href="#section-3.1-1" class="pilcrow">¶</a></p>
-<p id="section-3.1-2">The Agent Identifier <span class="bcp14">MAY</span> be, and is <span class="bcp14">RECOMMENDED</span> to be, a Workload
+authorization; single-agent policy is an exact match on the sub value.<a href="#section-3.2-1" class="pilcrow">¶</a></p>
+<p id="section-3.2-2">The Agent Identifier <span class="bcp14">MAY</span> be, and is <span class="bcp14">RECOMMENDED</span> to be, a Workload
 Identifier URI <span>[<a href="#WIMSE-ID" class="cite xref">WIMSE-ID</a>]</span> with an opaque path; a bare opaque string is also
 permitted.  URI form costs no opacity -- the path remains meaningful only to
 the issuing Platform -- and carries the trust boundary inside the
@@ -1421,82 +1506,74 @@ evaluate only subject and audience need (<a href="#oi" class="auto internal xref
 is a URI, the Authorization Server validates its authority component against
 the allowlisted issuer's tenancy once, at token issuance; Resource Servers
 treat the complete identifier as an opaque, exact-match string regardless of
-form and <span class="bcp14">MUST NOT</span> derive trust from its components.<a href="#section-3.1-2" class="pilcrow">¶</a></p>
+form and <span class="bcp14">MUST NOT</span> derive trust from its components.<a href="#section-3.2-2" class="pilcrow">¶</a></p>
 </section>
 </div>
-<div id="relationship-to-aims">
-<section id="section-3.2">
+<div id="aims">
+<section id="section-3.3">
         <h3 id="name-relationship-to-aims">
-<a href="#section-3.2" class="section-number selfRef">3.2. </a><a href="#name-relationship-to-aims" class="section-name selfRef">Relationship to AIMS</a>
+<a href="#section-3.3" class="section-number selfRef">3.3. </a><a href="#name-relationship-to-aims" class="section-name selfRef">Relationship to AIMS</a>
         </h3>
-<p id="section-3.2-1"><span>[<a href="#AIMS" class="cite xref">AIMS</a>]</span> remains the base specification for anything not restated here.  This
-profile constrains <span>[<a href="#AIMS" class="cite xref">AIMS</a>]</span> as follows:<a href="#section-3.2-1" class="pilcrow">¶</a></p>
+<p id="section-3.3-1"><span>[<a href="#AIMS" class="cite xref">AIMS</a>]</span> describes a framework for authentication and authorization of AI
+agents, with a conceptual model in which agents are treated as workloads with
+identifiers, credentials, and authorization.  This document is not a
+profile of <span>[<a href="#AIMS" class="cite xref">AIMS</a>]</span> and does not depend on it: nothing in <span>[<a href="#AIMS" class="cite xref">AIMS</a>]</span> is
+normative here, and where terminology overlaps, the definitions in
+<a href="#conventions" class="auto internal xref">Section 2</a> govern.  This section is informative; it exists so that a
+reader who knows <span>[<a href="#AIMS" class="cite xref">AIMS</a>]</span> can see where this mechanism sits in its model.<a href="#section-3.3-1" class="pilcrow">¶</a></p>
+<p id="section-3.3-2">In <span>[<a href="#AIMS" class="cite xref">AIMS</a>]</span> terms, WAG is one concrete answer for the case of an agent
+acting on its own behalf (<span>[<a href="#AIMS" class="cite xref">AIMS</a>]</span>, Section 10.4.2), in which the agent is a
+hosted workload and the platform that hosts it is the authority that vouches
+for it.  The correspondences are:<a href="#section-3.3-2" class="pilcrow">¶</a></p>
 <table class="center" id="table-1">
           <caption><a href="#table-1" class="selfRef">Table 1</a></caption>
 <thead>
             <tr>
-              <th class="text-left" rowspan="1" colspan="1">AIMS component</th>
-              <th class="text-left" rowspan="1" colspan="1">Here</th>
-              <th class="text-left" rowspan="1" colspan="1">Relationship</th>
+              <th class="text-left" rowspan="1" colspan="1">AIMS concept</th>
+              <th class="text-left" rowspan="1" colspan="1">In this document</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">Identifiers (Sec. 6)</td>
-              <td class="text-left" rowspan="1" colspan="1">
-                <a href="#identity-model" class="auto internal xref">Section 3.1</a>
+              <td class="text-left" rowspan="1" colspan="1">Agent identifier (Sec. 6)</td>
+              <td class="text-left" rowspan="1" colspan="1">The Agent Identifier (<a href="#identity-model" class="auto internal xref">Section 3.2</a>): opaque, immutable, non-reassignable, scoped to its issuer, carried as <code>sub</code>
 </td>
-              <td class="text-left" rowspan="1" colspan="1">Constrained: opaque, immutable, non-reassignable agent identifier, <span class="bcp14">RECOMMENDED</span> to be a Workload Identifier <span>[<a href="#WIMSE-ID" class="cite xref">WIMSE-ID</a>]</span>, carried as sub</td>
             </tr>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">Credentials (Sec. 7), Authentication (Sec. 9)</td>
-              <td class="text-left" rowspan="1" colspan="1">
-                <a href="#workload-authorization-grant" class="auto internal xref">Section 4</a>
-</td>
-              <td class="text-left" rowspan="1" colspan="1">Constrained: <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span> JWT authorization grant (assertion), platform-signed; no per-agent credential; client identity deliberately unspecified</td>
+              <td class="text-left" rowspan="1" colspan="1">Agent credentials (Sec. 7) and authentication (Sec. 9)</td>
+              <td class="text-left" rowspan="1" colspan="1">The Platform's per-tenancy issuer signs an <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span> JWT authorization grant on the Agent's behalf (<a href="#workload-authorization-grant" class="auto internal xref">Section 4</a>); OAuth client identity is deliberately unspecified</td>
             </tr>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">Credential Provisioning (Sec. 8)</td>
-              <td class="text-left" rowspan="1" colspan="1">
-                <a href="#instantiation" class="auto internal xref">Section 5.2</a>
-</td>
-              <td class="text-left" rowspan="1" colspan="1">Constrained: platform-internal</td>
+              <td class="text-left" rowspan="1" colspan="1">Credential provisioning (Sec. 8)</td>
+              <td class="text-left" rowspan="1" colspan="1">Platform-internal (<a href="#instantiation" class="auto internal xref">Section 5.2</a>); the Authorization Server learns of an Agent at first presentation</td>
             </tr>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">Authorization (Sec. 10, case 10.4.2)</td>
-              <td class="text-left" rowspan="1" colspan="1">
-                <a href="#properties" class="auto internal xref">Section 5.3</a>
-</td>
-              <td class="text-left" rowspan="1" colspan="1">Added: standard property claims; by-reference trust (<a href="#trust" class="auto internal xref">Section 5.1</a>)</td>
+              <td class="text-left" rowspan="1" colspan="1">Authorization (Sec. 10)</td>
+              <td class="text-left" rowspan="1" colspan="1">Platform-asserted Agent Properties mapped locally to permissions (<a href="#properties" class="auto internal xref">Section 5.3</a>), under trust established once by reference (<a href="#trust" class="auto internal xref">Section 5.1</a>)</td>
             </tr>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">Monitoring/Remediation (Sec. 11)</td>
-              <td class="text-left" rowspan="1" colspan="1">
-                <a href="#oi" class="auto internal xref">Section 6</a>
+              <td class="text-left" rowspan="1" colspan="1">Monitoring and remediation (Sec. 11)</td>
+              <td class="text-left" rowspan="1" colspan="1">Attribution by (<code>iss</code>, <code>sub</code>) and <code>jti</code>; retirement by cessation (<a href="#lifecycle" class="auto internal xref">Section 5.5</a>); open items in <a href="#oi" class="auto internal xref">Section 6</a>
 </td>
-              <td class="text-left" rowspan="1" colspan="1">TODO</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">Policy (Sec. 12), Compliance (Sec. 13)</td>
-              <td class="text-left" rowspan="1" colspan="1">--</td>
-              <td class="text-left" rowspan="1" colspan="1">Inherited</td>
             </tr>
           </tbody>
         </table>
+<p id="section-3.3-4">The shared-credential antipattern that <span>[<a href="#AIMS" class="cite xref">AIMS</a>]</span>, Section 7, describes is
+the deployment this mechanism is designed to replace (<a href="#introduction" class="auto internal xref">Section 1</a>).<a href="#section-3.3-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="relationship-to-wimse-and-spiffe">
-<section id="section-3.3">
+<section id="section-3.4">
         <h3 id="name-relationship-to-wimse-and-s">
-<a href="#section-3.3" class="section-number selfRef">3.3. </a><a href="#name-relationship-to-wimse-and-s" class="section-name selfRef">Relationship to WIMSE and SPIFFE</a>
+<a href="#section-3.4" class="section-number selfRef">3.4. </a><a href="#name-relationship-to-wimse-and-s" class="section-name selfRef">Relationship to WIMSE and SPIFFE</a>
         </h3>
-<p id="section-3.3-1">TODO.  A reader arriving from WIMSE or SPIFFE will ask where the Workload
+<p id="section-3.4-1">TODO.  A reader arriving from WIMSE or SPIFFE will ask where the Workload
 Identity Token and the SPIFFE ID are in this design.  Explain: why the
 assertion is an <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span> authorization grant rather than a WIMSE WIT;
 how the Agent Identifier's <span class="bcp14">RECOMMENDED</span> <span>[<a href="#WIMSE-ID" class="cite xref">WIMSE-ID</a>]</span> URI form relates to a
 SPIFFE ID; and what changes if the Platform's issuer is backed by a
 SPIFFE/WIMSE-style workload identity plane rather than operated as a
-standalone OAuth issuer.<a href="#section-3.3-1" class="pilcrow">¶</a></p>
+standalone OAuth issuer.<a href="#section-3.4-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -1512,7 +1589,7 @@ Section 2.1, issued by the Platform as a third party in the sense of
 <span>[<a href="#RFC7521" class="cite xref">RFC7521</a>]</span>, Section 3.  The token request carries
 <code>grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer</code>, the JWT in the
 assertion parameter, and the target resource in the resource parameter
-<span>[<a href="#RFC8707" class="cite xref">RFC8707</a>]</span>.  This profile deliberately does not specify the OAuth client
+<span>[<a href="#RFC8707" class="cite xref">RFC8707</a>]</span>.  This document deliberately does not specify the OAuth client
 identity or attach semantics to <code>client_id</code>.  In the simplest deployment the
 token request is made without client authentication.  Deployments <span class="bcp14">MAY</span> layer
 client authentication on top -- for example, the Platform authenticating as
@@ -1539,7 +1616,7 @@ than fully specifying it (<a href="#oi" class="auto internal xref">Section 6</a>
 <dt id="section-4.1-2.3">
 <code>sub</code>:</dt>
           <dd style="margin-left: 1.5em" id="section-4.1-2.4">
-            <p id="section-4.1-2.4.1"><span class="bcp14">REQUIRED</span> - The Agent Identifier as defined in <a href="#identity-model" class="auto internal xref">Section 3.1</a>.<a href="#section-4.1-2.4.1" class="pilcrow">¶</a></p>
+            <p id="section-4.1-2.4.1"><span class="bcp14">REQUIRED</span> - The Agent Identifier as defined in <a href="#identity-model" class="auto internal xref">Section 3.2</a>.<a href="#section-4.1-2.4.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 <dt id="section-4.1-2.5">
@@ -1547,7 +1624,7 @@ than fully specifying it (<a href="#oi" class="auto internal xref">Section 6</a>
           <dd style="margin-left: 1.5em" id="section-4.1-2.6">
             <p id="section-4.1-2.6.1"><span class="bcp14">REQUIRED</span>. The value <span class="bcp14">SHOULD</span> include both the Authorization Server's
 issuer identifier and its token endpoint URL; an Authorization Server
-supporting this profile <span class="bcp14">MUST</span> accept an assertion whose <code>aud</code> includes either
+accepting Workload Authorization Grants <span class="bcp14">MUST</span> accept an assertion whose <code>aud</code> includes either
 value (<span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span> itself leaves the audience strings to out-of-band
 configuration).  <span>[<a href="#RFC7523BIS" class="cite xref">RFC7523BIS</a>]</span> adds the issuer identifier as an audience
 option for authorization grants (while restricting client-authentication
@@ -1589,7 +1666,7 @@ used.  If a local authorization rule requires a Property to remain true at
 one of those later times, the deployment <span class="bcp14">MUST</span> obtain evidence current for
 that time.  Otherwise, the deployment <span class="bcp14">MUST</span> bound its exposure to stale
 Properties through the grant and access token lifetimes.<a href="#section-4.1-4" class="pilcrow">¶</a></p>
-<p id="section-4.1-5">Authorization Servers supporting this profile <span class="bcp14">MUST</span>
+<p id="section-4.1-5">Authorization Servers accepting Workload Authorization Grants <span class="bcp14">MUST</span>
 include <code>urn:ietf:params:oauth:grant-type:jwt-bearer</code> in <code>grant_types_supported</code>
 in their metadata <span>[<a href="#RFC8414" class="cite xref">RFC8414</a>]</span>.<a href="#section-4.1-5" class="pilcrow">¶</a></p>
 </section>
@@ -1599,10 +1676,10 @@ in their metadata <span>[<a href="#RFC8414" class="cite xref">RFC8414</a>]</span
         <h3 id="name-presentation">
 <a href="#section-4.2" class="section-number selfRef">4.2. </a><a href="#name-presentation" class="section-name selfRef">Presentation</a>
         </h3>
-<p id="section-4.2-1"><a href="#fig-token-request" class="auto internal xref">Figure 1</a> shows an example token request (with extra line
+<p id="section-4.2-1"><a href="#fig-token-request" class="auto internal xref">Figure 2</a> shows an example token request (with extra line
 breaks for display purposes only):<a href="#section-4.2-1" class="pilcrow">¶</a></p>
 <span id="name-example-token-request"></span><div id="fig-token-request">
-<figure id="figure-1">
+<figure id="figure-2">
           <div class="alignLeft art-text artwork" id="section-4.2-2.1">
 <pre>
 POST /token HTTP/1.1
@@ -1614,15 +1691,15 @@ grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer
 &amp;resource=https%3A%2F%2Fapi.saas.example%2F
 </pre>
 </div>
-<figcaption><a href="#figure-1" class="selfRef">Figure 1</a>:
+<figcaption><a href="#figure-2" class="selfRef">Figure 2</a>:
 <a href="#name-example-token-request" class="selfRef">Example token request</a>
           </figcaption></figure>
 </div>
-<p id="section-4.2-3"><a href="#fig-assertion-claims" class="auto internal xref">Figure 2</a> shows the decoded claims of the assertion carried
+<p id="section-4.2-3"><a href="#fig-assertion-claims" class="auto internal xref">Figure 3</a> shows the decoded claims of the assertion carried
 in that request; name, namespace, groups, roles, and ctx are Agent
 Properties (<a href="#properties" class="auto internal xref">Section 5.3</a>):<a href="#section-4.2-3" class="pilcrow">¶</a></p>
 <span id="name-example-assertion-claims"></span><div id="fig-assertion-claims">
-<figure id="figure-2">
+<figure id="figure-3">
           <div class="alignLeft art-text artwork" id="section-4.2-4.1">
 <pre>
 {
@@ -1641,7 +1718,7 @@ Properties (<a href="#properties" class="auto internal xref">Section 5.3</a>):<a
 }
 </pre>
 </div>
-<figcaption><a href="#figure-2" class="selfRef">Figure 2</a>:
+<figcaption><a href="#figure-3" class="selfRef">Figure 3</a>:
 <a href="#name-example-assertion-claims" class="selfRef">Example assertion claims</a>
           </figcaption></figure>
 </div>
@@ -1661,10 +1738,12 @@ PoP JWT) if agent instances hold keys.<a href="#section-4.2-6" class="pilcrow">�
       <h2 id="name-deployment">
 <a href="#section-5" class="section-number selfRef">5. </a><a href="#name-deployment" class="section-name selfRef">Deployment</a>
       </h2>
-<p id="section-5-1">TODO: diagram.  One-time trust establishment by the Customer Administrator
-(<a href="#trust" class="auto internal xref">Section 5.1</a>); agent creation by end users with no interaction with the
-Resource Server (<a href="#instantiation" class="auto internal xref">Section 5.2</a>); per-request JWT authorization grant
-(<a href="#workload-authorization-grant" class="auto internal xref">Section 4</a>).<a href="#section-5-1" class="pilcrow">¶</a></p>
+<p id="section-5-1"><a href="#overview" class="auto internal xref">Section 3.1</a> shows the three steps end to end: one-time trust establishment
+by the Customer Administrator (<a href="#trust" class="auto internal xref">Section 5.1</a>); agent creation by end users with
+no interaction with the Resource Server (<a href="#instantiation" class="auto internal xref">Section 5.2</a>); and the
+per-request JWT authorization grant (<a href="#workload-authorization-grant" class="auto internal xref">Section 4</a>).
+This section specifies the first two and the authorization model that
+connects them.<a href="#section-5-1" class="pilcrow">¶</a></p>
 <div id="trust">
 <section id="section-5.1">
         <h3 id="name-trust-establishment">
@@ -1682,7 +1761,7 @@ and a shared issuer would move tenancy enforcement into claim evaluation at
 every Authorization Server -- including relying parties that can evaluate
 only subject and audience (<a href="#oi" class="auto internal xref">Section 6</a>).  The proposed MCP Workload Identity
 Federation extension <span>[<a href="#MCP-WIF" class="cite xref">MCP-WIF</a>]</span> recommends (<span class="bcp14">SHOULD</span>) that authorization
-servers rely only on issuing keys bound to a single tenant; this profile deliberately tightens that boundary to a
+servers rely only on issuing keys bound to a single tenant; this document deliberately tightens that boundary to a
 per-tenancy issuer <span class="bcp14">MUST</span>.<a href="#section-5.1-1" class="pilcrow">¶</a></p>
 <p id="section-5.1-2">Multi-issuer operation is scoped by issuer throughout.  An Authorization
 Server <span class="bcp14">MUST</span> resolve and cache keys per allowlist entry and <span class="bcp14">MUST NOT</span> merge
@@ -1765,7 +1844,7 @@ credential lifetimes plus ceasing issuance (<a href="#oi" class="auto internal x
 <p id="section-5.5-2">Broader lifecycle management is out of scope for this document.  In
 particular, resources that come to be owned by an Agent (documents, records,
 long-lived artifacts) need succession planning when the Agent is retired;
-this profile makes the retirement event's access consequences legible, but
+this document makes the retirement event's access consequences legible, but
 does not manage its downstream effects.<a href="#section-5.5-2" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -1780,7 +1859,7 @@ does not manage its downstream effects.<a href="#section-5.5-2" class="pilcrow">
 <li class="normal" id="section-6-1.1">
           <p id="section-6-1.1.1">Relying parties that authorize only on subject and audience (e.g., cloud
 IAM federation trust policies) and cannot evaluate Property predicates;
-URI-form Agent Identifiers (<a href="#identity-model" class="auto internal xref">Section 3.1</a>) carry the tenancy inside
+URI-form Agent Identifiers (<a href="#identity-model" class="auto internal xref">Section 3.2</a>) carry the tenancy inside
 the identifier for this case, but the residual gap is unassessed.<a href="#section-6-1.1.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="section-6-1.2">
@@ -1854,10 +1933,6 @@ still holds.<a href="#section-8-2" class="pilcrow">¶</a></p>
 <a href="#section-10.1" class="section-number selfRef">10.1. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
         </h3>
 <dl class="references">
-<dt id="AIMS">[AIMS]</dt>
-        <dd>
-<span class="refAuthor">Kasselman, P.</span>, <span class="refAuthor">Lombardo, J.</span>, <span class="refAuthor">Rosomakho, Y.</span>, <span class="refAuthor">Campbell, B.</span>, <span class="refAuthor">Steele, N.</span>, and <span class="refAuthor">A. Parecki</span>, <span class="refTitle">"AI Agent Authentication and Authorization"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-klrc-aiagent-auth-03</span>, <time datetime="2026-07-06" class="refDate">6 July 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-klrc-aiagent-auth-03">https://datatracker.ietf.org/doc/html/draft-klrc-aiagent-auth-03</a>&gt;</span>. </dd>
-<dd class="break"></dd>
 <dt id="OIDC-DISCOVERY">[OIDC-DISCOVERY]</dt>
         <dd>
 <span class="refAuthor">Sakimura, N.</span>, <span class="refAuthor">Bradley, J.</span>, <span class="refAuthor">Jones, M.</span>, and <span class="refAuthor">E. Jay</span>, <span class="refTitle">"OpenID Connect Discovery 1.0 incorporating errata set 2"</span>, <time datetime="2023-12" class="refDate">December 2023</time>, <span>&lt;<a href="https://openid.net/specs/openid-connect-discovery-1_0.html">https://openid.net/specs/openid-connect-discovery-1_0.html</a>&gt;</span>. </dd>
@@ -1911,9 +1986,13 @@ still holds.<a href="#section-8-2" class="pilcrow">¶</a></p>
 <a href="#section-10.2" class="section-number selfRef">10.2. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
         </h3>
 <dl class="references">
+<dt id="AIMS">[AIMS]</dt>
+        <dd>
+<span class="refAuthor">Kasselman, P.</span>, <span class="refAuthor">Lombardo, J.</span>, <span class="refAuthor">Rosomakho, Y.</span>, <span class="refAuthor">Campbell, B.</span>, <span class="refAuthor">Steele, N.</span>, and <span class="refAuthor">A. Parecki</span>, <span class="refTitle">"AI Agent Authentication and Authorization"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-klrc-aiagent-auth-03</span>, <time datetime="2026-07-06" class="refDate">6 July 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-klrc-aiagent-auth-03">https://datatracker.ietf.org/doc/html/draft-klrc-aiagent-auth-03</a>&gt;</span>. </dd>
+<dd class="break"></dd>
 <dt id="ATTEST-CLIENT-AUTH">[ATTEST-CLIENT-AUTH]</dt>
         <dd>
-<span class="refAuthor">Looker, T.</span>, <span class="refAuthor">Bastian, P.</span>, and <span class="refAuthor">C. Bormann</span>, <span class="refTitle">"OAuth 2.0 Attestation-Based Client Authentication"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-oauth-attestation-based-client-auth-10</span>, <time datetime="2026-07-06" class="refDate">6 July 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-attestation-based-client-auth-10">https://datatracker.ietf.org/doc/html/draft-ietf-oauth-attestation-based-client-auth-10</a>&gt;</span>. </dd>
+<span class="refAuthor">Looker, T.</span>, <span class="refAuthor">Bastian, P.</span>, and <span class="refAuthor">C. Bormann</span>, <span class="refTitle">"OAuth 2.0 Attestation-Based Client Authentication"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-oauth-attestation-based-client-auth-11</span>, <time datetime="2026-09-03" class="refDate">3 September 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-attestation-based-client-auth-11">https://datatracker.ietf.org/doc/html/draft-ietf-oauth-attestation-based-client-auth-11</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="CIMD">[CIMD]</dt>
         <dd>
@@ -1966,10 +2045,9 @@ still holds.<a href="#section-8-2" class="pilcrow">¶</a></p>
 <a href="#name-acknowledgments" class="section-name selfRef">Acknowledgments</a>
       </h2>
 <p id="appendix-A-1">The editors thank Pieter Kasselman, Karl McGuinness, Kevin Kelley, Emily
-Lauber, and Maxwell Gerber for discussions that shaped this document.  This
-profile builds directly on the Agent Identity Management System framework
-<span>[<a href="#AIMS" class="cite xref">AIMS</a>]</span> and would not exist without it.  Further acknowledgments will be
-added in a future revision.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
+Lauber, and Maxwell Gerber for discussions that shaped this document.  The
+conceptual model of agents as workloads in <span>[<a href="#AIMS" class="cite xref">AIMS</a>]</span> informed this design.
+Further acknowledgments will be added in a future revision.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="authors-addresses">
