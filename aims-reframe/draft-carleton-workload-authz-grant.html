@@ -14,15 +14,19 @@
        This document defines the Workload Authorization Grant (WAG), a mechanism
 by which a workload hosted on a platform -- an AI agent being the motivating
 case -- obtains access tokens from a third party's OAuth authorization
-server without any per-workload registration step at that server.  Each
+server without an administrator provisioning anything for that workload
+ahead of time.  An administrator establishes trust in the platform's issuer
+once; thereafter workloads can be created, and can obtain access, by people
+who are not authorized to provision credentials at that server.  Each
 workload is identified by an opaque, non-reassignable identifier; it obtains
 access tokens by presenting a JWT authorization grant (RFC 7523) minted for
 it by the platform's per-tenancy issuer, in the assertion parameter at the
 authorization server protecting the resource server.  Trust is established
-once, by reference to the issuer's published metadata and keys; workload
-creation requires no per-workload step at the authorization server or
-resource server; and authorization is expressed over platform-asserted
-properties that resource servers map locally to permissions.  This document
+by reference to the issuer's published metadata and keys; creating a
+workload requires no ahead-of-time step by an administrator at the
+authorization server or resource server; and authorization is expressed over
+platform-asserted properties that resource servers map locally to
+permissions.  This document
 addresses workloads acting on their own behalf; access on behalf of a user
 or other principal is out of scope, though the design is intended to compose
 with existing delegation mechanisms in which the workload appears as the
@@ -1118,15 +1122,19 @@ svg {
 <p id="section-abstract-1">This document defines the Workload Authorization Grant (WAG), a mechanism
 by which a workload hosted on a platform -- an AI agent being the motivating
 case -- obtains access tokens from a third party's OAuth authorization
-server without any per-workload registration step at that server.  Each
+server without an administrator provisioning anything for that workload
+ahead of time.  An administrator establishes trust in the platform's issuer
+once; thereafter workloads can be created, and can obtain access, by people
+who are not authorized to provision credentials at that server.  Each
 workload is identified by an opaque, non-reassignable identifier; it obtains
 access tokens by presenting a JWT authorization grant (RFC 7523) minted for
 it by the platform's per-tenancy issuer, in the assertion parameter at the
 authorization server protecting the resource server.  Trust is established
-once, by reference to the issuer's published metadata and keys; workload
-creation requires no per-workload step at the authorization server or
-resource server; and authorization is expressed over platform-asserted
-properties that resource servers map locally to permissions.  This document
+by reference to the issuer's published metadata and keys; creating a
+workload requires no ahead-of-time step by an administrator at the
+authorization server or resource server; and authorization is expressed over
+platform-asserted properties that resource servers map locally to
+permissions.  This document
 addresses workloads acting on their own behalf; access on behalf of a user
 or other principal is out of scope, though the design is intended to compose
 with existing delegation mechanisms in which the workload appears as the
@@ -1537,7 +1545,7 @@ for it.  The correspondences are:<a href="#section-3.3-2" class="pilcrow">¶</a>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">Agent credentials (Sec. 7) and authentication (Sec. 9)</td>
-              <td class="text-left" rowspan="1" colspan="1">No per-agent credential is provisioned at the Authorization Server.  The Platform's per-tenancy issuer signs an <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span> JWT authorization grant on the Agent's behalf (<a href="#workload-authorization-grant" class="auto internal xref">Section 4</a>); OAuth client identity is deliberately unspecified</td>
+              <td class="text-left" rowspan="1" colspan="1">No per-Agent provisioning step by an administrator at the Authorization Server.  The Platform's per-tenancy issuer signs an <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span> JWT authorization grant on the Agent's behalf (<a href="#workload-authorization-grant" class="auto internal xref">Section 4</a>); OAuth client identity is deliberately unspecified</td>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">Credential provisioning (Sec. 8)</td>
