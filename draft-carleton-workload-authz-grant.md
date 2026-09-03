@@ -91,7 +91,7 @@ informative:
 This document defines the Workload Authorization Grant (WAG), a mechanism
 by which a workload hosted on a platform -- an AI agent being the motivating
 case -- obtains access tokens from a third party's OAuth authorization
-server without a per-workload credential or registration step.  Each
+server without a per-workload registration step.  Each
 workload is identified by an opaque, non-reassignable identifier; it obtains
 access tokens by presenting a JWT authorization grant (RFC 7523), signed by
 the platform's per-tenancy issuer, in the assertion parameter at the
@@ -295,7 +295,7 @@ for it.  The correspondences are:
 | AIMS concept | In this document |
 |---|---|
 | Agent identifier (Sec. 6) | The Agent Identifier ({{identity-model}}): opaque, immutable, non-reassignable, scoped to its issuer, carried as `sub` |
-| Agent credentials (Sec. 7) and authentication (Sec. 9) | No per-agent credential.  The Platform's per-tenancy issuer signs an {{RFC7523}} JWT authorization grant on the Agent's behalf ({{workload-authorization-grant}}); OAuth client identity is deliberately unspecified |
+| Agent credentials (Sec. 7) and authentication (Sec. 9) | The Platform's per-tenancy issuer signs an {{RFC7523}} JWT authorization grant on the Agent's behalf ({{workload-authorization-grant}}); OAuth client identity is deliberately unspecified |
 | Credential provisioning (Sec. 8) | Platform-internal ({{instantiation}}); the Authorization Server learns of an Agent at first presentation |
 | Authorization (Sec. 10) | Platform-asserted Agent Properties mapped locally to permissions ({{properties}}), under trust established once by reference ({{trust}}) |
 | Monitoring and remediation (Sec. 11) | Attribution by (`iss`, `sub`) and `jti`; retirement by cessation ({{lifecycle}}); open items in {{oi}} |
