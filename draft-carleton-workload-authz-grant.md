@@ -211,10 +211,11 @@ Tenancy:
 : One customer's administrative boundary at a party.  At the Platform, a
   tenancy is the set of Agents one customer controls together with the
   issuer that signs assertions about them; at the Authorization Server
-  and Resource Server, it is that customer's account there, within which
-  issuer registrations are held.  Where the side matters, this document
-  says "Platform tenancy" or "the customer's tenancy at the Authorization
-  Server".
+  and Resource Server, it is the customer's organization-level partition
+  of that service (its organization, workspace, or tenant, in product
+  terms), within which issuer registrations are held.  Where the side
+  matters, this document says "Platform tenancy" or "the customer's
+  tenancy at the Authorization Server".
 
 Issuer Registration ("registration"):
 : The record a Customer Administrator creates at an Authorization Server
