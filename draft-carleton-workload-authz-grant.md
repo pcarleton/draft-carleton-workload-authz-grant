@@ -265,10 +265,10 @@ An Agent's identity has three units: the issuer, which signs assertions
 about the Agent; the Agent Identifier, carried as the
 assertion's `sub` ({{workload-authorization-grant}}); and claims, carrying
 everything else ({{properties}}).  The Agent Identifier is opaque and
-immutable.  It MUST be unique within the scope of the allowlist entry under
-which it is presented ({{trust}}) -- within the issuer, for the per-tenancy
-issuers this revision specifies -- the rule that {{Section 3.1 of IDJAG}}
-applies to subject identifiers.  It MUST NOT be reassigned to a different Agent;
+immutable.  It MUST be unique within its issuer, the Platform's per-tenancy
+issuer ({{trust}}), and hence within that tenancy -- the (`iss`, `sub`) rule
+of {{Section 3.1 of IDJAG}} for a single-tenant issuer.  It MUST NOT be
+reassigned to a different Agent;
 where the identifier is a Workload Identifier, this tightens the SHOULD NOT
 of {{Section 4.5 of WIMSE-ID}}, because Resource Servers key durable records
 (policy, audit, grants) on it.  Renaming an Agent -- changing its name
