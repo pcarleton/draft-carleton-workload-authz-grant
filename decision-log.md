@@ -56,12 +56,12 @@ Terminology entry says explicitly that a tenancy registration is not a
 client registration and yields no client identifier or credential, and the
 two disclaimers ("not via a client registration", "Agents are not
 dynamically registered clients") stay qualified.
-Alternatives (review-panel poll, 7 seats; 5 ranked this first): keep
-"allowlist entry" and define it (zero-risk status quo; author and two seats
-found it undersold the record); "Trusted Issuer" (RFC 7521 s8 / ID-JAG s4.1
-vocabulary; mislabels a per-tenancy record as an issuer once issuers are
-shared); "Issuer Trust" (federation-console jargon, unattested in the cited
-texts); "issuer binding" ("binding" is overloaded with sender-constraining).
+Alternatives considered: keep "allowlist entry" and define it (zero-risk
+status quo, but undersells the record); "Trusted Issuer" (RFC 7521 s8 /
+ID-JAG s4.1 vocabulary; mislabels a per-tenancy record as an issuer once
+issuers are shared); "Issuer Trust" (federation-console jargon, unattested
+in the cited texts); "issuer binding" ("binding" is overloaded with
+sender-constraining).
 
 ### D13 — WAG is a standalone mechanism, not a profile of AIMS (2026-08-31, closes #1)
 The draft no longer calls itself a profile of draft-klrc-aiagent-auth
@@ -70,7 +70,7 @@ The draft no longer calls itself a profile of draft-klrc-aiagent-auth
 so that a reader who knows AIMS can place WAG in its model (agent acting on
 its own behalf, Section 10.4.2), and a new Concepts/Overview section with an
 end-to-end figure lets the document stand on its own. Rationale (issue #1
-and the 2026-08-26 adoption review): an implementer at a SaaS authorization
+and adopter feedback): an implementer at a SaaS authorization
 server should not have to read a second draft to implement this one, and
 "profile" implied a normative dependence the text never actually used --
 every rule here is stated in terms of RFC 7523, RFC 8414 metadata and
@@ -237,7 +237,7 @@ the AS can require attestation sub == grant sub). DPoP remains the
 orthogonal token-binding layer (protects stolen access tokens, costs
 RS-side changes).
 
-Sharper cut (2026-07-28, paulc): against a whole-request thief (inside TLS
+Sharper cut (2026-07-28): against a whole-request thief (inside TLS
 termination) every shape degrades to replay-within-freshness-window -- the
 pkjwt/PoP artifacts travel next to the assertion, so signing buys nothing
 there; short exp + jti replay caching are the real defense and belong in the
@@ -246,7 +246,7 @@ from the caller's key material: issuer != caller (IdP-issued grants),
 at-rest leaks (logs/queues), or the AS wanting a caller identity for
 quota/kill-switch. pkjwt vs attest is then just which boundary is being
 defended: issuer != caller (platform key) vs platform != instance
-(per-instance keys). Caveat (paulc): attest's per-instance blast radius
+(per-instance keys). Caveat: attest's per-instance blast radius
 applies only to edge keys -- the attester key is itself a platform-level
 durable key (~= the issuer key; possibly the same key), so at the root
 pkjwt and attest carry identical concentration risk.
