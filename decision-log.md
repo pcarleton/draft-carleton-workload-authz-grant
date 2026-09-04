@@ -5,6 +5,64 @@ Most recent first within each state. Open items are at the bottom.
 
 ## Decided
 
+### D16 — Terminology: "Service" for the AS + RS party; "Platform tenancy" / "Service tenancy" (2026-09-04)
+"Service" names the party that operates a Resource Server and the
+Authorization Server protecting it -- typically one vendor's product -- as
+one organizational unit, so that the customer's two tenancies have a fixed
+pair of names: the "Platform tenancy" (its Agents plus the issuer that
+vouches for them) and the "Service tenancy" (its organization, workspace
+or tenant at the Service, within which tenancy registrations are held).
+D9's Authorization Server / Resource Server split stands: every normative
+requirement is still stated on one or the other, and "Service" is used
+only where the unit is the organization or product (tenancy, adoption
+path), never as the subject of a MUST.  This retires "the customer's
+tenancy at the Authorization Server" and the earlier "customer's account
+there", which read as a single user's login.  Alternatives considered:
+"Service Provider" (SAML SP / OAuth 1.0 sense; carries federation-protocol
+baggage and invites "SP" alongside "AS"/"RS"); "resource tenancy" (names
+the side by the RS alone, though the registration lives at the AS);
+"issuing tenancy" / "relying tenancy" (precise but unfamiliar, and
+"relying party" is already OIDC vocabulary for a client).
+
+### D15 — Terminology: "tenancy registration" replaces "allowlist entry" (2026-09-04)
+The record a Customer Administrator creates once at an Authorization Server
+so that it accepts Workload Authorization Grants for the Agents of one
+Platform tenancy is a "tenancy registration" (short form "the
+registration"); the administrator "registers the tenancy"; a tenancy so
+recorded is a "registered tenancy", and the issuer the registration names
+is a "registered issuer".  This replaces "allowlist entry" / "allowlist" /
+"allowlisted" throughout (and, on the same day, the interim "issuer
+registration" / "registers the issuer").  The unit is the tenancy, not the
+issuer, because what the Authorization Server comes to trust is one
+Platform tenancy: the registration names the issuer (its issuer
+identifier) only as the means by which that tenancy's assertions are
+recognized, and under shared issuers (issue #7) two registrations at one
+Authorization Server name the same issuer with different tenancy-claim
+values, so "issuer registration" would need a qualifier every time it was
+used.  Rationale: the one-time setup step per (Platform tenancy,
+Authorization Server) is a registration in substance -- an
+administrator-created record holding an issuer identifier, a key-discovery
+reference and policy, against which later presentations are validated --
+and naming it one states the contrast the document actually draws: one
+registration per tenancy, no per-workload and no client registration
+(RFC 7591).  "Allowlist" is attested for the *set* of accepted issuers
+(WIMSE-ID s7.3, WIMSE workload-creds s9.1, ID-JAG s9.4) but undersells a
+structured record that carries a permission mapping and, under shared
+issuers, a pinned tenancy value; "allowlist entry" as that record was this
+document's coinage and was never defined.  The term survives shared issuers
+(above), which "Trusted Issuer" does not.  Known cost: in the OAuth WG
+unqualified "registration" means RFC 7591 client registration, so the
+Terminology entry says explicitly that a tenancy registration is not a
+client registration and yields no client identifier or credential, and the
+two disclaimers ("not via a client registration", "Agents are not
+dynamically registered clients") stay qualified.
+Alternatives considered: keep "allowlist entry" and define it (zero-risk
+status quo, but undersells the record); "Trusted Issuer" (RFC 7521 s8 /
+ID-JAG s4.1 vocabulary; mislabels a per-tenancy record as an issuer once
+issuers are shared); "Issuer Trust" (federation-console jargon, unattested
+in the cited texts); "issuer binding" ("binding" is overloaded with
+sender-constraining).
+
 ### D13 — WAG is a standalone mechanism, not a profile of AIMS (2026-08-31, closes #1)
 The draft no longer calls itself a profile of draft-klrc-aiagent-auth
 (AIMS). AIMS moves from the normative to the informative references; the
@@ -12,7 +70,7 @@ The draft no longer calls itself a profile of draft-klrc-aiagent-auth
 so that a reader who knows AIMS can place WAG in its model (agent acting on
 its own behalf, Section 10.4.2), and a new Concepts/Overview section with an
 end-to-end figure lets the document stand on its own. Rationale (issue #1
-and the 2026-08-26 adoption review): an implementer at a SaaS authorization
+and adopter feedback): an implementer at a SaaS authorization
 server should not have to read a second draft to implement this one, and
 "profile" implied a normative dependence the text never actually used --
 every rule here is stated in terms of RFC 7523, RFC 8414 metadata and
@@ -179,7 +237,7 @@ the AS can require attestation sub == grant sub). DPoP remains the
 orthogonal token-binding layer (protects stolen access tokens, costs
 RS-side changes).
 
-Sharper cut (2026-07-28, paulc): against a whole-request thief (inside TLS
+Sharper cut (2026-07-28): against a whole-request thief (inside TLS
 termination) every shape degrades to replay-within-freshness-window -- the
 pkjwt/PoP artifacts travel next to the assertion, so signing buys nothing
 there; short exp + jti replay caching are the real defense and belong in the
@@ -188,7 +246,7 @@ from the caller's key material: issuer != caller (IdP-issued grants),
 at-rest leaks (logs/queues), or the AS wanting a caller identity for
 quota/kill-switch. pkjwt vs attest is then just which boundary is being
 defended: issuer != caller (platform key) vs platform != instance
-(per-instance keys). Caveat (paulc): attest's per-instance blast radius
+(per-instance keys). Caveat: attest's per-instance blast radius
 applies only to edge keys -- the attester key is itself a platform-level
 durable key (~= the issuer key; possibly the same key), so at the root
 pkjwt and attest carry identical concentration risk.
