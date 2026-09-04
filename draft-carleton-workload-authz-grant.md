@@ -180,7 +180,7 @@ or {{IDJAG}}), and that composition is left to future documents.
 {::boilerplate bcp14-tagged}
 
 Agent Platform ("Platform"):
-: The service that hosts Agents and operates the per-tenancy issuers that
+: The party that hosts Agents and operates the per-tenancy issuers that
   vouch for them.
 
 Agent:
@@ -197,8 +197,15 @@ Authorization Server (AS):
   by the same vendor as the Resource Server it protects.
 
 Resource Server (RS):
-: The service holding customer resources, accessed with the access tokens
+: The server holding customer resources, accessed with the access tokens
   the Authorization Server issues.
+
+Service:
+: The party that operates a Resource Server and the Authorization Server
+  protecting it, and that accepts Workload Authorization Grants for
+  access to it; typically one vendor's product.  Normative requirements
+  are stated on the Authorization Server or the Resource Server
+  individually; "Service" names the two as one organizational unit.
 
 Enterprise IdP:
 : The customer's identity provider (optional).
@@ -210,12 +217,11 @@ Customer Administrator:
 Tenancy:
 : One customer's administrative boundary at a party.  At the Platform, a
   tenancy is the set of Agents one customer controls together with the
-  issuer that signs assertions about them; at the Authorization Server
-  and Resource Server, it is the customer's organization-level partition
-  of that service (its organization, workspace, or tenant, in product
-  terms), within which registrations of Platform tenancies are held.
-  Where the side matters, this document says "Platform tenancy" or "the
-  customer's tenancy at the Authorization Server".
+  issuer that signs assertions about them (the "Platform tenancy"); at
+  the Service, it is the customer's organization-level partition of the
+  Service (its organization, workspace, or tenant, in product terms),
+  within which registrations of Platform tenancies are held (the
+  "Service tenancy").
 
 Tenancy Registration ("registration"):
 : The record a Customer Administrator creates at an Authorization Server
@@ -243,8 +249,8 @@ assertions about that tenancy's Agents; each Agent presents its own
 assertion to the Authorization Server.  The Authorization Server
 protects a Resource Server and issues the access tokens the Resource
 Server accepts.  The Customer Administrator holds the authority, within
-a customer tenancy, to configure the Authorization Server to trust that
-tenancy's issuer.
+the customer's Service tenancy, to configure the Authorization Server to
+trust a Platform tenancy's issuer.
 
 The mechanism has three steps, of which only the last recurs
 ({{fig-overview}}):
@@ -492,7 +498,7 @@ Authorization Server by reference to the published metadata of the
 tenancy's issuer.
 
 The Customer Administrator registers the Platform tenancy at the
-Authorization Server once, within the customer's tenancy there.  The
+Authorization Server once, within the customer's Service tenancy.  The
 resulting tenancy registration admits the Agents of that one Platform
 tenancy: it names the tenancy's issuer by its issuer identifier
 ({{Section 2 of RFC8414}}) and holds that tenancy's initial

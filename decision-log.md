@@ -5,6 +5,25 @@ Most recent first within each state. Open items are at the bottom.
 
 ## Decided
 
+### D16 — Terminology: "Service" for the AS + RS party; "Platform tenancy" / "Service tenancy" (2026-09-04)
+"Service" names the party that operates a Resource Server and the
+Authorization Server protecting it -- typically one vendor's product -- as
+one organizational unit, so that the customer's two tenancies have a fixed
+pair of names: the "Platform tenancy" (its Agents plus the issuer that
+vouches for them) and the "Service tenancy" (its organization, workspace
+or tenant at the Service, within which tenancy registrations are held).
+D9's Authorization Server / Resource Server split stands: every normative
+requirement is still stated on one or the other, and "Service" is used
+only where the unit is the organization or product (tenancy, adoption
+path), never as the subject of a MUST.  This retires "the customer's
+tenancy at the Authorization Server" and the earlier "customer's account
+there", which read as a single user's login.  Alternatives considered:
+"Service Provider" (SAML SP / OAuth 1.0 sense; carries federation-protocol
+baggage and invites "SP" alongside "AS"/"RS"); "resource tenancy" (names
+the side by the RS alone, though the registration lives at the AS);
+"issuing tenancy" / "relying tenancy" (precise but unfamiliar, and
+"relying party" is already OIDC vocabulary for a client).
+
 ### D15 — Terminology: "tenancy registration" replaces "allowlist entry" (2026-09-04)
 The record a Customer Administrator creates once at an Authorization Server
 so that it accepts Workload Authorization Grants for the Agents of one
