@@ -47,6 +47,7 @@ normative:
   RFC7523:
   RFC8414:
   RFC8707:
+  RFC8725:
   RFC9525:
   WIMSE-ID: I-D.ietf-wimse-identifier
   OIDC-DISCOVERY:
@@ -476,44 +477,77 @@ connects them.
 
 ## Trust Establishment {#trust}
 
-The Customer Administrator once records, at the Authorization Server, an
-issuer registration binding one issuer to one tenancy: the issuer identifier, from which
-the issuer's metadata and JWK Set location are discovered per
-{{OIDC-DISCOVERY}} (retrieved over https {{RFC9525}}), and the tenancy's initial
-Property-to-permission mapping for the Resource Server ({{properties}}).  Establishment is by
-reference; no keys or secrets are transferred, and key rotation is by JWK Set
-update alone.  Platforms serving multiple customers MUST use a distinct
-issuer per tenancy: the issuer is the trust boundary the registration expresses,
-and a shared issuer would move tenancy enforcement into claim evaluation at
-every Authorization Server -- including relying parties that can evaluate
-only subject and audience ({{oi}}).  The proposed MCP Workload Identity
-Federation extension {{MCP-WIF}} recommends (SHOULD) that authorization
-servers rely only on issuing keys bound to a single tenant; this document deliberately tightens that boundary to a
-per-tenancy issuer MUST.
+{{RFC7523}}, Section 5, leaves to deployments or to further profiles the
+agreement an assertion issuer and an authorization server must reach on
+issuer and audience identifiers, verification keys, lifetime and
+one-time-use limits, and subject and claim requirements.  This section
+specifies how that agreement is reached for the Workload Authorization
+Grant: by an issuer registration, made once per issuer and tenancy, by
+reference to the issuer's published metadata.
 
-An issuer registration is durable: it is held at the Authorization Server, only
-the Customer Administrator can remove it, and it outlives the tenancy it
-names if that tenancy ends at the Platform.  The issuer identifier of a
-per-tenancy issuer MUST therefore be assigned by the Platform, MUST remain
-stable for the life of the tenancy, and MUST NOT be reassigned to another
-tenancy after that tenancy ends.  A Platform that derives the identifier
-from a customer-chosen name (a workspace slug, an organization subdomain)
-MUST NOT release that name for reuse by another customer: reassignment
-would hand the new customer every issuer registration the old one held, at
+The Customer Administrator registers the Platform's issuer at the
+Authorization Server once, within the customer's tenancy there.  The
+resulting issuer registration admits one issuer for one Platform tenancy
+and holds the issuer identifier ({{Section 2 of RFC8414}}) and that
+tenancy's initial Property-to-permission mapping for the Resource Server
+({{properties}}).  From the issuer identifier the Authorization Server
+discovers the issuer's metadata and, from the metadata's `jwks_uri`, the
+issuer's JWK Set {{RFC7517}} ({{OIDC-DISCOVERY}}, Section 4).  It
+retrieves both over HTTPS, verifying the server's identity per
+{{RFC9525}}, and it MUST NOT use a metadata document whose `issuer` value
+is not identical to the registered issuer identifier ({{OIDC-DISCOVERY}},
+Section 4.3; compare {{Section 3.3 of RFC8414}}).  No keys or secrets are
+exchanged, the Authorization Server issues nothing back to the Platform,
+and key rotation is by JWK Set update alone.  A customer whose Agents run
+under more than one issuer has one registration per issuer, and the same
+issuer can be registered at any number of Authorization Servers.
+
+Platforms serving multiple customers MUST use a distinct issuer per
+tenancy: the issuer is then the trust boundary an issuer registration
+expresses, and a shared issuer would move tenancy enforcement into claim
+evaluation at every Authorization Server, including those that can
+evaluate only issuer, subject, and audience ({{oi}}).  The proposed MCP
+Workload Identity Federation extension {{MCP-WIF}} draws the corresponding
+boundary at the signing key, recommending that an authorization server
+rely only on keys bound to a single tenant; this document draws it at the
+issuer registration.
+
+An issuer registration names the issuer only by its issuer identifier and
+persists at the Authorization Server until it is removed there, even after
+the Platform tenancy it was created for has ended.  A Platform therefore
+MUST NOT reassign a per-tenancy issuer identifier to a different tenancy,
+and MUST NOT release for reuse by another customer a customer-chosen name,
+such as a subdomain, from which that identifier is derived: reassignment
+would hand the new holder every registration the old tenancy held, at
 every Authorization Server, with no way for the Platform to find or clear
-them.  The same rule covers the authority component of a URI-form Agent
-Identifier ({{identity-model}}), which carries the same tenancy.
+them.  The same holds for the authority component of a URI-form Agent
+Identifier -- its trust domain ({{Section 4.3 of WIMSE-ID}}) -- which
+likewise identifies the tenancy ({{identity-model}}).
 
-Multi-issuer operation is scoped by issuer throughout.  An Authorization
-Server MUST resolve and cache keys per issuer registration and MUST NOT merge
-key sets across issuers, and it MUST interpret `sub` and `jti` only within
-the scope of the presenting `iss`.  A Resource Server that keeps a
-Property-to-permission mapping ({{properties}}) likewise scopes it by
-`iss`.  An Agent Identifier is unique within the issuer registration that
-admits it, not globally.  Policy, audit, and grant records MUST be keyed on
-that registration's scope plus `sub` -- the (`iss`, `sub`) pair -- and MUST NOT be
-keyed on `sub` alone; a complete URI-form identifier whose authority
-component identifies the tenancy ({{identity-model}}) is an equivalent key.
+On each presented assertion, the Authorization Server compares `iss` with
+its registered issuer identifiers by Simple String Comparison, as
+{{Section 3 of RFC7523}} requires; `https://issuer.example` and
+`https://issuer.example/` therefore name different issuers.  It MUST
+reject an assertion whose `iss` equals no registered issuer identifier
+without retrieving any metadata or keys for it.  It MUST verify the
+signature only under a key from the JWK Set discovered for the matching
+registration, never under key material or key locations carried in the
+assertion itself ({{RFC8725}}, Sections 3.8 and 3.10).
+
+Authorization Server and Resource Server state is scoped by issuer.  An
+Authorization Server MUST hold signing keys per registered issuer
+identifier and MUST NOT merge key sets across issuers.  It MUST interpret
+`sub` and `jti` only within the scope of the presenting `iss`.  A
+Property-to-permission mapping ({{properties}}) is likewise scoped by
+`iss`.  An Agent Identifier is unique only within its issuer
+({{identity-model}}), not globally: the same `sub` value under a different
+`iss` denotes a different Agent ({{Section 3.1.2 of WIMSE-ARCH}}).  An
+Authorization Server or Resource Server that keeps policy, audit, or grant
+records about an Agent MUST therefore key them on the (`iss`, `sub`) pair
+and MUST NOT key them on `sub` alone.  A complete URI-form Agent
+Identifier is an equivalent key only where the Authorization Server has
+verified, at issuance, that its authority component belongs to the
+tenancy of the admitting registration ({{identity-model}}).
 
 ## Agent Instantiation {#instantiation}
 
