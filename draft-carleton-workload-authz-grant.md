@@ -283,10 +283,7 @@ an exact match on the `sub` value.
 
 The Agent Identifier MAY be, and is RECOMMENDED to be, a Workload
 Identifier URI {{WIMSE-ID}} with an opaque path; a bare opaque string is also
-permitted.  URI form costs no opacity -- the path remains meaningful only to
-the issuing Platform -- and carries the trust boundary inside the
-identifier's authority component, which is what relying parties that
-evaluate only subject and audience need ({{oi}}).  When the Agent Identifier
+permitted.  When the Agent Identifier
 is a URI, the Authorization Server validates its authority component against
 the allowlisted issuer's tenancy once, at token issuance; Resource Servers
 treat the complete identifier as an opaque, exact-match string regardless of
