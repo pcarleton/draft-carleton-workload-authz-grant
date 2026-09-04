@@ -5,6 +5,37 @@ Most recent first within each state. Open items are at the bottom.
 
 ## Decided
 
+### D15 — Terminology: "issuer registration" replaces "allowlist entry" (2026-09-04)
+The record a Customer Administrator creates once at an Authorization Server
+so that it accepts Workload Authorization Grants from one issuer for one
+tenancy is an "issuer registration"; the administrator "registers the
+issuer"; an issuer so recorded is a "registered issuer".  This replaces
+"allowlist entry" / "allowlist" / "allowlisted" throughout.  Rationale: the
+one-time setup step per (issuer, and under a shared issuer the tenancy
+claim, Authorization Server) is a registration in substance -- an
+administrator-created record holding an identifier, a key-discovery
+reference and policy, against which later presentations are validated --
+and naming it one states the contrast the document actually draws: one
+issuer registration per tenancy, no per-workload and no client registration
+(RFC 7591).  "Allowlist" is attested for the *set* of accepted issuers
+(WIMSE-ID s7.3, WIMSE workload-creds s9.1, ID-JAG s9.4) but undersells a
+structured record that carries a permission mapping and, under shared
+issuers, a pinned tenancy value; "allowlist entry" as that record was this
+document's coinage and was never defined.  The term survives shared issuers
+(two registrations at one Authorization Server may name the same issuer
+with different tenancy values), which "Trusted Issuer" does not.  Known
+cost: in the OAuth WG unqualified "registration" means RFC 7591 client
+registration, so the Terminology entry says explicitly that an issuer
+registration is not a client registration and yields no client identifier
+or credential, and the two disclaimers ("not via a client registration",
+"Agents are not dynamically registered clients") stay qualified.
+Alternatives (review-panel poll, 7 seats; 5 ranked this first): keep
+"allowlist entry" and define it (zero-risk status quo; author and two seats
+found it undersold the record); "Trusted Issuer" (RFC 7521 s8 / ID-JAG s4.1
+vocabulary; mislabels a per-tenancy record as an issuer once issuers are
+shared); "Issuer Trust" (federation-console jargon, unattested in the cited
+texts); "issuer binding" ("binding" is overloaded with sender-constraining).
+
 ### D13 — WAG is a standalone mechanism, not a profile of AIMS (2026-08-31, closes #1)
 The draft no longer calls itself a profile of draft-klrc-aiagent-auth
 (AIMS). AIMS moves from the normative to the informative references; the

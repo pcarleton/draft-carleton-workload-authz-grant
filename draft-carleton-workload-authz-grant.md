@@ -159,7 +159,7 @@ conceptual model in {{aims}}.
 A design goal of this document is a minimal adoption path for services that
 already operate an OAuth deployment: supporting it requires changes only at
 the authorization server's token endpoint, which accepts the JWT
-authorization grant from allowlisted issuers.  The access tokens the
+authorization grant from registered issuers.  The access tokens the
 authorization server issues are unchanged in format and semantics, and
 resource servers continue to trust their authorization server exactly as
 they do today.
@@ -234,7 +234,7 @@ The mechanism has three steps, of which only the last recurs
    issuer, naming the Agent as its subject and carrying the Agent's
    Properties -- as the authorization grant in an ordinary OAuth token
    request.  The Authorization Server validates the signature against the
-   allowlisted issuer's keys, accepts the Agent whether or not it has seen
+   registered issuer's keys, accepts the Agent whether or not it has seen
    the Agent Identifier before, and issues an access token whose format and
    semantics are unchanged.
 
@@ -242,7 +242,7 @@ The mechanism has three steps, of which only the last recurs
  Customer        Agent Platform        Authorization      Resource
  Administrator   (tenancy issuer)      Server (AS)        Server (RS)
       |                 |                   |                 |
-  (1) |--- allowlist issuer identifier ---->|                 |
+  (1) |--- register issuer identifier ----->|                 |
       |                 |<-- GET metadata,  |                 |
       |                 |    JWK Set -------|                 |
       |                 |                   |                 |
@@ -285,7 +285,7 @@ The Agent Identifier MAY be, and is RECOMMENDED to be, a Workload
 Identifier URI {{WIMSE-ID}} with an opaque path; a bare opaque string is also
 permitted.  When the Agent Identifier
 is a URI, the Authorization Server validates its authority component against
-the allowlisted issuer's tenancy once, at token issuance; Resource Servers
+the registered issuer's tenancy once, at token issuance; Resource Servers
 treat the complete identifier as an opaque, exact-match string regardless of
 form and MUST NOT derive trust from its components.
 
@@ -454,13 +454,13 @@ connects them.
 ## Trust Establishment {#trust}
 
 The Customer Administrator once records, at the Authorization Server, an
-allowlist entry binding one issuer to one tenancy: the issuer identifier, from which
+issuer registration binding one issuer to one tenancy: the issuer identifier, from which
 the issuer's metadata and JWK Set location are discovered per
 {{OIDC-DISCOVERY}} (retrieved over https {{RFC9525}}), and the tenancy's initial
 Property-to-permission mapping for the Resource Server ({{properties}}).  Establishment is by
 reference; no keys or secrets are transferred, and key rotation is by JWK Set
 update alone.  Platforms serving multiple customers MUST use a distinct
-issuer per tenancy: the issuer is the trust boundary the allowlist expresses,
+issuer per tenancy: the issuer is the trust boundary the registration expresses,
 and a shared issuer would move tenancy enforcement into claim evaluation at
 every Authorization Server -- including relying parties that can evaluate
 only subject and audience ({{oi}}).  The proposed MCP Workload Identity
@@ -468,7 +468,7 @@ Federation extension {{MCP-WIF}} recommends (SHOULD) that authorization
 servers rely only on issuing keys bound to a single tenant; this document deliberately tightens that boundary to a
 per-tenancy issuer MUST.
 
-An allowlist entry is durable: it is held at the Authorization Server, only
+An issuer registration is durable: it is held at the Authorization Server, only
 the Customer Administrator can remove it, and it outlives the tenancy it
 names if that tenancy ends at the Platform.  The issuer identifier of a
 per-tenancy issuer MUST therefore be assigned by the Platform, MUST remain
@@ -476,19 +476,19 @@ stable for the life of the tenancy, and MUST NOT be reassigned to another
 tenancy after that tenancy ends.  A Platform that derives the identifier
 from a customer-chosen name (a workspace slug, an organization subdomain)
 MUST NOT release that name for reuse by another customer: reassignment
-would hand the new customer every allowlist entry the old one held, at
+would hand the new customer every issuer registration the old one held, at
 every Authorization Server, with no way for the Platform to find or clear
 them.  The same rule covers the authority component of a URI-form Agent
 Identifier ({{identity-model}}), which carries the same tenancy.
 
 Multi-issuer operation is scoped by issuer throughout.  An Authorization
-Server MUST resolve and cache keys per allowlist entry and MUST NOT merge
+Server MUST resolve and cache keys per issuer registration and MUST NOT merge
 key sets across issuers, and it MUST interpret `sub` and `jti` only within
 the scope of the presenting `iss`.  A Resource Server that keeps a
 Property-to-permission mapping ({{properties}}) likewise scopes it by
-`iss`.  An Agent Identifier is unique within the allowlist entry that
+`iss`.  An Agent Identifier is unique within the issuer registration that
 admits it, not globally.  Policy, audit, and grant records MUST be keyed on
-that entry's scope plus `sub` -- the (`iss`, `sub`) pair -- and MUST NOT be
+that registration's scope plus `sub` -- the (`iss`, `sub`) pair -- and MUST NOT be
 keyed on `sub` alone; a complete URI-form identifier whose authority
 component identifies the tenancy ({{identity-model}}) is an equivalent key.
 
@@ -499,7 +499,7 @@ ahead-of-time interaction with the Resource Server, the Authorization
 Server, an Enterprise IdP, or the Customer Administrator.  The Authorization
 Server first learns that an Agent exists when the Agent presents its first
 authorization grant: it MUST accept a previously-unseen Agent Identifier
-presented as sub under an allowlisted issuer, and authorization -- at the
+presented as sub under a registered issuer, and authorization -- at the
 Authorization Server and the Resource Server alike -- is via {{properties}},
 never identifier structure.  Agents are not
 dynamically registered clients {{RFC7591}}.
@@ -578,7 +578,7 @@ does not manage its downstream effects.
 
 # Security Considerations
 
-TODO: unseen agent identifiers under trusted issuers; issuer allowlist as the
+TODO: unseen agent identifiers under trusted issuers; issuer registration as the
 trust boundary; tenant confusion at multi-issuer Authorization Servers ({{trust}});
 bearer-assertion theft and assertion lifetime; Platform as root of trust;
 credential non-exposure to the model; automated trust establishment.
