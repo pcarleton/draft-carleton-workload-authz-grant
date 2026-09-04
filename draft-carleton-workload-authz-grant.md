@@ -271,8 +271,9 @@ issuers this revision specifies -- the rule that {{Section 3.1 of IDJAG}}
 applies to subject identifiers.  It MUST NOT be reassigned to a different Agent;
 where the identifier is a Workload Identifier, this tightens the SHOULD NOT
 of {{Section 4.5 of WIMSE-ID}}, because Resource Servers key durable records
-(policy, audit, grants) on it.  Renaming an Agent MUST NOT change its Agent
-Identifier.  Agent Identifiers are compared as case-sensitive strings with
+(policy, audit, grants) on it.  Renaming an Agent -- changing its name
+Property ({{properties}}) or any other display label -- MUST NOT change its
+Agent Identifier.  Agent Identifiers are compared as case-sensitive strings with
 no transformations or canonicalizations applied ({{Section 2 of RFC7519}},
 StringOrURI); a URI-form identifier is compared as the complete URI
 ({{Section 4.3 of WIMSE-ID}}), with no prefix or wildcard matching
