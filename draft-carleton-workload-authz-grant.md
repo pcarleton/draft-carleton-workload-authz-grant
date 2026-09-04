@@ -261,13 +261,24 @@ The mechanism has three steps, of which only the last recurs
 
 ## Agent Identity Model {#identity-model}
 
-An Agent's identity has three units: the tenancy's issuer, which signs
-assertions about the Agent; the Agent Identifier, opaque, unique within the
-issuer, immutable, and never reassigned, carried as the assertion's sub
-({{workload-authorization-grant}}); and claims, carrying everything else
-({{properties}}).  Renaming an Agent MUST NOT change its Agent Identifier.
-Resource Servers MUST NOT parse or pattern-match the Agent Identifier for
-authorization; single-agent policy is an exact match on the sub value.
+An Agent's identity has three units: the issuer that vouches for it, which
+signs assertions about the Agent; the Agent Identifier, carried as the
+assertion's `sub` ({{workload-authorization-grant}}); and claims, carrying
+everything else ({{properties}}).  The Agent Identifier is opaque and
+immutable.  It MUST be unique within the scope of the allowlist entry under
+which it is presented ({{trust}}) -- within the issuer, for the per-tenancy
+issuers this revision specifies -- the rule that {{Section 3.1 of IDJAG}}
+applies to subject identifiers.  It MUST NOT be reassigned to a different Agent;
+where the identifier is a Workload Identifier, this tightens the SHOULD NOT
+of {{Section 4.5 of WIMSE-ID}}, because Resource Servers key durable records
+(policy, audit, grants) on it.  Renaming an Agent MUST NOT change its Agent
+Identifier.  Agent Identifiers are compared as case-sensitive strings with
+no transformations or canonicalizations applied ({{Section 2 of RFC7519}},
+StringOrURI); a URI-form identifier is compared as the complete URI
+({{Section 4.3 of WIMSE-ID}}), with no prefix or wildcard matching
+({{Section 7.6 of WIMSE-ID}}).  Resource Servers MUST NOT parse or
+pattern-match the Agent Identifier for authorization; single-agent policy is
+an exact match on the `sub` value.
 
 The Agent Identifier MAY be, and is RECOMMENDED to be, a Workload
 Identifier URI {{WIMSE-ID}} with an opaque path; a bare opaque string is also
@@ -459,14 +470,29 @@ Federation extension {{MCP-WIF}} recommends (SHOULD) that authorization
 servers rely only on issuing keys bound to a single tenant; this document deliberately tightens that boundary to a
 per-tenancy issuer MUST.
 
+An allowlist entry is durable: it is held at the Authorization Server, only
+the Customer Administrator can remove it, and it outlives the tenancy it
+names if that tenancy ends at the Platform.  The issuer identifier of a
+per-tenancy issuer MUST therefore be assigned by the Platform, MUST remain
+stable for the life of the tenancy, and MUST NOT be reassigned to another
+tenancy after that tenancy ends.  A Platform that derives the identifier
+from a customer-chosen name (a workspace slug, an organization subdomain)
+MUST NOT release that name for reuse by another customer: reassignment
+would hand the new customer every allowlist entry the old one held, at
+every Authorization Server, with no way for the Platform to find or clear
+them.  The same rule covers the authority component of a URI-form Agent
+Identifier ({{identity-model}}), which carries the same tenancy.
+
 Multi-issuer operation is scoped by issuer throughout.  An Authorization
 Server MUST resolve and cache keys per allowlist entry and MUST NOT merge
-key sets across issuers, and it MUST interpret sub and jti only within the scope of the presenting
-iss.  A Resource Server that keeps a Property-to-permission mapping
-({{properties}}) likewise scopes it by iss.
-An Agent Identifier is unique within its issuer, not globally: policy and
-audit records are keyed on the (iss, sub) pair, or on the complete URI-form
-identifier, which carries the tenancy in its authority component.
+key sets across issuers, and it MUST interpret `sub` and `jti` only within
+the scope of the presenting `iss`.  A Resource Server that keeps a
+Property-to-permission mapping ({{properties}}) likewise scopes it by
+`iss`.  An Agent Identifier is unique within the allowlist entry that
+admits it, not globally.  Policy, audit, and grant records MUST be keyed on
+that entry's scope plus `sub` -- the (`iss`, `sub`) pair -- and MUST NOT be
+keyed on `sub` alone; a complete URI-form identifier whose authority
+component identifies the tenancy ({{identity-model}}) is an equivalent key.
 
 ## Agent Instantiation {#instantiation}
 
