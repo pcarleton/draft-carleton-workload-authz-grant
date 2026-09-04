@@ -261,8 +261,8 @@ The mechanism has three steps, of which only the last recurs
 
 ## Agent Identity Model {#identity-model}
 
-An Agent's identity has three units: the issuer that vouches for it, which
-signs assertions about the Agent; the Agent Identifier, carried as the
+An Agent's identity has three units: the issuer, which signs assertions
+about the Agent; the Agent Identifier, carried as the
 assertion's `sub` ({{workload-authorization-grant}}); and claims, carrying
 everything else ({{properties}}).  The Agent Identifier is opaque and
 immutable.  It MUST be unique within the scope of the allowlist entry under
