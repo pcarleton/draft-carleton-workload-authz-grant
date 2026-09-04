@@ -121,7 +121,7 @@ https://github.com/pcarleton/draft-carleton-workload-authz-grant.
 
 # Introduction {#introduction}
 
-Agent platforms increasingly host many agent instances per customer, created
+Agent platforms host many agent instances per customer, created
 and retired at the cadence at which the customer organizes its work -- per
 channel, repository, or pipeline.  An individual agent may persist for weeks
 or months, but the person creating it is typically not the person authorized
