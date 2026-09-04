@@ -203,7 +203,30 @@ Enterprise IdP:
 : The customer's identity provider (optional).
 
 Customer Administrator:
-: The human who performs one-time trust establishment.
+: The human who performs one-time trust establishment by registering the
+  Platform's issuer at the Authorization Server ({{trust}}).
+
+Tenancy:
+: One customer's administrative boundary at a party.  At the Platform, a
+  tenancy is the set of Agents one customer controls together with the
+  issuer that signs assertions about them; at the Authorization Server
+  and Resource Server, it is that customer's account there, within which
+  issuer registrations are held.  Where the side matters, this document
+  says "Platform tenancy" or "the customer's tenancy at the Authorization
+  Server".
+
+Issuer Registration ("registration"):
+: The record a Customer Administrator creates at an Authorization Server
+  so that it accepts Workload Authorization Grants from one issuer for the
+  Agents of one Platform tenancy ({{trust}}).  The administrator
+  "registers the issuer"; an issuer so recorded is a "registered issuer".
+  In this document a registration holds the issuer identifier and the
+  tenancy's initial Property-to-permission mapping ({{properties}}); it
+  is also the scope within which the Authorization Server holds the
+  issuer's keys and interprets `sub` and `jti`.  An issuer registration
+  is not an OAuth client registration {{RFC7591}}: it is made by
+  reference to the issuer's published metadata, and the Authorization
+  Server issues no client identifier or credential in return.
 
 # Concepts
 
