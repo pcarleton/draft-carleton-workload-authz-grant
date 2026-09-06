@@ -5,7 +5,58 @@ Most recent first within each state. Open items are at the bottom.
 
 ## Decided
 
-### D16 — Terminology: "Service" for the AS + RS party; "Platform tenancy" / "Service tenancy" (2026-09-04)
+### D17 — Tenancy is confined to one section; the rest of the document speaks of one Platform and one Service (2026-09-06)
+Partly supersedes D15 (the term) and D16 (the tenancy pair).  The
+document now treats the Platform as one party with one issuer and the
+Service as one party throughout, and says everything it has to say about
+multi-tenant Platforms and Services in a single Deployment section,
+"Multi-Tenant Platforms and Services".  That section states the reading
+rule (outside it, "the Platform" denotes one customer's tenancy of a
+Platform, with its own issuer, and "the Service" / "the Authorization
+Server" / "the Resource Server" denote the Service acting for one
+tenancy) and carries the only tenancy-specific requirements: a
+multi-tenant Platform MUST operate a distinct issuer (and issuer
+identifier) per tenancy, so that the issuer is the trust boundary a
+registration expresses; a tenancy's issuer identifier, or a
+customer-chosen name it derives from, MUST NOT be reassigned to another
+tenancy; and at a multi-tenant Service a registration, its mapping and its
+Agent records belong to one tenancy, and an assertion admitted under it
+MUST NOT yield access outside that tenancy (how the Service selects the
+tenancy for a token request is out of scope).  Consequences elsewhere:
+"per-tenancy issuer" becomes "the Platform's issuer", and the Agent
+Platform definition says once that a multi-customer Platform is treated as
+a distinct Platform per customer; the trust record is a "Platform
+registration" (the Customer Administrator "registers the Platform"; the
+registration names the Platform's issuer), replacing D15's "tenancy
+registration" for the reason D15 gave -- the unit is the trusted party,
+the issuer is how its assertions are recognized -- now stated without the
+tenancy vocabulary; the Conventions entry "Tenancy" and D16's "Platform
+tenancy" / "Service tenancy" pair are withdrawn ("Service" itself stays);
+Trust Establishment states issuer-identifier non-reassignment generally
+(a Platform MUST NOT assign an issuer identifier it has used, or a name it
+derives from, to another holder) and leaves the per-tenancy form to the
+new section; the Agent Identity Model keeps the ID-JAG (iss, sub)
+"single-tenant issuer" citation with a pointer to the section that makes
+every issuer single-tenant in ID-JAG's sense.  Rationale (editor feedback
+on PR #10): interoperability depends on the issuer, the subject and the
+registration, not on how either party partitions its customers
+internally, so the document should specify as little about tenancy as it
+can and abstract it as a trust boundary; threading "tenancy" through every
+section forced a Platform-side / Service-side qualifier on each use and
+three Conventions entries to support it.  Alternatives: keep tenancy
+threaded through Conventions, Overview, Identity Model, JWT Syntax and
+Trust Establishment (the state of PR #10 before this change; precise, but
+every section then restates the partition); drop tenancy entirely
+(rejected: the distinct-issuer-per-tenancy requirement and the
+identifier-reassignment hazard exist only because Platforms are
+multi-tenant, are load-bearing for security, and need one normative
+home); "issuer registration" instead of "Platform registration"
+(mechanically exact once the Platform has one issuer, and D15's objection
+to it was the shared-issuer case now out of the main text; not taken so
+that the registration keeps naming the trusted party rather than its
+key-discovery handle, but a one-word swap if preferred).
+
+### D16 — [tenancy pair withdrawn by D17] Terminology: "Service" for the AS + RS party; "Platform tenancy" / "Service tenancy" (2026-09-04)
 "Service" names the party that operates a Resource Server and the
 Authorization Server protecting it -- typically one vendor's product -- as
 one organizational unit, so that the customer's two tenancies have a fixed
@@ -24,7 +75,7 @@ the side by the RS alone, though the registration lives at the AS);
 "issuing tenancy" / "relying tenancy" (precise but unfamiliar, and
 "relying party" is already OIDC vocabulary for a client).
 
-### D15 — Terminology: "tenancy registration" replaces "allowlist entry" (2026-09-04)
+### D15 — [term superseded by D17] Terminology: "tenancy registration" replaces "allowlist entry" (2026-09-04)
 The record a Customer Administrator creates once at an Authorization Server
 so that it accepts Workload Authorization Grants for the Agents of one
 Platform tenancy is a "tenancy registration" (short form "the
