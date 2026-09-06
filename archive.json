@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2026-09-03T03:35:12.629620+00:00",
+  "timestamp": "2026-09-06T03:37:31.402642+00:00",
   "repo": "pcarleton/draft-carleton-workload-authz-grant",
   "labels": [
     {
@@ -55,15 +55,15 @@
       "id": "I_kwDOTlTgBM8AAAABMywF3g",
       "title": "Reposition away from \"profile of AIMS\" to only having \"relationship to AIMS\", and revisit Table of Contents",
       "url": "https://github.com/pcarleton/draft-carleton-workload-authz-grant/issues/1",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "pcarleton",
       "authorAssociation": "OWNER",
       "assignees": [],
       "labels": [],
       "body": "This draft does fit the conceptual model put forward in [AIMS](https://datatracker.ietf.org/doc/draft-klrc-aiagent-auth/), however calling it a \"profile\" doesn't quite fit.\n\nThis issue is to track revising the draft to be less dependent on AIMS, so it needs:\n* to remove \"profile\" language\n* to revisit the concepts section to be able to stand by itself more readily\n\nOnce this issue is complete, the following should be true:\n* A reader does not need to read all of AIMS to make use of this draft\n* A reader familiar with AIMS should know how this draft lines up with its conceptual model of agents as workloads",
       "createdAt": "2026-08-14T16:00:00Z",
-      "updatedAt": "2026-08-19T17:37:59Z",
-      "closedAt": null,
+      "updatedAt": "2026-09-03T14:22:28Z",
+      "closedAt": "2026-09-03T14:22:28Z",
       "comments": [
         {
           "author": "arndt-s",
@@ -93,7 +93,7 @@
       "labels": [],
       "body": "We want:\n* A small set of claims that are common among implementations (target: max of 3)\n* extensibility to add more claims if a platform and resource want\n* Clearly specify which claims can be trusted for policy decisions, and clarify that others cannot\n* ability to re-use existing authz modeling where appropriate (i.e. I want this agent to have the same permissions as humans on this team)\n\nThe leading candidate is `roles`, `groups` and `entitlements` from https://datatracker.ietf.org/doc/html/rfc7643#section-4.1.2 / https://datatracker.ietf.org/doc/html/rfc9068#section-2.2.3.1\n\nIf that does end up being what we do, we need to:\n* play out an example of the agent platform giving claims like roles / groups if they're not specific to the platform\n* decide whether they need to be namespaced by FQDN (or if issuer namespacing is sufficient)\n* explain relationship to #3 ",
       "createdAt": "2026-08-14T16:12:42Z",
-      "updatedAt": "2026-08-27T21:40:39Z",
+      "updatedAt": "2026-09-03T14:17:42Z",
       "closedAt": null,
       "comments": [
         {
@@ -112,17 +112,24 @@
         },
         {
           "author": "bc-pi",
-          "authorAssociation": "NONE",
+          "authorAssociation": "COLLABORATOR",
           "body": "I'm struggling to see/understand how `authorization_details` would work here and the claims* about what that claim does in ID-JAG. \n\n\\* pun intended ",
           "createdAt": "2026-08-27T21:23:03Z",
           "updatedAt": "2026-08-27T21:23:03Z"
         },
         {
           "author": "bc-pi",
-          "authorAssociation": "NONE",
+          "authorAssociation": "COLLABORATOR",
           "body": "One (other?) potential problem with the claims from SCIM is that they aren't defined very well despite being registered\n\nhttps://datatracker.ietf.org/doc/html/rfc9068#name-registry-content-2\n\nhttps://mailarchive.ietf.org/arch/msg/jwt-reg-review/sokgjH43qzp9nK5iq-Qo4J8QFRY/ \n\nhttps://mailarchive.ietf.org/arch/msg/oauth/iJFODO2hW6rTlVV3pnJKxyRMQMU/\n\n",
           "createdAt": "2026-08-27T21:40:39Z",
           "updatedAt": "2026-08-27T21:40:39Z"
+        },
+        {
+          "author": "pcarleton",
+          "authorAssociation": "OWNER",
+          "body": "I'm tempted to leave `authorization_details` fairly unspecified in order to leave room for things like payments if folks want to use it for that in the future, e.g. what's layed out here: https://yaron-zehavi.github.io/oauth-rich-authorization-requests-metadata/draft-ietf-oauth-rar-metadata-remediation-00/draft-ietf-oauth-rar-metadata-remediation.html#name-authorization-server-metada\n\nregarding the SCIM claims, I was thinking just plain strings to start. In the \"direct\" deployment model (Platform -> Service provider, no IdP involved), it is most convenient to just use strings, and not try to teach the platform the full SCIM schema.  The purpose of using `groups` in the direct model is only as a familiar way to convey properties between the platform and service provider.  There will need to be a \"mapping\" step, where the Service Provider lets the admin decide what access the WAG grants in the platform based on properties.  The main / only benefit of mentioning the SCIM claim set here is to give a small nudge to make that \"mapping\" step a little less \"wild west\". (e.g. \"platform_foo_team4=true\" claim coming from Platform4 should map to this permission in Service6, vs. having some nicer UX around when you see \"team4\" in a `groups` claim.) \n\nrelated: I believe if we're making agent platforms full SCIM clients, that's likely not desirable, and instead would be better served by the \"idp mediated\" model (Platform -> IdP -> Service Provider) that we've started sketching out a little in #3 (and to re-iterate, I want to leave basically *all* \"how does this work with an idp\" specification out of this document, apart from nodding to it as a deployment model, and potentially stating that Service Providers should be able to be mostly agnostic of whether the token is coming from an IdP or from a platform)\n\n",
+          "createdAt": "2026-09-03T14:17:42Z",
+          "updatedAt": "2026-09-03T14:17:42Z"
         }
       ]
     },
@@ -185,7 +192,7 @@
       "labels": [],
       "body": "-00 (Trust Establishment) says a platform serving multiple customers MUST use a distinct issuer per tenancy, because the issuer is the boundary the AS allowlist expresses. Two things push against the MUST:\n\n- A platform that already runs one issuer (one metadata document, one JWKS) would need per-tenant issuer URLs and metadata just for this grant,  the single largest piece of new surface the draft asks of a platform. (example issuers in this boat: )\n- An AS that evaluates claims can pin (issuer, tenant) exactly as precisely as it can pin an issuer, so this allows for more flexibility.\n\nCosts of allowing a `tenant` claim:\n- If we allow it ever, then every consumer needs to process it always, and a missing tenant claim when one is needed becomes a failure mode we have to consider\n- It's slightly more complicated for the admin flow to copy 2 values over (issuer + tenant claim), than just a single string (per-tenant-issuer)\n\n\nI still thing distinct issuers is the better path for someone implementing from scratch, however, I think it's worth the flexibility / matches reality more closely to allow for the tenant claim.\n\nProposal for -01:\n- Distinct issuer per tenancy becomes RECOMMENDED. A platform that shares an issuer across tenancies MUST include a `tenant` claim (single opaque, stable string) and the AS allowlist entry pins issuer + tenant.\n- Issuer metadata MUST state which mode the issuer uses. (more discussion needed here, I want to prevent the missing claim when needed causing issues)\n\nRelated: #6 (subject namespace collisions at multi-issuer ASes).",
       "createdAt": "2026-08-27T13:12:46Z",
-      "updatedAt": "2026-08-31T16:15:54Z",
+      "updatedAt": "2026-09-04T14:25:26Z",
       "closedAt": null,
       "comments": [
         {
@@ -208,6 +215,13 @@
           "body": "I think where we're landing:\n* we want to support IdP's that use a shared issuer\n* a `tenant` claim is one option we can recommend, but can't require given the goal of supporting existing deployments that _don't_ use `tenant`\n* we could also specify a metadata-based approach to explaining which claims define the notion of a `tenant` along with `issuer`.  (related from previous discussion: we could also use the metadata based approach for defining which claims are set by which authority, platform, admin or agent-author).\n* the fallback we'd need likely in any case is \"which claim is load-bearing is communicated out of band\", e.g. for ones that don't use tenant, you have to figure it out per issuer (e.g. knowing that Entra uses `tid`).  I don't love that mechanism, but may just be required to note, e.g. have bullets (2) & (3) be SHOULD's.\n\n@arndt-s  I think for (3), we'd want to specify that it is specifically for uniqueness, rather than just generically \"required\", right? e.g.  you might have a required \"scope\" claim, but that wouldn't be treated the same way ",
           "createdAt": "2026-08-31T16:15:54Z",
           "updatedAt": "2026-08-31T16:15:54Z"
+        },
+        {
+          "author": "arndt-s",
+          "authorAssociation": "NONE",
+          "body": "Agreed that the `required_assertion_claims` name is not ideal. Maybe we also just need to make it explicit and call it \"required_tenant_claims\". My thought was actually a bit further and use the same mechanics for claims that are not directly describing the tenant but within. As a concrete example, a Github organization is the tenant, but the repository is an essential thing to check. Or Kubernetes, where the namespace is a very common claim to check.",
+          "createdAt": "2026-09-04T14:25:26Z",
+          "updatedAt": "2026-09-04T14:25:26Z"
         }
       ]
     }
@@ -312,6 +326,81 @@
       },
       "comments": [],
       "reviews": []
+    },
+    {
+      "number": 9,
+      "id": "PR_kwDOTlTgBM8AAAABCEcmGA",
+      "title": "Aims reframe",
+      "url": "https://github.com/pcarleton/draft-carleton-workload-authz-grant/pull/9",
+      "state": "MERGED",
+      "author": "pcarleton",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "Closes #1.\r\n\r\nthe draft called itself a profile of draft-klrc-aiagent-auth (AIMS) but never\r\nactually depended on it: every rule is stated in terms of RFC 7523, RFC\r\n8414 metadata and published JWK Sets. This drops the profile framing so\r\nan AS implementer can read this document alone.\r\n\r\n- AIMS moves from normative to informative references; \"profile\" is\r\n  removed throughout.\r\n- \"Relationship to AIMS\" becomes an informative correspondence table\r\n  (agent acting on its own behalf, AIMS 10.4.2) instead of inherited\r\n  requirements.\r\n- New Concepts > Overview: the parties, the three steps (trust\r\n  establishment once, instantiation, per-request grant) and an\r\n  end-to-end figure, so the document stands on its own.\r\n- Abstract/Introduction wording: no administrator-performed\r\n  per-workload registration step; drop the \"self-contained\" and \"no\r\n  per-workload credential\" claims (the grant is per workload; we build\r\n  on RFC 7523).\r\n- Agent Identity Model: single-agent policy is an exact match on the\r\n  sub value.\r\n- Section anchors added ({#introduction}, {#conventions}, {#overview},\r\n  {#aims}); decision log D13.\r\n\r\nNo change to the grant format, claims, or AS processing rules.",
+      "createdAt": "2026-09-03T14:21:17Z",
+      "updatedAt": "2026-09-03T14:22:27Z",
+      "baseRepository": "pcarleton/draft-carleton-workload-authz-grant",
+      "baseRefName": "main",
+      "baseRefOid": "210b15d16b028b27d5fc6a2c0e9096ee679ff370",
+      "headRepository": "pcarleton/draft-carleton-workload-authz-grant",
+      "headRefName": "aims-reframe",
+      "headRefOid": "c5475e47d8e125601bb17fd17553d33e715ef6c7",
+      "closedAt": "2026-09-03T14:22:27Z",
+      "mergedAt": "2026-09-03T14:22:27Z",
+      "mergedBy": "pcarleton",
+      "mergeCommit": {
+        "oid": "2c5222b411c6ff73bed92ec94622d0b2c8717bce"
+      },
+      "comments": [],
+      "reviews": []
+    },
+    {
+      "number": 10,
+      "id": "PR_kwDOTlTgBM8AAAABCNovMA",
+      "title": "[wip] rewrite the trust section",
+      "url": "https://github.com/pcarleton/draft-carleton-workload-authz-grant/pull/10",
+      "state": "OPEN",
+      "author": "pcarleton",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "\r\nthis is combination of:\r\n* clarifying the constraints around the agent identifier\r\n* swapping from \"allowlist entry\" to \"tenancy registration\"\r\n* rewriting the Trust section to make more sense \r\n\r\nstill todo:\r\n* allow for `tenant` claim",
+      "createdAt": "2026-09-04T14:29:18Z",
+      "updatedAt": "2026-09-04T18:29:03Z",
+      "baseRepository": "pcarleton/draft-carleton-workload-authz-grant",
+      "baseRefName": "main",
+      "baseRefOid": "2c5222b411c6ff73bed92ec94622d0b2c8717bce",
+      "headRepository": "pcarleton/draft-carleton-workload-authz-grant",
+      "headRefName": "trust-rewrite",
+      "headRefOid": "17c7d74dac9a75794962bf150fbc35c781020421",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABMPlXeQ",
+          "commit": {
+            "abbreviatedOid": "17c7d74"
+          },
+          "author": "pcarleton",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-04T18:29:00Z",
+          "updatedAt": "2026-09-04T18:29:03Z",
+          "comments": [
+            {
+              "originalPosition": 4,
+              "body": "Heads-up before anyone reviews this closely: I'm leaning towards dropping tenancy from the draft almost entirely, or reducing it to the minimal mention we can get away with, rather than building the Trust section around it. I'm preparing a variant of this branch along those lines and will push it here (or close this in favor of it) early next week. Comments on the agent-identifier constraints are still welcome; the tenancy-registration framing is the part likely to change.",
+              "createdAt": "2026-09-04T18:29:00Z",
+              "updatedAt": "2026-09-04T18:29:03Z"
+            }
+          ]
+        }
+      ]
     }
   ]
 }
