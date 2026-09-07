@@ -536,15 +536,8 @@ each registered issuer's JWK Set separate, per issuer identifier, and
 MUST NOT merge key sets across issuers.  It MUST interpret
 `sub` and `jti` only within the scope of the presenting `iss`.  A
 Property-to-permission mapping ({{properties}}) is likewise scoped by
-`iss`.  An Agent Identifier is unique only within its issuer
-({{identity-model}}), not globally: the same `sub` value under a different
-`iss` denotes a different Agent ({{Section 3.1.2 of WIMSE-ARCH}}).  An
-Authorization Server or Resource Server that keeps policy, audit, or grant
-records about an Agent MUST therefore key them on the (`iss`, `sub`) pair
-and MUST NOT key them on `sub` alone.  A complete URI-form Agent
-Identifier is an equivalent key only where the Authorization Server has
-verified, at issuance, that its authority component is the trust
-domain of the admitting registration's issuer ({{identity-model}}).
+`iss`; {{security-considerations}} states what this means for records
+keyed on the Agent Identifier.
 
 ## Multi-Tenant Platforms and Services {#tenancy}
 
@@ -601,12 +594,13 @@ their mappings.
 Agent Identifiers, by contrast, MUST be unique across all tenancies
 sharing the issuer identifier -- stricter than the (`iss`, `tenant`,
 `sub`) rule of {{Section 3.1 of IDJAG}} -- so that (`iss`, `sub`)
-denotes one Agent ({{trust}}) even to a party that never sees the
-pinned value, such as a Resource Server or a relying party that
-evaluates only issuer, subject, and audience ({{oi}}).  Under either
-form, the trust domain of a tenancy's URI-form Agent Identifiers
-({{identity-model}}) identifies that tenancy alone: a Platform MUST NOT
-place the Agent Identifiers of two tenancies in one trust domain.
+denotes one Agent ({{security-considerations}}) even to a party
+that never sees the pinned value, such as a Resource Server or a
+relying party that evaluates only issuer, subject, and audience
+({{oi}}).  Under either form, the trust domain of a tenancy's URI-form
+Agent Identifiers ({{identity-model}}) identifies that tenancy alone:
+a Platform MUST NOT place the Agent Identifiers of two tenancies in
+one trust domain.
 
 The first form is preferred because under it the issuer identifier
 alone is the trust boundary a registration expresses ({{trust}});
@@ -748,6 +742,17 @@ one issuer identifier and JWK Set, and registrations of a shared
 identifier that lack a pinned value ({{tenancy}}); bearer-assertion
 theft and assertion lifetime; Platform as root of trust;
 credential non-exposure to the model; automated trust establishment.
+
+An Agent Identifier is unique only within its issuer
+({{identity-model}}, {{trust}}), not globally: the same `sub` value
+under a different `iss` denotes a different Agent
+({{Section 3.1.2 of WIMSE-ARCH}}).  An Authorization Server or Resource
+Server that keeps policy, audit, or grant records about an Agent MUST
+therefore key them on the (`iss`, `sub`) pair and MUST NOT key them on
+`sub` alone.  A complete URI-form Agent Identifier is an equivalent
+key only where the Authorization Server has verified, at issuance,
+that its authority component is the trust domain of the admitting
+registration's issuer ({{identity-model}}).
 
 Property freshness is distinct from JWT validity.  A valid signature proves
 that the Platform made the assertion, while `exp` only limits how long the
