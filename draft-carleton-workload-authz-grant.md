@@ -224,13 +224,11 @@ Platform Registration ("registration"):
   registration names is a "registered issuer".  In this document a
   registration names the Platform's issuer by its issuer identifier, by
   which the Platform's assertions are recognized, and optionally holds
-  an initial Property-to-permission mapping ({{properties}}); it is
-  also the scope within which the Authorization Server holds the
-  issuer's keys and interprets `sub` and `jti`.  A Platform
-  registration is not an OAuth client registration {{RFC7591}}: it is
-  made by reference to the issuer's published metadata, and the
-  Authorization Server issues no client identifier or credential in
-  return.
+  an initial Property-to-permission mapping ({{properties}}).  A
+  Platform registration is not an OAuth client registration
+  {{RFC7591}}: it is made by reference to the issuer's published
+  metadata, and the Authorization Server issues no client identifier
+  or credential in return.
 
 # Concepts
 
