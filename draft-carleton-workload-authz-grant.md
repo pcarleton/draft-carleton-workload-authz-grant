@@ -245,8 +245,8 @@ customers; this document then treats each customer's partition of a
 Platform, with its own issuer, as a distinct Platform, and likewise for
 a Service ({{tenancy}}).
 
-The mechanism has three steps, of which only the last recurs
-({{fig-overview}}):
+The mechanism has three steps ({{fig-overview}}); the first two are
+setup, and only the token request happens on every access:
 
 1. Trust establishment, once per Platform and Authorization Server
    ({{trust}}): the Customer Administrator registers the Platform at the
