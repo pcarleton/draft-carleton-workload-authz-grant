@@ -45,7 +45,7 @@ longer be inferred from the identifier.  Alternatives: let sub be unique
 only per (iss, pinned value), as ID-JAG allows (rejected for the
 downstream collision above, unless the Authorization Server were also
 required to convey the pinned value to the Resource Server and the
-Resource Server to key on all three -- an obligation the own-identifier
+Resource Server to key on all three -- an obligation the unique-identifier
 form does not have -- and even then the subject-only relying parties
 stay exposed); let the trust domain follow the shared identifier as
 metadata and keys do (rejected: it would require editing Trust
@@ -62,7 +62,7 @@ alternative above, with its costs stated.
 Amends D17, which required a distinct issuer identifier per tenancy.
 The per-tenancy distinct-issuer MUST stands, but "Multi-Tenant Platforms
 and Services" now says what "distinct" means, in two named forms: the
-own-identifier form, in which the tenancy's issuer has its own issuer
+unique-identifier form, in which the tenancy's issuer has its own issuer
 identifier (RECOMMENDED; a single-tenant issuer in the terms of ID-JAG
 Section 6.1), and the shared-identifier form, which the Platform MAY use
 instead, giving several tenancies' issuers one identifier -- one
@@ -92,7 +92,7 @@ domain per tenancy -- are recorded separately as D19.
 Non-reassignment between tenancies covers the issuer identifier and the
 trust domain, as before, and now the pinned value; and a Platform MUST
 NOT bring further tenancies under an identifier a tenancy has used in
-the own-identifier form, since the registrations naming it hold no
+the unique-identifier form, since the registrations naming it hold no
 pinned value and would admit them.  The Agent Platform definition and
 the Overview no longer assert a separate issuer per customer: a
 multi-customer Platform is treated as distinct Platforms, one per
@@ -101,13 +101,13 @@ The Security Considerations TODO gains the shared-key-set and
 unpinned-registration items.  Rationale: what the rest of the document
 depends on is that a registration admits exactly one tenancy's
 assertions and scopes Authorization Server and Resource Server state to
-it.  An own identifier delivers that at every relying party, including
+it.  A unique identifier delivers that at every relying party, including
 those that evaluate only issuer, subject and audience, survives a
 registration made with the identifier alone, and lets a tenancy have
 signing keys of its own -- hence RECOMMENDED, and hence the restated
 MCP-WIF comparison (MCP-WIF draws the boundary at the signing key, this
 document at the registered issuer; the two coincide only under the
-own-identifier form).  But issuers that serve many tenancies under one
+unique-identifier form).  But issuers that serve many tenancies under one
 identifier and distinguish them by a claim are widely deployed and are
 the case ID-JAG's tenant claim exists for; requiring a separate
 identifier would exclude them for a property a pinned claim also

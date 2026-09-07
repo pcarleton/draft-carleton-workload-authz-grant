@@ -555,25 +555,25 @@ A Platform serving multiple customers MUST operate a distinct issuer
 for each tenancy -- one whose assertions name only that tenancy's
 Agents as subject -- so that each Platform registration ({{trust}})
 admits exactly one tenancy.  A tenancy's issuer is distinct in one of
-two forms: the own-identifier form ({{own-identifier}}), which is
-RECOMMENDED, or the shared-identifier form ({{shared-identifier}}),
+two forms: a unique issuer identifier ({{unique-identifier}}), which
+is RECOMMENDED, or a shared issuer identifier ({{shared-identifier}}),
 which a Platform MAY use instead.  In the terms of
 {{Section 6.1 of IDJAG}} these are a single-tenant issuer and one
 tenant of a multi-tenant issuer.  {{tenancy-common}} applies to both.
 
-### Own-Identifier Form {#own-identifier}
+### Unique Issuer Identifier {#unique-identifier}
 
-The tenancy's issuer has an issuer identifier, and hence a metadata
-document and JWK Set, of its own, and the rest of this document
-applies to it as written.  This form is RECOMMENDED because the issuer
-identifier alone is then the trust boundary a registration expresses
-({{trust}}): any Authorization Server enforces it, including a relying
-party that evaluates only issuer, subject, and audience ({{oi}}), and
-the tenancy's signing keys are its own.  ({{MCP-WIF}} draws the
-corresponding boundary at the signing key; the two coincide only under
-this form.)
+The tenancy's issuer has a unique issuer identifier, and hence a
+metadata document and JWK Set of its own, and the rest of this
+document applies to it as written.  This form is RECOMMENDED because
+the issuer identifier alone is then the trust boundary a registration
+expresses ({{trust}}): any Authorization Server enforces it, including
+a relying party that evaluates only issuer, subject, and audience
+({{oi}}), and the tenancy's signing keys are its own.  ({{MCP-WIF}}
+draws the corresponding boundary at the signing key; the two coincide
+only under this form.)
 
-### Shared-Identifier Form {#shared-identifier}
+### Shared Issuer Identifier {#shared-identifier}
 
 The tenancy's issuer shares an issuer identifier -- and hence one
 metadata document and JWK Set -- with other tenancies of the Platform,
@@ -592,8 +592,8 @@ Tenancies in this form share signing keys, and a registration holding
 no pinned value -- the only kind a relying party that evaluates only
 issuer, subject, and audience can hold ({{oi}}) -- admits every
 tenancy under the identifier.  For the same reason a Platform MUST NOT
-bring further tenancies under an issuer identifier already used in the
-own-identifier form: the registrations naming it hold no pinned value
+bring further tenancies under an issuer identifier already used as a
+unique identifier: the registrations naming it hold no pinned value
 and would admit them.
 
 ### Rules Common to Both Forms {#tenancy-common}
