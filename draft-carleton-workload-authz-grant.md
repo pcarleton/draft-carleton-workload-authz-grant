@@ -510,19 +510,15 @@ same Platform can be registered at any number of Authorization Servers,
 and one Authorization Server can hold registrations for any number of
 Platforms.
 
-A Platform registration identifies the Platform only by the issuer
-identifier and persists at the Authorization Server until it is removed
-there, whether or not the Platform still operates that issuer.  The
-issuer is therefore the trust boundary a registration expresses:
-whoever controls an issuer identifier -- or a name, such as a DNS name,
+Because a registration identifies the Platform only by its issuer
+identifier and persists until the Customer Administrator removes it,
+whoever controls that identifier -- or a name, such as a DNS name,
 from which it is derived -- holds every registration naming it, at
-every Authorization Server, and the Platform has no way to find or
-clear them.  A Platform accordingly MUST NOT assign an issuer identifier
-it has used, or such a name, to any other holder.  The same holds for
-the authority component of a URI-form Agent Identifier -- its trust
-domain ({{Section 4.3 of WIMSE-ID}}) -- which likewise identifies the
-Platform ({{identity-model}}).  {{tenancy}} states the corresponding
-rules for a Platform that serves many customers.
+every Authorization Server; a Platform therefore MUST NOT assign an
+issuer identifier it has used, such a name, or the trust domain of its
+URI-form Agent Identifiers ({{identity-model}}) to any other holder,
+and {{tenancy}} states the corresponding rules between a Platform's
+tenancies.
 
 On each presented assertion, the Authorization Server compares `iss` with
 its registered issuer identifiers by Simple String Comparison, as
