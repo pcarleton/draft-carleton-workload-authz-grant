@@ -531,8 +531,9 @@ registration, never under key material or key locations carried in the
 assertion itself ({{RFC8725}}, Sections 3.8 and 3.10).
 
 Authorization Server and Resource Server state is scoped by issuer.  An
-Authorization Server MUST hold signing keys per registered issuer
-identifier and MUST NOT merge key sets across issuers.  It MUST interpret
+Authorization Server MUST keep the verification keys it retrieves from
+each registered issuer's JWK Set separate, per issuer identifier, and
+MUST NOT merge key sets across issuers.  It MUST interpret
 `sub` and `jti` only within the scope of the presenting `iss`.  A
 Property-to-permission mapping ({{properties}}) is likewise scoped by
 `iss`.  An Agent Identifier is unique only within its issuer
@@ -592,10 +593,11 @@ registration as it rejects one whose `iss` equals no registered issuer
 identifier.  Elsewhere in this document, wherever a registration names
 the issuer, or identifies the Platform, by the issuer identifier, or
 the Property-to-permission mapping is scoped by `iss`, the issuer
-identifier is read together with the pinned value; issuer metadata is
-nonetheless discovered from, and signing keys are held per, the issuer
-identifier alone, so registrations that name one identifier with
-different pinned values share its JWK Set but not their mappings.
+identifier is read together with the pinned value; issuer metadata
+and verification keys are nonetheless discovered from, and kept per,
+the issuer identifier alone, so registrations that name one
+identifier with different pinned values share its JWK Set but not
+their mappings.
 Agent Identifiers, by contrast, MUST be unique across all tenancies
 sharing the issuer identifier -- stricter than the (`iss`, `tenant`,
 `sub`) rule of {{Section 3.1 of IDJAG}} -- so that (`iss`, `sub`)
