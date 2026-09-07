@@ -181,9 +181,9 @@ or {{IDJAG}}), and that composition is left to future documents.
 
 Agent Platform ("Platform"):
 : The party that hosts Agents and operates the issuer that vouches for
-  them.  A Platform serving many customers operates a distinct issuer
-  for each and is treated in this document as a distinct Platform per
-  customer ({{tenancy}}).
+  them.  A Platform serving many customers is treated in this document
+  as distinct Platforms, one per customer, each with its own issuer in
+  the sense {{tenancy}} defines.
 
 Agent:
 : A hosted workload with its own Agent Identifier, context, and
@@ -242,8 +242,9 @@ tokens the Resource Server accepts.  The Customer Administrator holds
 the authority to configure the Authorization Server to trust the
 Platform's issuer.  Platforms and Services commonly serve many
 customers; this document then treats each customer's partition of a
-Platform, with its own issuer, as a distinct Platform, and likewise for
-a Service ({{tenancy}}).
+Platform as a distinct Platform, with its own issuer in the sense
+{{tenancy}} defines, and each customer's partition of a Service as a
+distinct Service.
 
 The mechanism has three steps ({{fig-overview}}); the first two are
 setup, and only the token request happens on every access:
@@ -294,8 +295,8 @@ assertion's `sub` ({{workload-authorization-grant}}); and claims, carrying
 everything else ({{properties}}).  The Agent Identifier is opaque and
 immutable.  It MUST be unique within its issuer ({{trust}}) -- the
 (`iss`, `sub`) rule of {{Section 3.1 of IDJAG}} for a single-tenant
-issuer (see {{tenancy}}).  It MUST NOT be reassigned to a different
-Agent;
+issuer, which {{tenancy}} applies to every issuer.  It MUST NOT be
+reassigned to a different Agent;
 where the identifier is a Workload Identifier, this tightens the SHOULD NOT
 of {{Section 4.5 of WIMSE-ID}}, because Resource Servers key durable records
 (policy, audit, grants) on it.  Renaming an Agent -- changing its name
@@ -560,37 +561,86 @@ A Platform or a Service commonly serves many customers, each within
 its own administrative partition of it -- a tenancy (an organization,
 workspace, or tenant, in product terms; compare "Tenant" in
 {{Section 2.2 of IDJAG}}).  Outside this section, "the Platform" denotes
-one such tenancy of a Platform, with its own issuer, and "the Service",
-"the Authorization Server", and "the Resource Server" denote the
-Service and its servers as they act for one tenancy.  This section
-states the requirements that make that reading sound; no other
-requirement of this document depends on how either party partitions
-its customers.
+one such tenancy of a Platform, with its own issuer in the sense given
+below, and "the Service", "the Authorization Server", and "the
+Resource Server" denote the Service and its servers as they act for
+one tenancy.  This section states the requirements that make that
+reading sound; no other requirement of this document depends on how
+either party partitions its customers.
 
-A Platform serving multiple customers MUST operate a distinct issuer,
-with its own issuer identifier, for each of its tenancies: that issuer
-signs assertions only about that tenancy's Agents, their Agent
-Identifiers are unique within it ({{identity-model}}), and the tenancy
-is registered on its own at each Authorization Server ({{trust}}), so a
-customer with several Platform tenancies has one registration for each.
-The issuer is thus the trust boundary a registration expresses
-({{trust}}); an issuer shared across tenancies would instead move
-tenancy enforcement into claim evaluation at every Authorization
-Server, including those that can evaluate only issuer, subject, and
-audience ({{oi}}).  The proposed MCP Workload Identity Federation
-extension {{MCP-WIF}} draws the corresponding boundary at the signing
-key, recommending that an authorization server rely only on keys bound
-to a single tenant; this document draws it at the registered issuer.
+A Platform serving multiple customers MUST operate a distinct issuer
+for each of its tenancies: that issuer's assertions name only that
+tenancy's Agents as subject, their Agent Identifiers are unique within
+it ({{identity-model}}), and the tenancy is registered on its own at
+each Authorization Server ({{trust}}), so a customer with several
+Platform tenancies has one registration for each.  A tenancy's issuer
+is distinct in one of two forms.  In the first, which is RECOMMENDED,
+it has its own issuer identifier.  In the second, which a Platform MAY
+use instead, it shares an issuer identifier -- hence one metadata
+document and one JWK Set -- with the issuers of the Platform's other
+tenancies and is distinguished from them by a claim whose string
+value identifies the tenancy (e.g., the `tenant` claim of
+{{Section 3.1 of IDJAG}}); every assertion issued under that identifier
+MUST then carry the claim, with the value that identifies its
+subject's tenancy.  In the terms of {{Section 6.1 of IDJAG}}, an issuer
+of the first form is a single-tenant issuer, and the issuers sharing
+an identifier in the second form make up one multi-tenant issuer.
 
-The rule of {{trust}} against assigning a used issuer identifier to
-another holder applies between tenancies: a Platform MUST NOT reassign
-a tenancy's issuer identifier to a different tenancy, and MUST NOT
-release for reuse by another customer a customer-chosen name, such as a
-subdomain, from which that identifier or the trust domain of the
-tenancy's URI-form Agent Identifiers is derived.  Registrations outlive
-the tenancy they were made for, so reassignment would hand the new
-holder every registration the old tenancy held, at every Authorization
-Server.
+Under the second form the Platform registration ({{trust}}) MUST also
+record the distinguishing claim and the tenancy's value for it (the
+"pinned value") and, where the tenancy's Agent Identifiers are
+URI-form, their trust domain ({{identity-model}}); the Platform MUST
+make these known to the tenancy's Customer Administrators together
+with the issuer identifier, and a Customer Administrator MUST NOT
+register such a Platform at an Authorization Server that cannot record
+them.  The Authorization Server compares the value a presented
+assertion carries for that claim with the pinned value by Simple
+String Comparison, as it compares `iss` ({{trust}}); it MUST NOT admit
+under that registration an assertion that lacks the claim or carries
+any other value, and it MUST reject an assertion admissible under no
+registration as it rejects one whose `iss` equals no registered issuer
+identifier.  Elsewhere in this document, wherever a registration names
+the issuer, or identifies the Platform, by the issuer identifier, or
+the Property-to-permission mapping is scoped by `iss`, the issuer
+identifier is read together with the pinned value; issuer metadata is
+nonetheless discovered from, and signing keys are held per, the issuer
+identifier alone, so registrations that name one identifier with
+different pinned values share its JWK Set but not their mappings.
+Agent Identifiers, by contrast, MUST be unique across all tenancies
+sharing the issuer identifier -- stricter than the (`iss`, `tenant`,
+`sub`) rule of {{Section 3.1 of IDJAG}} -- so that (`iss`, `sub`)
+denotes one Agent ({{trust}}) even to a party that never sees the
+pinned value, such as a Resource Server or a relying party that
+evaluates only issuer, subject, and audience ({{oi}}).  Under either
+form, the trust domain of a tenancy's URI-form Agent Identifiers
+({{identity-model}}) identifies that tenancy alone: a Platform MUST NOT
+place the Agent Identifiers of two tenancies in one trust domain.
+
+The first form is preferred because under it the issuer identifier
+alone is the trust boundary a registration expresses ({{trust}});
+under the second, the tenancies sharing an identifier share signing
+keys, and a registration made without a pinned value -- the only kind
+a relying party that evaluates only issuer, subject, and audience
+({{oi}}) can hold -- admits every one of them.  The proposed MCP
+Workload Identity Federation extension {{MCP-WIF}} draws the
+corresponding boundary at the signing key, recommending that an
+authorization server rely only on keys bound to a single tenant; this
+document draws it at the registered issuer, and the two can coincide
+only under the first form.
+
+The rule of {{trust}} against assigning a used issuer identifier or
+trust domain to another holder applies between tenancies and extends
+to pinned values: a Platform MUST NOT reassign to a different tenancy
+a tenancy's own issuer identifier, its pinned value, or the trust
+domain of its URI-form Agent Identifiers, and MUST NOT release for
+reuse by another customer a customer-chosen name, such as a subdomain,
+from which any of those is derived.  Registrations outlive the tenancy
+they were made for, so reassignment would hand the new holder every
+registration the old tenancy held, at every Authorization Server.
+Sharing an identifier under the second form is not such an assignment,
+but a Platform MUST NOT bring further tenancies under an issuer
+identifier that a tenancy has used in the first form: the
+registrations naming it hold no pinned value and would admit them.
 
 At a Service serving multiple customers, a Customer Administrator's
 authority to register a Platform is authority within one tenancy of the
@@ -692,7 +742,9 @@ does not manage its downstream effects.
 
 TODO: unseen agent identifiers under trusted issuers; the registered
 issuer as the trust boundary; confusion between registered issuers at
-one Authorization Server ({{trust}}, {{tenancy}}); bearer-assertion
+one Authorization Server ({{trust}}, {{tenancy}}); tenancies sharing
+one issuer identifier and JWK Set, and registrations of a shared
+identifier that lack a pinned value ({{tenancy}}); bearer-assertion
 theft and assertion lifetime; Platform as root of trust;
 credential non-exposure to the model; automated trust establishment.
 

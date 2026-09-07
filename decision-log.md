@@ -5,7 +5,91 @@ Most recent first within each state. Open items are at the bottom.
 
 ## Decided
 
-### D17 — Tenancy is confined to one section; the rest of the document speaks of one Platform and one Service (2026-09-06)
+### D18 — A tenancy's issuer is "distinct" by its own issuer identifier (RECOMMENDED) or by a shared identifier plus a pinned tenancy claim (2026-09-07, refs #7)
+Amends D17, which required a distinct issuer identifier per tenancy.
+The per-tenancy distinct-issuer MUST stands, but "Multi-Tenant Platforms
+and Services" now says what "distinct" means, in two forms: the
+tenancy's issuer has its own issuer identifier (RECOMMENDED; a
+single-tenant issuer in the terms of ID-JAG Section 6.1), or the Platform
+MAY give several tenancies' issuers one identifier -- one metadata
+document, one JWK Set -- and distinguish them by a claim whose string
+value identifies the tenancy (ID-JAG's tenant claim, Section 3.1, is the
+example; no keyword attaches to the choice of claim), every assertion
+under that identifier then carrying the claim (MUST).  Under the shared
+form the registration MUST record the claim and the tenancy's value (the
+pinned value) and, for URI-form Agent Identifiers, the tenancy's trust
+domain; the Platform MUST make these known to the tenancy's Customer
+Administrators with the issuer identifier, and an administrator MUST NOT
+register such a Platform at an Authorization Server that cannot record
+them; the Authorization Server compares the pinned value by Simple String
+Comparison, MUST NOT admit under that registration an assertion lacking
+the claim or carrying another value, and MUST reject an assertion
+admissible under no registration as it rejects an unregistered iss.  A
+second reading rule in the D17 style keeps the rest of the document
+untouched: wherever a registration names the issuer or identifies the
+Platform by the issuer identifier, or the Property-to-permission mapping
+is scoped by iss, the identifier is read together with the pinned value;
+metadata and keys stay per identifier (registrations sharing one share
+its JWK Set but not their mappings).  Two things are stated outright
+rather than left to the reading rule: Agent Identifiers MUST be unique
+across all tenancies sharing an identifier (the (iss, sub) rule, stricter
+than ID-JAG's (iss, tenant, sub)), because Resource Servers and
+subject-only relying parties key on (iss, sub) and never see the pinned
+value -- the Identity Model's ID-JAG citation now says the single-tenant
+(iss, sub) rule is applied to every issuer; and the trust domain of
+URI-form Agent Identifiers stays per tenancy under either form rather
+than following the shared identifier as metadata and keys do (a Platform
+MUST NOT place two tenancies' identifiers in one trust domain), so Trust
+Establishment's trust-domain sentences, the URI-form record-key
+equivalence and the first Open Issue stay true as written.
+Non-reassignment between tenancies covers the own identifier and the
+trust domain, as before, and now the pinned value; sharing an identifier
+is stated not to be an assignment to another holder, but a Platform MUST
+NOT bring further tenancies under an identifier a tenancy has used in
+the own-identifier form, since the registrations naming it hold no
+pinned value and would admit them.  The Agent Platform definition and
+the Overview no longer assert a separate issuer per customer: a
+multi-customer Platform is treated as distinct Platforms, one per
+customer, "each with its own issuer in the sense" the section defines.
+The Security Considerations TODO gains the shared-key-set and
+unpinned-registration items.  Rationale: what the rest of the document
+depends on is that a registration admits exactly one tenancy's
+assertions and scopes Authorization Server and Resource Server state to
+it.  An own identifier delivers that at every relying party, including
+those that evaluate only issuer, subject and audience, survives a
+registration made with the identifier alone, and lets a tenancy have
+signing keys of its own -- hence RECOMMENDED, and hence the restated
+MCP-WIF comparison (MCP-WIF draws the boundary at the signing key, this
+document at the registered issuer; the two coincide only under the
+own-identifier form).  But issuers that serve many tenancies under one
+identifier and distinguish them by a claim are widely deployed and are
+the case ID-JAG's tenant claim exists for; requiring a separate
+identifier would exclude them for a property a pinned claim also
+provides at any Authorization Server that evaluates claims.
+Alternatives: keep D17's per-tenancy identifier MUST (simplest for
+relying parties and for the text; rejected as excluding
+shared-identifier issuers without a security gain at claim-evaluating
+Authorization Servers); relax Agent Identifier uniqueness to (iss,
+tenant, sub) as ID-JAG permits (rejected: a party keying on (iss, sub)
+without the pinned value would let one tenancy's sub land on another's
+records, the hazard D8 excludes, unless the Authorization Server were
+also obliged to convey the pinned value downstream; platform-wide
+uniqueness costs the Platform nothing and URI-form identifiers have it
+already); make tenant the RECOMMENDED claim rather than an example (not
+taken while Property claim naming is open, O2, and because deployed
+shared-identifier issuers use issuer-specific claims a registration pins
+equally well); an Authorization Server SHOULD for supporting pinned
+registrations, and a rule that an Authorization Server holding a pinned
+registration for an identifier refuses an unpinned one for it (left out:
+the administrator-side MUST NOT covers the hazard without declaring
+subject-only relying parties non-conformant, and the refusal rule,
+applied across a multi-tenant Service, would let one customer's
+registration disable another's); a pointer in JWT Syntax to the
+distinguishing claim (not added, to keep tenancy confined to its
+section); thread (iss, tenant, sub) through Trust Establishment, the
+Identity Model and JWT Syntax (precise, but undoes D17's confinement).
+
+### D17 — [distinct-issuer rule amended by D18] Tenancy is confined to one section; the rest of the document speaks of one Platform and one Service (2026-09-06)
 Partly supersedes D15 (the term) and D16 (the tenancy pair).  The
 document now treats the Platform as one party with one issuer and the
 Service as one party throughout, and says everything it has to say about
