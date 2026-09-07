@@ -427,3 +427,20 @@ agent-as-actor; hardened tier = O1 row 3); or a per-agent client
 "upgrade" reserved for user-granted personal resources (cost: the same
 agent appears as client_id in one flow and sub in others). See
 notes/oauth-slots.md.
+
+### O5 — Just-in-time acceptance: what the Authorization Server must do on a first-seen Agent
+The Overview says the Authorization Server "accepts the Agent whether or
+not it has seen the Agent Identifier before", and Agent Instantiation
+makes that a MUST (accept a previously-unseen `sub` under a registered
+issuer; IdP projection, if any, MAY be performed just in time).  What is
+not yet written down is how just-in-time an Authorization Server has to
+be and what, if anything, it is permitted or required to do at first
+sight: whether it may create a local record for the Agent synchronously
+and fail the request if that fails; whether any per-Agent state (audit
+key, rate-limit bucket, Property snapshot) is required before the first
+access token issues; how this interacts with Resource Servers that keep
+their own per-Agent records; and whether "first seen" has any meaning
+across registrations or Authorization Server replicas.  To be covered in
+a short "just-in-time" passage (in Agent Instantiation or its own
+subsection) that states the minimum required behaviour and what is left
+to deployments.
