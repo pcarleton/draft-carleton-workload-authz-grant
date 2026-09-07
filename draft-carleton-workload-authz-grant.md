@@ -223,13 +223,14 @@ Platform Registration ("registration"):
   Platform so recorded is a "registered Platform", and the issuer the
   registration names is a "registered issuer".  In this document a
   registration names the Platform's issuer by its issuer identifier, by
-  which the Platform's assertions are recognized, and holds the initial
-  Property-to-permission mapping ({{properties}}); it is also the scope
-  within which the Authorization Server holds the issuer's keys and
-  interprets `sub` and `jti`.  A Platform registration is not an OAuth
-  client registration {{RFC7591}}: it is made by reference to the
-  issuer's published metadata, and the Authorization Server issues no
-  client identifier or credential in return.
+  which the Platform's assertions are recognized, and optionally holds
+  an initial Property-to-permission mapping ({{properties}}); it is
+  also the scope within which the Authorization Server holds the
+  issuer's keys and interprets `sub` and `jti`.  A Platform
+  registration is not an OAuth client registration {{RFC7591}}: it is
+  made by reference to the issuer's published metadata, and the
+  Authorization Server issues no client identifier or credential in
+  return.
 
 # Concepts
 
@@ -494,8 +495,9 @@ Server by reference to the published metadata of the Platform's issuer.
 The Customer Administrator registers the Platform at the Authorization
 Server once.  The resulting Platform registration admits the Platform's
 Agents: it names the Platform's issuer by its issuer identifier
-({{Section 2 of RFC8414}}) and holds the initial Property-to-permission
-mapping for the Resource Server ({{properties}}).
+({{Section 2 of RFC8414}}) and optionally holds an initial
+Property-to-permission mapping for the Resource Server
+({{properties}}).
 From the issuer identifier the Authorization Server discovers the
 issuer's metadata and, from the metadata's `jwks_uri`, the issuer's JWK
 Set {{RFC7517}} ({{OIDC-DISCOVERY}}, Section 4).  It
@@ -626,12 +628,14 @@ document with an email address, distinct from both name and the opaque
 Agent Identifier; noted here, deliberately unsolved.  A Resource
 Server keeps a local, administrator-controlled mapping from Property
 predicates to permissions; possession of a Property is not itself
-authorization.  Property names and values cross a trust boundary as
-issuer assertions, not as portable permission assignments.  A Resource
-Server MUST interpret them under its own issuer-scoped mapping and MUST NOT
-assume that a role, group, entitlement, or similarly named value has the
-same meaning in another issuer's domain.  Deny semantics do not travel.
-TODO: worked example.
+authorization.  The mapping is optional: a registration ({{trust}})
+need not hold one, and every Agent admitted under such a registration
+then receives the same baseline access, if any.  Property names and
+values cross a trust boundary as issuer assertions, not as portable
+permission assignments.  A Resource Server MUST interpret them under
+its own issuer-scoped mapping and MUST NOT assume that a role, group,
+entitlement, or similarly named value has the same meaning in another
+issuer's domain.  Deny semantics do not travel.  TODO: worked example.
 
 ## Attribution
 
