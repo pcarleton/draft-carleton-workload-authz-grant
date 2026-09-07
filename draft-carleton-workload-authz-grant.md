@@ -490,11 +490,18 @@ Grant: by a Platform registration, made once at each Authorization
 Server by reference to the published metadata of the Platform's issuer.
 
 The Customer Administrator registers the Platform at the Authorization
-Server once.  The resulting Platform registration admits the Platform's
-Agents: it names the Platform's issuer by its issuer identifier
-({{Section 2 of RFC8414}}) and optionally holds an initial
-Property-to-permission mapping for the Resource Server
-({{properties}}).
+Server once.  The resulting Platform registration names the
+Platform's issuer by its issuer identifier ({{Section 2 of RFC8414}});
+from then on the Authorization Server accepts Workload Authorization
+Grants from that issuer for any of the Platform's Agents.  Acceptance
+is distinct from permission: an admitted Agent may hold few or no
+permissions at the Resource Server.  Permissions are granted most
+smoothly through a Property-to-permission mapping ({{properties}}),
+which the registration optionally holds, so that Agents created later
+derive their permissions from the Properties the Platform asserts,
+with no per-Agent provisioning.  Which claims such a mapping consults
+and how it is configured are local to the Service, established out of
+band, and not specified by this document.
 From the issuer identifier the Authorization Server discovers the
 issuer's metadata and, from the metadata's `jwks_uri`, the issuer's JWK
 Set {{RFC7517}} ({{OIDC-DISCOVERY}}, Section 4).  It
