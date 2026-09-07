@@ -5,6 +5,59 @@ Most recent first within each state. Open items are at the bottom.
 
 ## Decided
 
+### D19 — Under a shared issuer identifier, Agent Identifiers stay unique across the whole identifier, and each tenancy keeps its own trust domain (2026-09-07)
+Follows from D18 and is recorded on its own so that it can be kept or
+reversed independently.  "Multi-Tenant Platforms and Services" states
+two rules that hold under either form of distinct issuer.  (1) An Agent
+Identifier MUST be unique within an issuer identifier, not merely
+within a tenancy: where several tenancies share an identifier, no two of
+their Agents carry the same sub.  This is ID-JAG's (iss, sub) rule for a
+single-tenant issuer applied to every issuer, and stricter than the
+(iss, tenant, sub) rule ID-JAG Section 3.1 permits a multi-tenant issuer;
+the Agent Identity Model's citation says so.  (2) The trust domain of
+URI-form Agent Identifiers identifies one tenancy: a Platform MUST NOT
+place two tenancies' Agent Identifiers in one trust domain, whether or
+not their issuers share an identifier.  Rationale for (1): the parties
+downstream of the Authorization Server never see the pinned value.  A
+Resource Server keys policy, audit and grant records on (iss, sub)
+(Security Considerations; D8), and a relying party of the first Open
+Issue evaluates only issuer, subject and audience.  If sub were unique
+only per tenancy, a customer with two tenancies of one shared-identifier
+Platform registered in the same Service tenancy would see agent-42 of
+tenancy B land on the records and grants of agent-42 of tenancy A --
+the collision D8 was written to exclude, reintroduced one hop downstream
+where no reading rule can reach it.  Identifier-wide uniqueness costs
+the Platform, which mints the identifiers, nothing (random or
+hierarchical identifiers have it already), and it lets (iss, sub) and
+jti scoping in Trust Establishment read literally under both forms.
+Rationale for (2): Trust Establishment says the trust domain, like the
+issuer identifier, identifies the Platform and MUST NOT be reassigned,
+and the first Open Issue relies on URI-form identifiers carrying "the
+Platform's trust domain" for relying parties that see only the subject;
+under D17's reading rule "the Platform" is one tenancy, so a trust
+domain shared across tenancies would falsify both.  Keeping it per
+tenancy also gives subject-only relying parties the one place the
+tenancy is visible without the pinned claim, and a WIMSE trust domain is
+a name rather than a host, so a per-tenancy value under a shared issuer
+identifier costs nothing to mint; under the shared-identifier form the
+registration records it (Security Considerations) because it can no
+longer be inferred from the identifier.  Alternatives: let sub be unique
+only per (iss, pinned value), as ID-JAG allows (rejected for the
+downstream collision above, unless the Authorization Server were also
+required to convey the pinned value to the Resource Server and the
+Resource Server to key on all three -- an obligation the own-identifier
+form does not have -- and even then the subject-only relying parties
+stay exposed); let the trust domain follow the shared identifier as
+metadata and keys do (rejected: it would require editing Trust
+Establishment and the first Open Issue, and would discard the only
+tenancy signal visible to subject-only relying parties); state neither
+rule and leave both to the reading rule (rejected: the reading rule
+yields per-tenancy sub uniqueness, which is exactly the unsafe reading
+for parties that cannot apply the rule).  Open to reversal: if
+identifier-wide sub uniqueness proves unrealistic for some deployed
+multi-tenant issuers, the fallback is the conveyed-pinned-value
+alternative above, with its costs stated.
+
 ### D18 — A tenancy's issuer is "distinct" by its own issuer identifier (RECOMMENDED) or by a shared identifier plus a pinned tenancy claim (2026-09-07, refs #7)
 Amends D17, which required a distinct issuer identifier per tenancy.
 The per-tenancy distinct-issuer MUST stands, but "Multi-Tenant Platforms
@@ -33,18 +86,9 @@ else the document refers to the Platform or its issuer by the issuer
 identifier, or scopes the Property-to-permission mapping by iss, the
 identifier is read together with the pinned value; metadata and keys
 stay per identifier (registrations sharing one share its JWK Set but not
-their mappings).  Two rules are stated outright, for either form, rather
-than left to the reading rule: Agent Identifiers MUST be unique within
-an issuer identifier, not merely within a tenancy (the (iss, sub) rule,
-stricter than ID-JAG's (iss, tenant, sub)), because Resource Servers and
-subject-only relying parties key on (iss, sub) and never see the pinned
-value -- the Identity Model's ID-JAG citation now says the single-tenant
-(iss, sub) rule is applied to every issuer; and the trust domain of
-URI-form Agent Identifiers stays per tenancy under either form rather
-than following the shared identifier as metadata and keys do (a Platform
-MUST NOT place two tenancies' identifiers in one trust domain), so Trust
-Establishment's trust-domain sentences, the URI-form record-key
-equivalence and the first Open Issue stay true as written.
+their mappings).  Two rules that hold under either form -- Agent
+Identifier uniqueness across a whole issuer identifier, and one trust
+domain per tenancy -- are recorded separately as D19.
 Non-reassignment between tenancies covers the issuer identifier and the
 trust domain, as before, and now the pinned value; and a Platform MUST
 NOT bring further tenancies under an identifier a tenancy has used in
@@ -71,13 +115,7 @@ provides at any Authorization Server that evaluates claims.
 Alternatives: keep D17's per-tenancy identifier MUST (simplest for
 relying parties and for the text; rejected as excluding
 shared-identifier issuers without a security gain at claim-evaluating
-Authorization Servers); relax Agent Identifier uniqueness to (iss,
-tenant, sub) as ID-JAG permits (rejected: a party keying on (iss, sub)
-without the pinned value would let one tenancy's sub land on another's
-records, the hazard D8 excludes, unless the Authorization Server were
-also obliged to convey the pinned value downstream; platform-wide
-uniqueness costs the Platform nothing and URI-form identifiers have it
-already); make tenant the RECOMMENDED claim rather than an example (not
+Authorization Servers); make tenant the RECOMMENDED claim rather than an example (not
 taken while Property claim naming is open, O2, and because deployed
 shared-identifier issuers use issuer-specific claims a registration pins
 equally well); an Authorization Server SHOULD for supporting pinned
