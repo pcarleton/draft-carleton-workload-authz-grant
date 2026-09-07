@@ -542,100 +542,72 @@ keyed on the Agent Identifier.
 ## Multi-Tenant Platforms and Services {#tenancy}
 
 A Platform or a Service commonly serves many customers, each within
-its own administrative partition of it -- a tenancy (an organization,
-workspace, or tenant, in product terms; compare "Tenant" in
-{{Section 2.2 of IDJAG}}).  Outside this section, "the Platform" denotes
-one such tenancy of a Platform, with its own issuer in the sense given
-below, and "the Service", "the Authorization Server", and "the
-Resource Server" denote the Service and its servers as they act for
-one tenancy.  This section states the requirements that make that
-reading sound; no other requirement of this document depends on how
-either party partitions its customers.
+its own administrative partition -- a tenancy (an organization,
+workspace, or tenant; compare "Tenant" in {{Section 2.2 of IDJAG}}).
+Where it does, outside this section "the Platform" denotes one tenancy
+of the Platform, with its own issuer as defined below, and "the
+Service", "the Authorization Server", and "the Resource Server" denote
+the Service and its servers as they act for one tenancy.  No
+requirement outside this section depends on how either party
+partitions its customers.
 
 A Platform serving multiple customers MUST operate a distinct issuer
-for each of its tenancies: that issuer's assertions name only that
-tenancy's Agents as subject, their Agent Identifiers are unique within
-it ({{identity-model}}), and the tenancy is registered on its own at
-each Authorization Server ({{trust}}), so a customer with several
-Platform tenancies has one registration for each.  A tenancy's issuer
-is distinct in one of two forms.  In the first, which is RECOMMENDED,
-it has its own issuer identifier.  In the second, which a Platform MAY
-use instead, it shares an issuer identifier -- hence one metadata
-document and one JWK Set -- with the issuers of the Platform's other
-tenancies and is distinguished from them by a claim whose string
-value identifies the tenancy (e.g., the `tenant` claim of
-{{Section 3.1 of IDJAG}}); every assertion issued under that identifier
-MUST then carry the claim, with the value that identifies its
-subject's tenancy.  In the terms of {{Section 6.1 of IDJAG}}, an issuer
-of the first form is a single-tenant issuer, and the issuers sharing
-an identifier in the second form make up one multi-tenant issuer.
+for each tenancy -- one whose assertions name only that tenancy's
+Agents as subject -- so that each Platform registration ({{trust}})
+admits exactly one tenancy.  A tenancy's issuer is distinct in one of
+two forms: the own-identifier form (RECOMMENDED), in which it has its
+own issuer identifier; or the shared-identifier form, which a Platform
+MAY use instead, in which it shares one -- and hence one metadata
+document and JWK Set -- with other tenancies of the Platform.  In the
+terms of {{Section 6.1 of IDJAG}} these are a single-tenant issuer and
+one tenant of a multi-tenant issuer.
 
-Under the second form the Platform registration ({{trust}}) MUST also
-record the distinguishing claim and the tenancy's value for it (the
-"pinned value") and, where the tenancy's Agent Identifiers are
-URI-form, their trust domain ({{identity-model}}); the Platform MUST
-make these known to the tenancy's Customer Administrators together
-with the issuer identifier, and a Customer Administrator MUST NOT
-register such a Platform at an Authorization Server that cannot record
-them.  The Authorization Server compares the value a presented
-assertion carries for that claim with the pinned value by Simple
-String Comparison, as it compares `iss` ({{trust}}); it MUST NOT admit
-under that registration an assertion that lacks the claim or carries
-any other value, and it MUST reject an assertion admissible under no
-registration as it rejects one whose `iss` equals no registered issuer
-identifier.  Elsewhere in this document, wherever a registration names
-the issuer, or identifies the Platform, by the issuer identifier, or
-the Property-to-permission mapping is scoped by `iss`, the issuer
-identifier is read together with the pinned value; issuer metadata
-and verification keys are nonetheless discovered from, and kept per,
-the issuer identifier alone, so registrations that name one
-identifier with different pinned values share its JWK Set but not
-their mappings.
-Agent Identifiers, by contrast, MUST be unique across all tenancies
-sharing the issuer identifier -- stricter than the (`iss`, `tenant`,
-`sub`) rule of {{Section 3.1 of IDJAG}} -- so that (`iss`, `sub`)
-denotes one Agent ({{security-considerations}}) even to a party
-that never sees the pinned value, such as a Resource Server or a
-relying party that evaluates only issuer, subject, and audience
-({{oi}}).  Under either form, the trust domain of a tenancy's URI-form
-Agent Identifiers ({{identity-model}}) identifies that tenancy alone:
-a Platform MUST NOT place the Agent Identifiers of two tenancies in
+In the shared-identifier form every assertion under the identifier
+MUST carry a claim whose string value identifies the subject's tenancy
+(e.g., the `tenant` claim of {{Section 3.1 of IDJAG}}); the
+registration records that value as its "pinned value", and the
+Authorization Server enforces it ({{security-considerations}}).
+Wherever else this document refers to the Platform or its issuer by
+the issuer identifier, or scopes the Property-to-permission mapping by
+`iss`, the identifier is then read together with the pinned value;
+metadata and verification keys remain per issuer identifier, so
+registrations that share an issuer identifier share its JWK Set but
+not their mappings.
+
+Two rules hold under either form.  First, Agent Identifiers MUST be
+unique within an issuer identifier, not merely within a tenancy, so
+that (`iss`, `sub`) denotes one Agent even to parties that never see a
+pinned value ({{security-considerations}}).  Second, the trust domain
+of URI-form Agent Identifiers ({{identity-model}}) identifies one
+tenancy: a Platform MUST NOT place two tenancies' Agent Identifiers in
 one trust domain.
 
-The first form is preferred because under it the issuer identifier
-alone is the trust boundary a registration expresses ({{trust}});
-under the second, the tenancies sharing an identifier share signing
-keys, and a registration made without a pinned value -- the only kind
-a relying party that evaluates only issuer, subject, and audience
-({{oi}}) can hold -- admits every one of them.  The proposed MCP
-Workload Identity Federation extension {{MCP-WIF}} draws the
-corresponding boundary at the signing key, recommending that an
-authorization server rely only on keys bound to a single tenant; this
-document draws it at the registered issuer, and the two can coincide
-only under the first form.
+The own-identifier form is the recommended one because the issuer
+identifier alone is then the trust boundary a registration expresses
+({{trust}}); tenancies sharing an issuer identifier share signing
+keys, and a registration holding no pinned value -- the only kind a
+relying party that evaluates only issuer, subject, and audience can
+hold ({{oi}}) -- admits every tenancy under that identifier.
+({{MCP-WIF}} instead draws this boundary at the signing key; the two
+coincide only under the own-identifier form.)
 
-The rule of {{trust}} against assigning a used issuer identifier or
-trust domain to another holder applies between tenancies and extends
-to pinned values: a Platform MUST NOT reassign to a different tenancy
-a tenancy's own issuer identifier, its pinned value, or the trust
-domain of its URI-form Agent Identifiers, and MUST NOT release for
-reuse by another customer a customer-chosen name, such as a subdomain,
-from which any of those is derived.  Registrations outlive the tenancy
-they were made for, so reassignment would hand the new holder every
-registration the old tenancy held, at every Authorization Server.
-Sharing an identifier under the second form is not such an assignment,
-but a Platform MUST NOT bring further tenancies under an issuer
-identifier that a tenancy has used in the first form: the
-registrations naming it hold no pinned value and would admit them.
+Between tenancies of one Platform the non-reassignment rule of
+{{trust}} applies as between holders, and extends to pinned values: a
+Platform MUST NOT reassign to another tenancy an issuer identifier,
+pinned value, or trust domain a tenancy has used, nor release to
+another customer a customer-chosen name, such as a subdomain, from
+which one was derived.  A Platform likewise MUST NOT bring further
+tenancies under an issuer identifier already used in the
+own-identifier form, whose registrations hold no pinned value and
+would admit them.
 
-At a Service serving multiple customers, a Customer Administrator's
-authority to register a Platform is authority within one tenancy of the
-Service, and the registration, its Property-to-permission mapping, and
-the records kept about the Agents it admits belong to that tenancy: an
-assertion admitted under a registration MUST NOT yield access outside
-the tenancy the registration belongs to.  How a Service partitions its
-customers, and how its Authorization Server determines the tenancy in
-which a given token request is processed, are otherwise out of scope.
+At a Service serving multiple customers, a Customer Administrator
+registers a Platform within one tenancy of the Service; the
+registration, its mapping, and the records about the Agents it admits
+belong to that tenancy, and an assertion admitted under it MUST NOT
+yield access outside that tenancy.  How the Service partitions its
+customers and assigns a token request to a tenancy is otherwise out
+of scope.
 
 ## Agent Instantiation {#instantiation}
 
@@ -753,6 +725,21 @@ therefore key them on the (`iss`, `sub`) pair and MUST NOT key them on
 key only where the Authorization Server has verified, at issuance,
 that its authority component is the trust domain of the admitting
 registration's issuer ({{identity-model}}).
+
+Where a Platform's tenancies share an issuer identifier ({{tenancy}}),
+the registration MUST record the distinguishing claim's name, the
+tenancy's value for it (the pinned value), and the trust domain of the
+tenancy's URI-form Agent Identifiers, if any, all of which the
+Platform MUST make known, with the issuer identifier, to the tenancy's
+Customer Administrators; a Customer Administrator MUST NOT register
+such a tenancy at an Authorization Server that cannot record them,
+since a registration naming the shared identifier alone admits every
+tenancy sharing it.  The Authorization Server compares the claim's
+value in a presented assertion with the pinned value by Simple String
+Comparison ({{trust}}); it MUST NOT admit under the registration an
+assertion that lacks the claim or carries another value, and MUST
+reject, as it rejects an unregistered `iss`, an assertion that no
+registration admits.
 
 Property freshness is distinct from JWT validity.  A valid signature proves
 that the Platform made the assertion, while `exp` only limits how long the

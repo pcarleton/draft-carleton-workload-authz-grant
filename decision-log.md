@@ -8,32 +8,35 @@ Most recent first within each state. Open items are at the bottom.
 ### D18 — A tenancy's issuer is "distinct" by its own issuer identifier (RECOMMENDED) or by a shared identifier plus a pinned tenancy claim (2026-09-07, refs #7)
 Amends D17, which required a distinct issuer identifier per tenancy.
 The per-tenancy distinct-issuer MUST stands, but "Multi-Tenant Platforms
-and Services" now says what "distinct" means, in two forms: the
-tenancy's issuer has its own issuer identifier (RECOMMENDED; a
-single-tenant issuer in the terms of ID-JAG Section 6.1), or the Platform
-MAY give several tenancies' issuers one identifier -- one metadata
-document, one JWK Set -- and distinguish them by a claim whose string
-value identifies the tenancy (ID-JAG's tenant claim, Section 3.1, is the
-example; no keyword attaches to the choice of claim), every assertion
-under that identifier then carrying the claim (MUST).  Under the shared
-form the registration MUST record the claim and the tenancy's value (the
-pinned value) and, for URI-form Agent Identifiers, the tenancy's trust
-domain; the Platform MUST make these known to the tenancy's Customer
-Administrators with the issuer identifier, and an administrator MUST NOT
-register such a Platform at an Authorization Server that cannot record
-them; the Authorization Server compares the pinned value by Simple String
+and Services" now says what "distinct" means, in two named forms: the
+own-identifier form, in which the tenancy's issuer has its own issuer
+identifier (RECOMMENDED; a single-tenant issuer in the terms of ID-JAG
+Section 6.1), and the shared-identifier form, which the Platform MAY use
+instead, giving several tenancies' issuers one identifier -- one
+metadata document, one JWK Set -- and distinguishing them by a claim
+whose string value identifies the subject's tenancy (ID-JAG's tenant
+claim, Section 3.1, is the example; no keyword attaches to the choice of
+claim), every assertion under that identifier then carrying the claim
+(MUST).  The registration records that value as its pinned value; the
+mechanics sit under Security Considerations, to which the section
+points: the registration MUST record the claim's name, the pinned value
+and, for URI-form Agent Identifiers, the tenancy's trust domain; the
+Platform MUST make these known to the tenancy's Customer Administrators
+with the issuer identifier, and an administrator MUST NOT register such
+a tenancy at an Authorization Server that cannot record them; the
+Authorization Server compares the pinned value by Simple String
 Comparison, MUST NOT admit under that registration an assertion lacking
-the claim or carrying another value, and MUST reject an assertion
-admissible under no registration as it rejects an unregistered iss.  A
-second reading rule in the D17 style keeps the rest of the document
-untouched: wherever a registration names the issuer or identifies the
-Platform by the issuer identifier, or the Property-to-permission mapping
-is scoped by iss, the identifier is read together with the pinned value;
-metadata and keys stay per identifier (registrations sharing one share
-its JWK Set but not their mappings).  Two things are stated outright
-rather than left to the reading rule: Agent Identifiers MUST be unique
-across all tenancies sharing an identifier (the (iss, sub) rule, stricter
-than ID-JAG's (iss, tenant, sub)), because Resource Servers and
+the claim or carrying another value, and MUST reject an assertion no
+registration admits as it rejects an unregistered iss.  A second reading
+rule in the D17 style keeps the rest of the document untouched: wherever
+else the document refers to the Platform or its issuer by the issuer
+identifier, or scopes the Property-to-permission mapping by iss, the
+identifier is read together with the pinned value; metadata and keys
+stay per identifier (registrations sharing one share its JWK Set but not
+their mappings).  Two rules are stated outright, for either form, rather
+than left to the reading rule: Agent Identifiers MUST be unique within
+an issuer identifier, not merely within a tenancy (the (iss, sub) rule,
+stricter than ID-JAG's (iss, tenant, sub)), because Resource Servers and
 subject-only relying parties key on (iss, sub) and never see the pinned
 value -- the Identity Model's ID-JAG citation now says the single-tenant
 (iss, sub) rule is applied to every issuer; and the trust domain of
@@ -42,9 +45,8 @@ than following the shared identifier as metadata and keys do (a Platform
 MUST NOT place two tenancies' identifiers in one trust domain), so Trust
 Establishment's trust-domain sentences, the URI-form record-key
 equivalence and the first Open Issue stay true as written.
-Non-reassignment between tenancies covers the own identifier and the
-trust domain, as before, and now the pinned value; sharing an identifier
-is stated not to be an assignment to another holder, but a Platform MUST
+Non-reassignment between tenancies covers the issuer identifier and the
+trust domain, as before, and now the pinned value; and a Platform MUST
 NOT bring further tenancies under an identifier a tenancy has used in
 the own-identifier form, since the registrations naming it hold no
 pinned value and would admit them.  The Agent Platform definition and
