@@ -494,15 +494,9 @@ The Customer Administrator registers the Platform at the Authorization
 Server once.  The resulting Platform registration names the
 Platform's issuer by its issuer identifier ({{Section 2 of RFC8414}});
 from then on the Authorization Server accepts Workload Authorization
-Grants from that issuer for any of the Platform's Agents.  Acceptance
-is distinct from permission: an admitted Agent may hold few or no
-permissions at the Resource Server.  Permissions are granted most
-smoothly through a Property-to-permission mapping ({{properties}}),
-which the registration optionally holds, so that Agents created later
-derive their permissions from the Properties the Platform asserts,
-with no per-Agent provisioning.  Which claims such a mapping consults
-and how it is configured are local to the Service, established out of
-band, and not specified by this document.
+Grants from that issuer for any of the Platform's Agents.  What an
+admitted Agent is permitted to do is a separate matter, governed by
+the optional Property-to-permission mapping of {{properties}}.
 From the issuer identifier the Authorization Server discovers the
 issuer's metadata and, from the metadata's `jwks_uri`, the issuer's JWK
 Set {{RFC7517}} ({{OIDC-DISCOVERY}}, Section 4).  It
@@ -671,6 +665,17 @@ BYO-IdP deployment model.
 
 ## Agent Properties and Authorization {#properties}
 
+Acceptance under a Platform registration ({{trust}}) is distinct from
+permission: an admitted Agent may hold few or no permissions at the
+Resource Server.  Permissions are granted most smoothly through a
+Property-to-permission mapping, which the registration optionally
+holds, so that Agents created later derive their permissions from the
+Properties the Platform asserts, with no per-Agent provisioning; under
+a registration that holds no mapping, every admitted Agent receives
+the same baseline access, if any.  Which claims such a mapping
+consults and how it is configured are local to the Service,
+established out of band, and not specified by this document.
+
 TODO.  Initial standard property claims: name, a human-readable display
 name as in an OpenID Connect ID Token {{OIDC-CORE}} (mutable, and never a
 key for authorization or attribution -- that is the Agent Identifier);
@@ -682,14 +687,12 @@ document with an email address, distinct from both name and the opaque
 Agent Identifier; noted here, deliberately unsolved.  A Resource
 Server keeps a local, administrator-controlled mapping from Property
 predicates to permissions; possession of a Property is not itself
-authorization.  The mapping is optional: a registration ({{trust}})
-need not hold one, and every Agent admitted under such a registration
-then receives the same baseline access, if any.  Property names and
-values cross a trust boundary as issuer assertions, not as portable
-permission assignments.  A Resource Server MUST interpret them under
-its own issuer-scoped mapping and MUST NOT assume that a role, group,
-entitlement, or similarly named value has the same meaning in another
-issuer's domain.  Deny semantics do not travel.  TODO: worked example.
+authorization.  Property names and values cross a trust boundary as
+issuer assertions, not as portable permission assignments.  A Resource
+Server MUST interpret them under its own issuer-scoped mapping and
+MUST NOT assume that a role, group, entitlement, or similarly named
+value has the same meaning in another issuer's domain.  Deny semantics
+do not travel.  TODO: worked example.
 
 ## Attribution
 
