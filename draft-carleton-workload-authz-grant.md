@@ -255,8 +255,7 @@ setup, and only the token request happens on every access:
    identifier.  The Authorization Server discovers the issuer's keys
    from its published metadata; nothing is exchanged out of band.
 2. Agent instantiation, per Agent ({{instantiation}}): the Platform creates
-   an Agent and assigns it an Agent Identifier.  Nothing happens at the
-   Authorization Server or Resource Server.
+   an Agent and assigns it an Agent Identifier.
 3. Token request, per access ({{workload-authorization-grant}}): the Agent
    presents a Workload Authorization Grant -- a JWT signed by the
    Platform's issuer, naming the Agent as its subject and carrying the
