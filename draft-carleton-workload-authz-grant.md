@@ -267,7 +267,7 @@ setup, and only the token request happens on every access:
 
 ~~~
  Customer        Agent Platform        Authorization      Resource
- Administrator   (issuer)              Server (AS)        Server (RS)
+ Administrator                         Server (AS)        Server (RS)
       |                 |                   |                 |
   (1) |--- register Platform (issuer id) -->|                 |
       |                 |<-- GET metadata,  |                 |
