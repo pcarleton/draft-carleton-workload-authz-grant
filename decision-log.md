@@ -5,6 +5,18 @@ Most recent first within each state. Open items are at the bottom.
 
 ## Decided
 
+### D15 — Collaboration context: platform plus platform-prefixed flat claims replace ctx (2026-09-07)
+The optional context an Agent acts in is carried as flat claims: platform,
+naming the collaboration platform the Agent acts in (a chat or work
+application -- not the Agent Platform), and that platform's own opaque
+workspace and channel identifiers under names prefixed with the platform
+name (example_workspace_id, example_channel_id); the composite ctx string in
+the -00 example is dropped. Flat string claims can be matched directly by a
+Resource Server, cloud IAM trust-policy conditions included, without
+parsing a composite value, and the prefix keeps identifiers of different
+platforms apart; which claims an issuer populates is its choice.
+Registration folds into O2.
+
 ### D13 — WAG is a standalone mechanism, not a profile of AIMS (2026-08-31, closes #1)
 The draft no longer calls itself a profile of draft-klrc-aiagent-auth
 (AIMS). AIMS moves from the normative to the informative references; the
@@ -198,7 +210,7 @@ Unregistered generic names (roles, groups) crossing an inter-organizational
 boundary will not survive review. Options under consideration:
 (a) reuse existing IANA-registered claims (name from OIDC Core; roles,
 groups, entitlements from RFC 9068/SCIM semantics) and register only the
-genuinely new ones (namespace, ctx);
+genuinely new ones (namespace, platform and the D15 context claims);
 (b) one registered container claim (e.g. agent_properties) holding the
 vocabulary, avoiding all top-level collisions;
 (c) collision-resistant (URI-prefixed) interim names;
