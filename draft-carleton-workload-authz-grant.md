@@ -403,8 +403,8 @@ grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer
 {: #fig-token-request title="Example token request"}
 
 {{fig-assertion-claims}} shows the decoded claims of the assertion carried
-in that request; name, namespace, groups, roles, and ctx are Agent
-Properties ({{properties}}):
+in that request; name, namespace, groups, roles, and the platform
+context claims are Agent Properties ({{properties}}):
 
 ~~~
 {
@@ -419,7 +419,9 @@ Properties ({{properties}}):
   "namespace": "acme/support",
   "groups": ["support-eng"],
   "roles": ["responder"],
-  "ctx": "channel:C0123456789"
+  "platform": "example",
+  "example_workspace_id": "T0123456789",
+  "example_channel_id": "C0123456789"
 }
 ~~~
 {: #fig-assertion-claims title="Example assertion claims"}
@@ -491,8 +493,13 @@ BYO-IdP deployment model.
 TODO.  Initial standard property claims: name, a human-readable display
 name as in an OpenID Connect ID Token {{OIDC-CORE}} (mutable, and never a
 key for authorization or attribution -- that is the Agent Identifier);
-namespace, groups, roles, and an optional ctx naming the collaboration
-context; additional attributes use collision-resistant claim names per
+namespace, groups, roles, and optional collaboration-context claims --
+platform, naming the collaboration platform (the chat or work application,
+not the Agent Platform) the Agent acts in, plus that platform's own
+workspace and channel identifiers under claim names prefixed with the
+platform name (example_workspace_id and example_channel_id for a platform
+named example), carried as flat strings a Resource Server can match
+directly; additional attributes use collision-resistant claim names per
 {{RFC7519}}, Section 4.3.  TODO: whether an Agent needs a human-usable,
 "@"-referenceable address within the Platform, analogous to sharing a
 document with an email address, distinct from both name and the opaque
