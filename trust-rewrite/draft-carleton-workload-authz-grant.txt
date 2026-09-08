@@ -5,14 +5,14 @@
 Network Working Group                                   P. Carleton, Ed.
 Internet-Draft                                                 Anthropic
 Intended status: Informational                                 N. Steele
-Expires: 8 March 2027                                             OpenAI
+Expires: 12 March 2027                                            OpenAI
                                                               A. Parecki
                                                                     Okta
                                                       A. Schwenkschuster
                                                         Defakto Security
                                                              B. Campbell
                                                            Ping Identity
-                                                        4 September 2026
+                                                        8 September 2026
 
 
                       Workload Authorization Grant
@@ -27,11 +27,11 @@ Abstract
    to perform a per-workload registration step.  Each workload is
    identified by an opaque, non-reassignable identifier; it obtains
    access tokens by presenting a JWT authorization grant (RFC 7523),
-   signed by the platform's per-tenancy issuer, in the assertion
-   parameter at the authorization server protecting the resource server.
-   Trust is established once, by reference to the issuer's published
-   metadata and keys; workload creation requires no per-workload step at
-   the authorization server or resource server; and authorization is
+   signed by the platform's issuer, in the assertion parameter at the
+   authorization server protecting the resource server.  Trust is
+   established once, by reference to the issuer's published metadata and
+   keys; workload creation requires no per-workload step at the
+   authorization server or resource server; and authorization is
    expressed over platform-asserted properties that resource servers map
    locally to permissions.  This document addresses workloads acting on
    their own behalf; access on behalf of a user or other principal is
@@ -78,7 +78,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 8 March 2027.
+   This Internet-Draft will expire on 12 March 2027.
 
 Copyright Notice
 
@@ -109,10 +109,15 @@ Table of Contents
      4.2.  Presentation
    5.  Deployment
      5.1.  Trust Establishment
-     5.2.  Agent Instantiation
-     5.3.  Agent Properties and Authorization
-     5.4.  Attribution
-     5.5.  Retirement and Lifecycle
+     5.2.  Multi-Tenant Platforms and Services
+       5.2.1.  Unique Issuer Identifier
+       5.2.2.  Shared Issuer Identifier
+       5.2.3.  Rules Common to Both Forms
+       5.2.4.  Multi-Tenant Services
+     5.3.  Agent Instantiation
+     5.4.  Agent Properties and Authorization
+     5.5.  Attribution
+     5.6.  Retirement and Lifecycle
    6.  Open Issues
    7.  Privacy Considerations
    8.  Security Considerations
@@ -167,7 +172,7 @@ Table of Contents
    services that already operate an OAuth deployment: supporting it
    requires changes only at the authorization server's token endpoint,
    which accepts the JWT authorization grant from the issuers of
-   registered tenancies.  The access tokens the authorization server
+   registered platforms.  The access tokens the authorization server
    issues are unchanged in format and semantics, and resource servers
    continue to trust their authorization server exactly as they do
    today.
@@ -192,7 +197,10 @@ Table of Contents
    capitals, as shown here.
 
    Agent Platform ("Platform"):  The party that hosts Agents and
-      operates the per-tenancy issuers that vouch for them.
+      operates the issuer that vouches for them.  A Platform serving
+      many customers is treated in this document as distinct Platforms,
+      one per customer, each with its own issuer in the sense
+      Section 5.2 defines.
 
    Agent:  A hosted workload with its own Agent Identifier, context, and
       configuration.
@@ -218,63 +226,55 @@ Table of Contents
    Enterprise IdP:  The customer's identity provider (optional).
 
    Customer Administrator:  The human who performs one-time trust
-      establishment by registering the Platform tenancy at the
-      Authorization Server (Section 5.1).
+      establishment by registering the Platform at the Authorization
+      Server (Section 5.1).
 
-   Tenancy:  One customer's administrative boundary at a party.  At the
-      Platform, a tenancy is the set of Agents one customer controls
-      together with the issuer that signs assertions about them (the
-      "Platform tenancy"); at the Service, it is the customer's
-      organization-level partition of the Service (its organization,
-      workspace, or tenant, in product terms), within which
-      registrations of Platform tenancies are held (the "Service
-      tenancy").
-
-   Tenancy Registration ("registration"):  The record a Customer
+   Platform Registration ("registration"):  The record a Customer
       Administrator creates at an Authorization Server so that it
       accepts Workload Authorization Grants for the Agents of one
-      Platform tenancy (Section 5.1).  The administrator "registers the
-      tenancy"; a tenancy so recorded is a "registered tenancy", and the
-      issuer the registration names is a "registered issuer".  In this
-      document a registration names the tenancy's issuer by its issuer
-      identifier, by which the tenancy's assertions are recognized, and
-      holds the tenancy's initial Property-to-permission mapping
-      (Section 5.3); it is also the scope within which the Authorization
-      Server holds the issuer's keys and interprets sub and jti.  A
-      tenancy registration is not an OAuth client registration
-      [RFC7591]: it is made by reference to the issuer's published
-      metadata, and the Authorization Server issues no client identifier
-      or credential in return.
+      Platform (Section 5.1).  The administrator "registers the
+      Platform"; a Platform so recorded is a "registered Platform", and
+      the issuer the registration names is a "registered issuer".  In
+      this document a registration names the Platform's issuer by its
+      issuer identifier, by which the Platform's assertions are
+      recognized, and optionally holds an initial Property-to-permission
+      mapping (Section 5.4).  A Platform registration is not an OAuth
+      client registration [RFC7591]: it is made by reference to the
+      issuer's published metadata, and the Authorization Server issues
+      no client identifier or credential in return.
 
 3.  Concepts
 
 3.1.  Overview
 
    The mechanism involves the following parties.  The Agent Platform
-   hosts Agents and operates, for each customer tenancy, an issuer that
-   signs assertions about that tenancy's Agents; each Agent presents its
-   own assertion to the Authorization Server.  The Authorization Server
-   protects a Resource Server and issues the access tokens the Resource
-   Server accepts.  The Customer Administrator holds the authority,
-   within the customer's Service tenancy, to configure the Authorization
-   Server to trust a Platform tenancy's issuer.
+   hosts Agents and operates an issuer that signs assertions about them;
+   each Agent presents its own assertion to the Authorization Server.
+   The Authorization Server protects a Resource Server and issues the
+   access tokens the Resource Server accepts.  The Customer
+   Administrator holds the authority to configure the Authorization
+   Server to trust the Platform's issuer.  Platforms and Services
+   commonly serve many customers; this document then treats each
+   customer's partition of a Platform as a distinct Platform, with its
+   own issuer in the sense Section 5.2 defines, and each customer's
+   partition of a Service as a distinct Service.
 
-   The mechanism has three steps, of which only the last recurs
-   (Figure 1):
+   The mechanism has three steps (Figure 1); the first two are setup,
+   and only the token request happens on every access:
 
-   1.  Trust establishment, once per tenancy (Section 5.1): the Customer
-       Administrator registers the Platform tenancy at the Authorization
-       Server, which thereafter accepts assertions from the tenancy's
-       issuer, named in the registration by its issuer identifier.  The
-       Authorization Server discovers the issuer's keys from its
-       published metadata; nothing is exchanged out of band.
+   1.  Trust establishment, once per Platform and Authorization Server
+       (Section 5.1): the Customer Administrator registers the Platform
+       at the Authorization Server, which thereafter accepts assertions
+       from the Platform's issuer, named in the registration by its
+       issuer identifier.  The Authorization Server discovers the
+       issuer's keys from its published metadata; nothing is exchanged
+       out of band.
 
-   2.  Agent instantiation, per Agent (Section 5.2): the Platform
-       creates an Agent and assigns it an Agent Identifier.  Nothing
-       happens at the Authorization Server or Resource Server.
+   2.  Agent instantiation, per Agent (Section 5.3): the Platform
+       creates an Agent and assigns it an Agent Identifier.
 
    3.  Token request, per access (Section 4): the Agent presents a
-       Workload Authorization Grant -- a JWT signed by the tenancy's
+       Workload Authorization Grant -- a JWT signed by the Platform's
        issuer, naming the Agent as its subject and carrying the Agent's
        Properties -- as the authorization grant in an ordinary OAuth
        token request.  The Authorization Server validates the signature
@@ -283,9 +283,9 @@ Table of Contents
        access token whose format and semantics are unchanged.
 
     Customer        Agent Platform        Authorization      Resource
-    Administrator   (tenancy issuer)      Server (AS)        Server (RS)
+    Administrator                         Server (AS)        Server (RS)
          |                 |                   |                 |
-     (1) |--- register tenancy (issuer id) --->|                 |
+     (1) |--- register Platform (issuer id) -->|                 |
          |                 |<-- GET metadata,  |                 |
          |                 |    JWK Set -------|                 |
          |                 |                   |                 |
@@ -308,31 +308,31 @@ Table of Contents
    An Agent's identity has three units: the issuer, which signs
    assertions about the Agent; the Agent Identifier, carried as the
    assertion's sub (Section 4); and claims, carrying everything else
-   (Section 5.3).  The Agent Identifier is opaque and immutable.  It
-   MUST be unique within its issuer, the Platform's per-tenancy issuer
-   (Section 5.1), and hence within that tenancy -- the (iss, sub) rule
-   of Section 3.1 of [IDJAG] for a single-tenant issuer.  It MUST NOT be
-   reassigned to a different Agent; where the identifier is a Workload
-   Identifier, this tightens the SHOULD NOT of Section 4.5 of
-   [WIMSE-ID], because Resource Servers key durable records (policy,
-   audit, grants) on it.  Renaming an Agent -- changing its name
-   Property (Section 5.3) or any other display label -- MUST NOT change
-   its Agent Identifier.  Agent Identifiers are compared as case-
-   sensitive strings with no transformations or canonicalizations
-   applied (Section 2 of [RFC7519], StringOrURI); a URI-form identifier
-   is compared as the complete URI (Section 4.3 of [WIMSE-ID]), with no
-   prefix or wildcard matching (Section 7.6 of [WIMSE-ID]).  Resource
-   Servers MUST NOT parse or pattern-match the Agent Identifier for
-   authorization; single-agent policy is an exact match on the sub
-   value.
+   (Section 5.4).  The Agent Identifier is opaque and immutable.  It
+   MUST be unique within its issuer (Section 5.1) -- the (iss, sub) rule
+   of Section 3.1 of [IDJAG] for a single-tenant issuer, which
+   Section 5.2.3 applies to every issuer.  It MUST NOT be reassigned to
+   a different Agent; where the identifier is a Workload Identifier,
+   this tightens the SHOULD NOT of Section 4.5 of [WIMSE-ID], because
+   Resource Servers key durable records (policy, audit, grants) on it.
+   Renaming an Agent -- changing its name Property (Section 5.4) or any
+   other display label -- MUST NOT change its Agent Identifier.  Agent
+   Identifiers are compared as case-sensitive strings with no
+   transformations or canonicalizations applied (Section 2 of [RFC7519],
+   StringOrURI); a URI-form identifier is compared as the complete URI
+   (Section 4.3 of [WIMSE-ID]), with no prefix or wildcard matching
+   (Section 7.6 of [WIMSE-ID]).  Resource Servers MUST NOT parse or
+   pattern-match the Agent Identifier for authorization; single-agent
+   policy is an exact match on the sub value.
 
    The Agent Identifier MAY be, and is RECOMMENDED to be, a Workload
    Identifier URI [WIMSE-ID] with an opaque path; a bare opaque string
    is also permitted.  When the Agent Identifier is a URI, the
-   Authorization Server validates its authority component against the
-   registered tenancy once, at token issuance; Resource Servers treat
-   the complete identifier as an opaque, exact-match string regardless
-   of form and MUST NOT derive trust from its components.
+   Authorization Server validates once, at token issuance, that its
+   authority component is the registered issuer's trust domain
+   (Section 5.1); Resource Servers treat the complete identifier as an
+   opaque, exact-match string regardless of form and MUST NOT derive
+   trust from its components.
 
 3.3.  Relationship to AIMS
 
@@ -350,31 +350,31 @@ Table of Contents
    is a hosted workload and the platform that hosts it is the authority
    that vouches for it.  The correspondences are:
 
-    +===================+============================================+
-    | AIMS concept      | In this document                           |
-    +===================+============================================+
-    | Agent identifier  | The Agent Identifier (Section 3.2):        |
-    | (Sec. 6)          | opaque, immutable, non-reassignable,       |
-    |                   | scoped to its issuer, carried as sub       |
-    +-------------------+--------------------------------------------+
-    | Agent credentials | The Platform's per-tenancy issuer signs an |
-    | (Sec. 7) and      | [RFC7523] JWT authorization grant on the   |
-    | authentication    | Agent's behalf (Section 4); OAuth client   |
-    | (Sec. 9)          | identity is deliberately unspecified       |
-    +-------------------+--------------------------------------------+
-    | Credential        | Platform-internal (Section 5.2); the       |
-    | provisioning      | Authorization Server learns of an Agent at |
-    | (Sec. 8)          | first presentation                         |
-    +-------------------+--------------------------------------------+
-    | Authorization     | Platform-asserted Agent Properties mapped  |
-    | (Sec. 10)         | locally to permissions (Section 5.3),      |
-    |                   | under trust established once by reference  |
-    |                   | (Section 5.1)                              |
-    +-------------------+--------------------------------------------+
-    | Monitoring and    | Attribution by (iss, sub) and jti;         |
-    | remediation (Sec. | retirement by cessation (Section 5.5);     |
-    | 11)               | open items in Section 6                    |
-    +-------------------+--------------------------------------------+
+     +===================+==========================================+
+     | AIMS concept      | In this document                         |
+     +===================+==========================================+
+     | Agent identifier  | The Agent Identifier (Section 3.2):      |
+     | (Sec. 6)          | opaque, immutable, non-reassignable,     |
+     |                   | scoped to its issuer, carried as sub     |
+     +-------------------+------------------------------------------+
+     | Agent credentials | The Platform's issuer signs an [RFC7523] |
+     | (Sec. 7) and      | JWT authorization grant on the Agent's   |
+     | authentication    | behalf (Section 4); OAuth client         |
+     | (Sec. 9)          | identity is deliberately unspecified     |
+     +-------------------+------------------------------------------+
+     | Credential        | Platform-internal (Section 5.3); the     |
+     | provisioning      | Authorization Server learns of an Agent  |
+     | (Sec. 8)          | at first presentation                    |
+     +-------------------+------------------------------------------+
+     | Authorization     | Platform-asserted Agent Properties       |
+     | (Sec. 10)         | mapped locally to permissions            |
+     |                   | (Section 5.4), under trust established   |
+     |                   | once by reference (Section 5.1)          |
+     +-------------------+------------------------------------------+
+     | Monitoring and    | Attribution by (iss, sub) and jti;       |
+     | remediation (Sec. | retirement by cessation (Section 5.6);   |
+     | 11)               | open items in Section 6                  |
+     +-------------------+------------------------------------------+
 
                                  Table 1
 
@@ -416,8 +416,8 @@ Table of Contents
    The following claims are used within the Workload Authorization Grant
    JWT:
 
-   iss:  REQUIRED - The issuer identifier of the Platform's per-tenancy
-      issuer (Section 5.1).
+   iss:  REQUIRED - The issuer identifier of the Platform's issuer
+      (Section 5.1).
 
    sub:  REQUIRED - The Agent Identifier as defined in Section 3.2.
 
@@ -441,7 +441,7 @@ Table of Contents
    The assertion is signed under a key in the issuer's published JWK Set
    [RFC7517].  The Authorization Server MUST resolve the signing key by
    iss (Section 5.1), not via a client registration.  The assertion
-   carries the Agent's Properties (Section 5.3), and the Authorization
+   carries the Agent's Properties (Section 5.4), and the Authorization
    Server MUST make them available to the Resource Server's
    authorization decision.
 
@@ -477,7 +477,7 @@ Table of Contents
 
    Figure 3 shows the decoded claims of the assertion carried in that
    request; name, namespace, groups, roles, and ctx are Agent Properties
-   (Section 5.3):
+   (Section 5.4):
 
    {
      "iss": "https://acme.agents.platform.example",
@@ -511,9 +511,10 @@ Table of Contents
    Section 3.1 shows the three steps end to end: one-time trust
    establishment by the Customer Administrator (Section 5.1); agent
    creation by end users with no interaction with the Resource Server
-   (Section 5.2); and the per-request JWT authorization grant
-   (Section 4).  This section specifies the first two and the
-   authorization model that connects them.
+   (Section 5.3); and the per-request JWT authorization grant
+   (Section 4).  This section specifies the first two, how they apply to
+   Platforms and Services that serve many customers (Section 5.2), and
+   the authorization model that connects them.
 
 5.1.  Trust Establishment
 
@@ -522,50 +523,39 @@ Table of Contents
    reach on issuer and audience identifiers, verification keys, lifetime
    and one-time-use limits, and subject and claim requirements.  This
    section specifies how that agreement is reached for the Workload
-   Authorization Grant: by a tenancy registration, made once per
-   Platform tenancy at each Authorization Server by reference to the
-   published metadata of the tenancy's issuer.
+   Authorization Grant: by a Platform registration, made once at each
+   Authorization Server by reference to the published metadata of the
+   Platform's issuer.
 
-   The Customer Administrator registers the Platform tenancy at the
-   Authorization Server once, within the customer's Service tenancy.
-   The resulting tenancy registration admits the Agents of that one
-   Platform tenancy: it names the tenancy's issuer by its issuer
-   identifier (Section 2 of [RFC8414]) and holds that tenancy's initial
-   Property-to-permission mapping for the Resource Server (Section 5.3).
-   From the issuer identifier the Authorization Server discovers the
-   issuer's metadata and, from the metadata's jwks_uri, the issuer's JWK
-   Set [RFC7517] ([OIDC-DISCOVERY], Section 4).  It retrieves both over
-   HTTPS, verifying the server's identity per [RFC9525], and it MUST NOT
-   use a metadata document whose issuer value is not identical to the
-   registration's issuer identifier ([OIDC-DISCOVERY], Section 4.3;
-   compare Section 3.3 of [RFC8414]).  No keys or secrets are exchanged,
-   the Authorization Server issues nothing back to the Platform, and key
-   rotation is by JWK Set update alone.  A customer with more than one
-   Platform tenancy has one registration per tenancy, and the same
-   tenancy can be registered at any number of Authorization Servers.
+   The Customer Administrator registers the Platform at the
+   Authorization Server once.  The resulting Platform registration names
+   the Platform's issuer by its issuer identifier (Section 2 of
+   [RFC8414]); from then on the Authorization Server accepts Workload
+   Authorization Grants from that issuer for any of the Platform's
+   Agents.  What an admitted Agent is permitted to do is a separate
+   matter, governed by the optional Property-to-permission mapping of
+   Section 5.4.  From the issuer identifier the Authorization Server
+   discovers the issuer's metadata and, from the metadata's jwks_uri,
+   the issuer's JWK Set [RFC7517] ([OIDC-DISCOVERY], Section 4).  It
+   retrieves both over HTTPS, verifying the server's identity per
+   [RFC9525], and it MUST NOT use a metadata document whose issuer value
+   is not identical to the registration's issuer identifier
+   ([OIDC-DISCOVERY], Section 4.3; compare Section 3.3 of [RFC8414]).
+   No keys or secrets are exchanged, the Authorization Server issues
+   nothing back to the Platform, and key rotation is by JWK Set update
+   alone.  The same Platform can be registered at any number of
+   Authorization Servers, and one Authorization Server can hold
+   registrations for any number of Platforms.
 
-   Platforms serving multiple customers MUST use a distinct issuer per
-   tenancy: the issuer is then the trust boundary a tenancy registration
-   expresses, and a shared issuer would move tenancy enforcement into
-   claim evaluation at every Authorization Server, including those that
-   can evaluate only issuer, subject, and audience (Section 6).  The
-   proposed MCP Workload Identity Federation extension [MCP-WIF] draws
-   the corresponding boundary at the signing key, recommending that an
-   authorization server rely only on keys bound to a single tenant; this
-   document draws it at the registered issuer.
-
-   A tenancy registration identifies the tenancy only by the issuer
-   identifier and persists at the Authorization Server until it is
-   removed there, even after the Platform tenancy it was created for has
-   ended.  A Platform therefore MUST NOT reassign a per-tenancy issuer
-   identifier to a different tenancy, and MUST NOT release for reuse by
-   another customer a customer-chosen name, such as a subdomain, from
-   which that identifier is derived: reassignment would hand the new
-   holder every registration the old tenancy held, at every
-   Authorization Server, with no way for the Platform to find or clear
-   them.  The same holds for the authority component of a URI-form Agent
-   Identifier -- its trust domain (Section 4.3 of [WIMSE-ID]) -- which
-   likewise identifies the tenancy (Section 3.2).
+   Because a registration identifies the Platform only by its issuer
+   identifier and persists until the Customer Administrator removes it,
+   whoever controls that identifier -- or a name, such as a DNS name,
+   from which it is derived -- holds every registration naming it, at
+   every Authorization Server; a Platform therefore MUST NOT assign an
+   issuer identifier it has used, such a name, or the trust domain of
+   its URI-form Agent Identifiers (Section 3.2) to any other holder, and
+   Section 5.2.3 states the corresponding rules between a Platform's
+   tenancies.
 
    On each presented assertion, the Authorization Server compares iss
    with its registered issuer identifiers by Simple String Comparison,
@@ -578,21 +568,98 @@ Table of Contents
    carried in the assertion itself ([RFC8725], Sections 3.8 and 3.10).
 
    Authorization Server and Resource Server state is scoped by issuer.
-   An Authorization Server MUST hold signing keys per registered issuer
-   identifier and MUST NOT merge key sets across issuers.  It MUST
+   An Authorization Server MUST keep the verification keys it retrieves
+   from each registered issuer's JWK Set separate, per issuer
+   identifier, and MUST NOT merge key sets across issuers.  It MUST
    interpret sub and jti only within the scope of the presenting iss.  A
-   Property-to-permission mapping (Section 5.3) is likewise scoped by
-   iss.  An Agent Identifier is unique only within its issuer
-   (Section 3.2), not globally: the same sub value under a different iss
-   denotes a different Agent (Section 3.1.2 of [WIMSE-ARCH]).  An
-   Authorization Server or Resource Server that keeps policy, audit, or
-   grant records about an Agent MUST therefore key them on the (iss,
-   sub) pair and MUST NOT key them on sub alone.  A complete URI-form
-   Agent Identifier is an equivalent key only where the Authorization
-   Server has verified, at issuance, that its authority component
-   belongs to the tenancy of the admitting registration (Section 3.2).
+   Property-to-permission mapping (Section 5.4) is likewise scoped by
+   iss; Section 8 states what this means for records keyed on the Agent
+   Identifier.
 
-5.2.  Agent Instantiation
+5.2.  Multi-Tenant Platforms and Services
+
+   A Platform or a Service commonly serves many customers, each within
+   its own administrative partition -- a tenancy (an organization,
+   workspace, or tenant; compare "Tenant" in Section 2.2 of [IDJAG]).
+   Where it does, outside this section "the Platform" denotes one
+   tenancy of the Platform, with its own issuer as defined below, and
+   "the Service", "the Authorization Server", and "the Resource Server"
+   denote the Service and its servers as they act for one tenancy.  No
+   requirement outside this section depends on how either party
+   partitions its customers.
+
+   A Platform serving multiple customers MUST operate a distinct issuer
+   for each tenancy -- one whose assertions name only that tenancy's
+   Agents as subject -- so that each Platform registration (Section 5.1)
+   admits exactly one tenancy.  A tenancy's issuer is distinct in one of
+   two forms: a unique issuer identifier (Section 5.2.1), which is
+   RECOMMENDED, or a shared issuer identifier (Section 5.2.2), which a
+   Platform MAY use instead.  In the terms of Section 6.1 of [IDJAG]
+   these are a single-tenant issuer and one tenant of a multi-tenant
+   issuer.  Section 5.2.3 applies to both.
+
+5.2.1.  Unique Issuer Identifier
+
+   The tenancy's issuer has a unique issuer identifier, and hence a
+   metadata document and JWK Set of its own, and the rest of this
+   document applies to it as written.  This form is RECOMMENDED because
+   the issuer identifier alone is then the trust boundary a registration
+   expresses (Section 5.1): any Authorization Server enforces it,
+   including a relying party that evaluates only issuer, subject, and
+   audience (Section 6), and the tenancy's signing keys are its own.
+   ([MCP-WIF] draws the corresponding boundary at the signing key; the
+   two coincide only under this form.)
+
+5.2.2.  Shared Issuer Identifier
+
+   The tenancy's issuer shares an issuer identifier -- and hence one
+   metadata document and JWK Set -- with other tenancies of the
+   Platform, and every assertion under that identifier MUST carry a
+   claim whose string value identifies the subject's tenancy (e.g., the
+   tenant claim of Section 3.1 of [IDJAG]).  The registration records
+   that value as its "pinned value", and the Authorization Server
+   enforces it (Section 8).  Wherever else this document refers to the
+   Platform or its issuer by the issuer identifier, or scopes the
+   Property-to-permission mapping by iss, the identifier is then read
+   together with the pinned value; metadata and verification keys remain
+   per issuer identifier, so registrations that share an issuer
+   identifier share its JWK Set but not their mappings.
+
+   Tenancies in this form share signing keys, and a registration holding
+   no pinned value -- the only kind a relying party that evaluates only
+   issuer, subject, and audience can hold (Section 6) -- admits every
+   tenancy under the identifier.  For the same reason a Platform MUST
+   NOT bring further tenancies under an issuer identifier already used
+   as a unique identifier: the registrations naming it hold no pinned
+   value and would admit them.
+
+5.2.3.  Rules Common to Both Forms
+
+   Agent Identifiers MUST be unique within an issuer identifier, not
+   merely within a tenancy, so that (iss, sub) denotes one Agent even to
+   parties that never see a pinned value (Section 8).  The trust domain
+   of URI-form Agent Identifiers (Section 3.2) identifies one tenancy: a
+   Platform MUST NOT place two tenancies' Agent Identifiers in one trust
+   domain.
+
+   Between tenancies of one Platform the non-reassignment rule of
+   Section 5.1 applies as between holders, and extends to pinned values:
+   a Platform MUST NOT reassign to another tenancy an issuer identifier,
+   pinned value, or trust domain a tenancy has used, nor release to
+   another customer a customer-chosen name, such as a subdomain, from
+   which one was derived.
+
+5.2.4.  Multi-Tenant Services
+
+   At a Service serving multiple customers, a Customer Administrator
+   registers a Platform within one tenancy of the Service; the
+   registration, its mapping, and the records about the Agents it admits
+   belong to that tenancy, and an assertion admitted under it MUST NOT
+   yield access outside that tenancy.  How the Service partitions its
+   customers and assigns a token request to a tenancy is otherwise out
+   of scope.
+
+5.3.  Agent Instantiation
 
    Creating an Agent is Platform-internal and MUST NOT require any
    ahead-of-time interaction with the Resource Server, the Authorization
@@ -601,7 +668,7 @@ Table of Contents
    presents its first authorization grant: it MUST accept a previously-
    unseen Agent Identifier presented as sub under a registered issuer,
    and authorization -- at the Authorization Server and the Resource
-   Server alike -- is via Section 5.3, never identifier structure.
+   Server alike -- is via Section 5.4, never identifier structure.
    Agents are not dynamically registered clients [RFC7591].
 
    Optionally, a Platform MAY project Agents into an Enterprise IdP
@@ -610,7 +677,18 @@ Table of Contents
    performing it just in time, including synchronously during first
    token issuance, is acceptable.  TODO: BYO-IdP deployment model.
 
-5.3.  Agent Properties and Authorization
+5.4.  Agent Properties and Authorization
+
+   Acceptance under a Platform registration (Section 5.1) is distinct
+   from permission: an admitted Agent may hold few or no permissions at
+   the Resource Server.  Permissions are granted most smoothly through a
+   Property-to-permission mapping, which the registration optionally
+   holds, so that Agents created later derive their permissions from the
+   Properties the Platform asserts, with no per-Agent provisioning;
+   under a registration that holds no mapping, every admitted Agent
+   receives the same baseline access, if any.  Which claims such a
+   mapping consults and how it is configured are local to the Service,
+   established out of band, and not specified by this document.
 
    TODO.  Initial standard property claims: name, a human-readable
    display name as in an OpenID Connect ID Token [OIDC-CORE] (mutable,
@@ -631,14 +709,14 @@ Table of Contents
    issuer's domain.  Deny semantics do not travel.  TODO: worked
    example.
 
-5.4.  Attribution
+5.5.  Attribution
 
    TODO.  The Authorization Server logs jti at token issuance; Resource
    Servers log the Agent Identifier (sub) and referenced Properties;
    internal fan-out via [TXN-TOKENS] rather than forwarding the access
    token.
 
-5.5.  Retirement and Lifecycle
+5.6.  Retirement and Lifecycle
 
    Retirement is expressed by cessation: the Platform stops signing
    assertions for a retired Agent, so residual access is bounded by the
@@ -661,8 +739,8 @@ Table of Contents
    *  Relying parties that authorize only on subject and audience (e.g.,
       cloud IAM federation trust policies) and cannot evaluate Property
       predicates; URI-form Agent Identifiers (Section 3.2) carry the
-      tenancy inside the identifier for this case, but the residual gap
-      is unassessed.
+      Platform's trust domain inside the identifier for this case, but
+      the residual gap is unassessed.
 
    *  Proof-of-possession: the authorization grant is bearer; see
       Section 4.
@@ -675,7 +753,7 @@ Table of Contents
 
    *  Staleness and retirement signaling in place of per-agent
       revocation (issuer- or Property-scoped epoch versus event push
-      versus lifetime alone, Section 5.5); a gap shared with neighboring
+      versus lifetime alone, Section 5.6); a gap shared with neighboring
       workload identity ecosystems.
 
    *  Addressing: whether an Agent needs a human-usable,
@@ -687,11 +765,38 @@ Table of Contents
 
 8.  Security Considerations
 
-   TODO: unseen agent identifiers under trusted issuers; tenancy
-   registration as the trust boundary; tenancy confusion at multi-issuer
-   Authorization Servers (Section 5.1); bearer-assertion theft and
-   assertion lifetime; Platform as root of trust; credential non-
-   exposure to the model; automated trust establishment.
+   TODO: unseen agent identifiers under trusted issuers; the registered
+   issuer as the trust boundary; confusion between registered issuers at
+   one Authorization Server (Section 5.1, Section 5.2); tenancies
+   sharing one issuer identifier and JWK Set, and registrations of a
+   shared identifier that lack a pinned value (Section 5.2.2); bearer-
+   assertion theft and assertion lifetime; Platform as root of trust;
+   credential non-exposure to the model; automated trust establishment.
+
+   An Agent Identifier is unique only within its issuer (Section 3.2,
+   Section 5.1), not globally: the same sub value under a different iss
+   denotes a different Agent (Section 3.1.2 of [WIMSE-ARCH]).  An
+   Authorization Server or Resource Server that keeps policy, audit, or
+   grant records about an Agent MUST therefore key them on the (iss,
+   sub) pair and MUST NOT key them on sub alone.  A complete URI-form
+   Agent Identifier is an equivalent key only where the Authorization
+   Server has verified, at issuance, that its authority component is the
+   trust domain of the admitting registration's issuer (Section 3.2).
+
+   Where a Platform's tenancies share an issuer identifier
+   (Section 5.2.2), the registration MUST record the distinguishing
+   claim's name, the tenancy's value for it (the pinned value), and the
+   trust domain of the tenancy's URI-form Agent Identifiers, if any, all
+   of which the Platform MUST make known, with the issuer identifier, to
+   the tenancy's Customer Administrators; a Customer Administrator MUST
+   NOT register such a tenancy at an Authorization Server that cannot
+   record them, since a registration naming the shared identifier alone
+   admits every tenancy sharing it.  The Authorization Server compares
+   the claim's value in a presented assertion with the pinned value by
+   Simple String Comparison (Section 5.1); it MUST NOT admit under the
+   registration an assertion that lacks the claim or carries another
+   value, and MUST reject, as it rejects an unregistered iss, an
+   assertion that no registration admits.
 
    Property freshness is distinct from JWT validity.  A valid signature
    proves that the Platform made the assertion, while exp only limits
@@ -705,7 +810,7 @@ Table of Contents
 9.  IANA Considerations
 
    This document has no IANA actions at this time; provisional claim
-   names (Section 5.3) may be registered in a future revision.
+   names (Section 5.4) may be registered in a future revision.
 
 10.  References
 
