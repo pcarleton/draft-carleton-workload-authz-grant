@@ -5,6 +5,73 @@ Most recent first within each state. Open items are at the bottom.
 
 ## Decided
 
+### D15 — -01 is a reduction of -00: what changed and what was only cut (2026-09-10)
+-01 is about a third the length of -00. The aim is a document that says
+only what two implementers have to agree on: the grant, whose keys verify
+it, and that a workload the authorization server has not seen before is
+not turned away for that reason. Most of the difference is text removed
+without changing what was decided. Four things did change.
+
+Changed:
+- aud (supersedes D6). The assertion carries the Authorization Server's
+  issuer identifier as a single value; the Authorization Server MUST
+  accept it and MAY also accept its token endpoint URL. D6's two-value
+  array is rejected outright by deployed RFC 7523 grant handlers that
+  require a single audience, and ID-JAG makes the same single-value
+  choice. Alternatives: keep both values (rejected: fails against those
+  handlers); the token endpoint as the single value (rejected: the value
+  rfc7523bis moves away from); MUST accept either (rejected: once the
+  sender is told which value to send, the Authorization Server only needs
+  to accept that one).
+- Agent Identifier (withdraws D7). `sub` is an opaque string, unique
+  within its Platform and never reassigned. D7 recommended a URI form so
+  that the tenancy could ride inside `sub` and the Authorization Server
+  could check its authority. Tenancy is now handled by the Platform
+  registration and nothing reads the identifier's structure, so
+  recommending a structure only invites parsing it.
+- Keys. How an Authorization Server obtains a Platform's keys is the
+  administrator's choice: entered directly, a JWK Set URL, or the
+  `jwks_uri` in the issuer's metadata. -00 required discovery by reference
+  to published metadata. What has to interoperate is which keys verify an
+  assertion (only those held for the matched registration, never keys
+  named in the assertion), not how they arrived. A Platform SHOULD publish
+  its keys at a URL so that rotation needs no administrator.
+- Platform and Platform registration. "Platform" means the sending end of
+  one trust relationship: one customer's partition where a provider
+  serves many. "Platform registration" is the Authorization Server's
+  record of one trusted Platform. Under a shared issuer identifier the
+  registration names the claim that tells Platforms apart, because
+  existing issuers each use a different claim; `tenant` is RECOMMENDED
+  only for new shared issuers. Every other rule can then say "the
+  Platform", and multi-tenancy is confined to the matching rule. This
+  replaces the tenancy text explored in pull request #10, which was not
+  merged; it relates to issue #7. Alternatives: fix the claim's name
+  (rejected: existing issuers would not conform); say nothing about
+  shared issuers (rejected: an Authorization Server that trusts a shared
+  identifier without a claim trusts every customer under it).
+
+Cut from the text without changing the decision: the AIMS correspondence
+table (D13; the Overview and its figure are kept in short form); the
+Scope section (D11: the fence is now in the abstract); retirement prose
+(D10: the bound is now the lifetime rule); instantiation and IdP
+projection (D5); the property vocabulary (O2 stays open; the text points
+at the roles, groups and entitlements names already in use and defines
+none).
+
+Small normative additions, each in the spirit of an existing entry: no
+refresh tokens, and access tokens that do not outlive the assertion by
+much (D10); no client registration per Agent, though the Platform may be
+required to authenticate as a client (D4); `resource` REQUIRED of the
+Agent; an optional `scope` claim as in ID-JAG; first-seen stated as "MUST
+NOT reject solely because the `sub` is unseen", since RFC 7523 Section 3
+leaves other policy to the Authorization Server and "MUST accept"
+overreached; error responses say who must act, using existing error
+codes only; `grant_types_supported` is a SHOULD.
+
+Deferred to the draft's Open Issues: a claim step performed by a user who
+is not an administrator; proof of possession (O1); an explicit JWT type;
+whether single use of `jti` is required.
+
 ### D13 — WAG is a standalone mechanism, not a profile of AIMS (2026-08-31, closes #1)
 The draft no longer calls itself a profile of draft-klrc-aiagent-auth
 (AIMS). AIMS moves from the normative to the informative references; the
@@ -91,7 +158,7 @@ URI-form identifier. Alternative: leave tuple semantics implicit (rejected:
 an AS indexing agents by sub alone lets tenancy B's agent inherit tenancy
 A's mapping).
 
-### D7 — Agent Identifier: URI form RECOMMENDED, bare string permitted (2026-07-28)
+### D7 — [withdrawn in -01, see D15] Agent Identifier: URI form RECOMMENDED, bare string permitted (2026-07-28)
 The identifier MAY (and is RECOMMENDED to) be a URI-form workload identifier
 with an opaque path; a bare opaque string remains permitted. Role split: the
 AS validates the URI authority against the allowlisted issuer's tenancy once
@@ -102,7 +169,7 @@ Alternatives: bare-string only (conflicted with the normative WIMSE-ID
 citation, which requires absolute URIs); URI-required (excludes simple
 platforms for no gain).
 
-### D6 — aud carries both issuer identifier and token endpoint URL (2026-07-28)
+### D6 — [superseded by D15] aud carries both issuer identifier and token endpoint URL (2026-07-28)
 The assertion's aud SHOULD list both values; an AS MUST accept either.
 rfc7523bis adds the issuer identifier as an audience option for
 authorization grants (issuer-only is mandated only for the separate
@@ -208,6 +275,7 @@ vocabulary, avoiding all top-level collisions;
 Outline agreed (slot argument; identifier compatibility; identity-plane
 backing changes nothing at the RS boundary). Drafting waits on O1 and O2
 since both feed the section's content.
+-01 drops the section altogether (see D15); reopen if it returns.
 
 ### O4 — Agent as grant-subject vs agent as OAuth client
 The expected flashpoint of external review. D3/D4 put the agent in the
