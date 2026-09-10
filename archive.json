@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2026-09-06T03:37:31.402642+00:00",
+  "timestamp": "2026-09-10T03:45:24.905463+00:00",
   "repo": "pcarleton/draft-carleton-workload-authz-grant",
   "labels": [
     {
@@ -93,7 +93,7 @@
       "labels": [],
       "body": "We want:\n* A small set of claims that are common among implementations (target: max of 3)\n* extensibility to add more claims if a platform and resource want\n* Clearly specify which claims can be trusted for policy decisions, and clarify that others cannot\n* ability to re-use existing authz modeling where appropriate (i.e. I want this agent to have the same permissions as humans on this team)\n\nThe leading candidate is `roles`, `groups` and `entitlements` from https://datatracker.ietf.org/doc/html/rfc7643#section-4.1.2 / https://datatracker.ietf.org/doc/html/rfc9068#section-2.2.3.1\n\nIf that does end up being what we do, we need to:\n* play out an example of the agent platform giving claims like roles / groups if they're not specific to the platform\n* decide whether they need to be namespaced by FQDN (or if issuer namespacing is sufficient)\n* explain relationship to #3 ",
       "createdAt": "2026-08-14T16:12:42Z",
-      "updatedAt": "2026-09-03T14:17:42Z",
+      "updatedAt": "2026-09-08T04:56:54Z",
       "closedAt": null,
       "comments": [
         {
@@ -130,6 +130,13 @@
           "body": "I'm tempted to leave `authorization_details` fairly unspecified in order to leave room for things like payments if folks want to use it for that in the future, e.g. what's layed out here: https://yaron-zehavi.github.io/oauth-rich-authorization-requests-metadata/draft-ietf-oauth-rar-metadata-remediation-00/draft-ietf-oauth-rar-metadata-remediation.html#name-authorization-server-metada\n\nregarding the SCIM claims, I was thinking just plain strings to start. In the \"direct\" deployment model (Platform -> Service provider, no IdP involved), it is most convenient to just use strings, and not try to teach the platform the full SCIM schema.  The purpose of using `groups` in the direct model is only as a familiar way to convey properties between the platform and service provider.  There will need to be a \"mapping\" step, where the Service Provider lets the admin decide what access the WAG grants in the platform based on properties.  The main / only benefit of mentioning the SCIM claim set here is to give a small nudge to make that \"mapping\" step a little less \"wild west\". (e.g. \"platform_foo_team4=true\" claim coming from Platform4 should map to this permission in Service6, vs. having some nicer UX around when you see \"team4\" in a `groups` claim.) \n\nrelated: I believe if we're making agent platforms full SCIM clients, that's likely not desirable, and instead would be better served by the \"idp mediated\" model (Platform -> IdP -> Service Provider) that we've started sketching out a little in #3 (and to re-iterate, I want to leave basically *all* \"how does this work with an idp\" specification out of this document, apart from nodding to it as a deployment model, and potentially stating that Service Providers should be able to be mostly agnostic of whether the token is coming from an IdP or from a platform)\n\n",
           "createdAt": "2026-09-03T14:17:42Z",
           "updatedAt": "2026-09-03T14:17:42Z"
+        },
+        {
+          "author": "jiyun-ant",
+          "authorAssociation": "NONE",
+          "body": "I'd like to get more clarity on emitting agent groups, here is where I'd land this section, building on the thread above:\n\n- `groups` (and `roles`) are opaque strings, unique and stable within the issuing tenancy: within `iss`, or within (`iss`, `tenant`) on a shared issuer. The platform documents how they're formed. It can be computed (all agents in a tenancy, all agents in one chat app workspace) or admin-assigned groups.\n- They are assertions, not permissions. The AS/RS maps (iss, tenant, value) to local teams or roles through a mapping the customer's admin sets up at trust establishment. No mapping, no access. Never merged with human groups that happen to share a name.\n- If the relying party wants a directory object for sharing UIs or access reviews, that's the SCIM agent group (I-D.wzdk-scim-agent-resource) carrying the same id in `externalId`; the claim is then the per-request proof of membership.\n- Request-specific authorization data stays in `authorization_details`, as discussed above.\n\nHappy to send this as PR text with a worked example if it matches where everyone is.",
+          "createdAt": "2026-09-08T04:56:54Z",
+          "updatedAt": "2026-09-08T04:56:54Z"
         }
       ]
     },
@@ -367,13 +374,13 @@
       "labels": [],
       "body": "\r\nthis is combination of:\r\n* clarifying the constraints around the agent identifier\r\n* swapping from \"allowlist entry\" to \"tenancy registration\"\r\n* rewriting the Trust section to make more sense \r\n\r\nstill todo:\r\n* allow for `tenant` claim",
       "createdAt": "2026-09-04T14:29:18Z",
-      "updatedAt": "2026-09-04T18:29:03Z",
+      "updatedAt": "2026-09-08T08:30:00Z",
       "baseRepository": "pcarleton/draft-carleton-workload-authz-grant",
       "baseRefName": "main",
       "baseRefOid": "2c5222b411c6ff73bed92ec94622d0b2c8717bce",
       "headRepository": "pcarleton/draft-carleton-workload-authz-grant",
       "headRefName": "trust-rewrite",
-      "headRefOid": "17c7d74dac9a75794962bf150fbc35c781020421",
+      "headRefOid": "bdbf71ee78b8fe6712acba9055c42d6b3769c6d0",
       "closedAt": null,
       "mergedAt": null,
       "mergedBy": null,
@@ -401,6 +408,32 @@
           ]
         }
       ]
+    },
+    {
+      "number": 11,
+      "id": "PR_kwDOTlTgBM8AAAABCnqF_w",
+      "title": "Property claims: platform plus platform-prefixed context claims in place of ctx",
+      "url": "https://github.com/pcarleton/draft-carleton-workload-authz-grant/pull/11",
+      "state": "OPEN",
+      "author": "jiyun-ant",
+      "authorAssociation": "NONE",
+      "assignees": [],
+      "labels": [],
+      "body": "Replaces the composite `ctx` Property in the example assertion and in the Properties section with flat collaboration-context claims: `platform`, naming the collaboration platform the Agent acts in (a chat or work application \u2014 not the Agent Platform), plus that platform's own workspace and channel identifiers under claim names prefixed with the platform name (`example_workspace_id`, `example_channel_id` for a platform named `example`). Records the choice as D15 in the decision log; O2 now points at it for registration.\n\nWhy: separate flat string claims can be matched directly by a Resource Server (cloud IAM trust-policy conditions included) without parsing a composite value, and the prefix keeps identifiers of different platforms apart. Which claims an issuer populates stays its choice.\n\nOffered as input per CONTRIBUTING.md \u2014 happy to turn this into an issue, or to move D15 to Open, if you'd rather settle it in review.\n",
+      "createdAt": "2026-09-08T05:44:21Z",
+      "updatedAt": "2026-09-08T05:44:21Z",
+      "baseRepository": "pcarleton/draft-carleton-workload-authz-grant",
+      "baseRefName": "main",
+      "baseRefOid": "2c5222b411c6ff73bed92ec94622d0b2c8717bce",
+      "headRepository": "jiyun-ant/draft-carleton-workload-authz-grant",
+      "headRefName": "context-claims-per-platform",
+      "headRefOid": "571ba117e97669feb8c9b388e47d904a8cf64eb5",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [],
+      "reviews": []
     }
   ]
 }
