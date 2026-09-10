@@ -1,0 +1,605 @@
+
+
+
+
+Network Working Group                                   P. Carleton, Ed.
+Internet-Draft                                                 Anthropic
+Intended status: Informational                                 N. Steele
+Expires: 14 March 2027                                            OpenAI
+                                                              A. Parecki
+                                                                    Okta
+                                                      A. Schwenkschuster
+                                                        Defakto Security
+                                                             B. Campbell
+                                                           Ping Identity
+                                                       10 September 2026
+
+
+                      Workload Authorization Grant
+               draft-carleton-workload-authz-grant-latest
+
+Abstract
+
+   This document defines the Workload Authorization Grant (WAG), by
+   which a workload hosted on a platform -- an AI agent is the
+   motivating case -- obtains access tokens from a third party's OAuth
+   authorization server without requiring an administrator to perform a
+   per-workload provisioning step.  Each workload is identified by an
+   opaque identifier that is never reassigned.  The platform signs a JWT
+   authorization grant (RFC 7523) that names one workload, and the
+   workload presents it at the token endpoint of an authorization server
+   that has been configured, once, to trust that platform.  The
+   authorization server does not reject a workload because it has not
+   seen it before; what the workload may then do is decided by the
+   authorization server's own policy, which may consult claims the
+   platform asserts about the workload.  This document covers workloads
+   acting on their own behalf.  Access on behalf of a user or other
+   principal is out of scope, though the grant is intended to compose
+   with delegation mechanisms in which the workload is the actor.
+
+About This Document
+
+   This note is to be removed before publishing as an RFC.
+
+   Status information for this document may be found at
+   https://datatracker.ietf.org/doc/draft-carleton-workload-authz-
+   grant/.
+
+   Source for this draft and an issue tracker can be found at
+   https://github.com/pcarleton/draft-carleton-workload-authz-grant.
+
+Note to Readers
+
+   This note is to be removed before publishing as an RFC.
+
+   This document is an early, exploratory individual draft, published to
+   solicit discussion of the deployment pattern it describes.  It is not
+   a working group document, does not describe a shipped or committed
+   design, and does not represent a position or roadmap of the editors'
+   employers.  Every aspect of it is subject to change or withdrawal,
+   including whether this mechanism should be specified in a separate
+   document at all.  Issues and pull requests:
+   https://github.com/pcarleton/draft-carleton-workload-authz-grant.
+
+Status of This Memo
+
+   This Internet-Draft is submitted in full conformance with the
+   provisions of BCP 78 and BCP 79.
+
+   Internet-Drafts are working documents of the Internet Engineering
+   Task Force (IETF).  Note that other groups may also distribute
+   working documents as Internet-Drafts.  The list of current Internet-
+   Drafts is at https://datatracker.ietf.org/drafts/current/.
+
+   Internet-Drafts are draft documents valid for a maximum of six months
+   and may be updated, replaced, or obsoleted by other documents at any
+   time.  It is inappropriate to use Internet-Drafts as reference
+   material or to cite them other than as "work in progress."
+
+   This Internet-Draft will expire on 14 March 2027.
+
+Copyright Notice
+
+   Copyright (c) 2026 IETF Trust and the persons identified as the
+   document authors.  All rights reserved.
+
+   This document is subject to BCP 78 and the IETF Trust's Legal
+   Provisions Relating to IETF Documents (https://trustee.ietf.org/
+   license-info) in effect on the date of publication of this document.
+   Please review these documents carefully, as they describe your rights
+   and restrictions with respect to this document.  Code Components
+   extracted from this document must include Revised BSD License text as
+   described in Section 4.e of the Trust Legal Provisions and are
+   provided without warranty as described in the Revised BSD License.
+
+Table of Contents
+
+   1.  Introduction
+   2.  Conventions and Terminology
+   3.  Overview
+   4.  Agent Identity
+   5.  Workload Authorization Grant
+     5.1.  JWT Syntax
+   6.  Issuer Keys
+   7.  First-Seen Agents
+   8.  Error Responses
+   9.  Permissions
+   10. Multi-Tenancy
+   11. Open Issues
+   12. Security Considerations
+   13. IANA Considerations
+   14. References
+     14.1.  Normative References
+     14.2.  Informative References
+   Acknowledgments
+   Authors' Addresses
+
+1.  Introduction
+
+   Agent platforms host many agents per customer, created and retired at
+   the pace of the customer's work -- one per channel, repository, or
+   pipeline.  The person creating an agent is rarely someone who can
+   provision credentials at the services it will use, so in practice
+   every agent of an installation ends up sharing one credential, at the
+   cost of any attribution of an individual agent's actions.
+
+   A platform that hosts many workloads -- an agent platform is a
+   motivating case -- needs each workload to obtain an access token at
+   third-party services without requiring an administrator to perform a
+   per-workload provisioning step.
+
+   This document defines one grant for that: a JWT authorization grant
+   [RFC7523] signed by the platform and naming one workload, presented
+   at the token endpoint of an authorization server that has been
+   configured, once, to trust that platform.
+
+   It specifies the grant, and that a workload the authorization server
+   has never seen can be accepted on its first assertion.
+
+   How trust in a platform is established and what an accepted workload
+   may do are left to deployments.
+
+2.  Conventions and Terminology
+
+   The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+   "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+   "OPTIONAL" in this document are to be interpreted as described in
+   BCP 14 [RFC2119] [RFC8174] when, and only when, they appear in all
+   capitals, as shown here.
+
+   Platform: the party that creates workloads ("Agents") and signs
+   assertions about them; the sending end of one trust relationship with
+   an Authorization Server.  Where a provider serves several customer
+   organizations under one issuer identifier, each customer's partition
+   is a separate Platform (Section 10).
+
+   Platform registration: an Authorization Server's record of one
+   Platform it trusts: the Platform's issuer identifier, its keys
+   (Section 6) and, where several Platforms share that issuer
+   identifier, the name of a claim and the value the claim carries for
+   this Platform (Section 10).  How a Platform registration comes to
+   exist is out of scope.  It is not a client registration [RFC7591] and
+   yields no client identifier or credential.
+
+   Authorization Server, Resource Server: as in [RFC6749].
+
+3.  Overview
+
+   1.  Once per Platform and Authorization Server: an administrator of
+       the Authorization Server creates a Platform registration
+       (Section 2), which records the Platform's issuer identifier and
+       how to obtain its keys (Section 6).  Nothing about individual
+       Agents is exchanged.
+
+   2.  Per Agent: the Platform creates an Agent and assigns it an Agent
+       Identifier (Section 4).  Nothing is sent to the Authorization
+       Server or the Resource Server.
+
+   3.  Per access: the Agent presents a Workload Authorization Grant in
+       an ordinary OAuth token request.  The Authorization Server
+       matches it to a Platform registration, verifies it under that
+       Platform's keys, does not reject it for carrying a sub it has not
+       seen before (Section 7), and issues an access token under its own
+       policy (Section 9).
+
+         Platform                    Authorization        Resource
+         (issuer; Agents)            Server (AS)          Server (RS)
+               |                          |                   |
+     (1)  [administrator creates a Platform registration]     |
+               |                          |                   |
+     (2)  [Platform creates Agent; nothing sent to AS or RS]  |
+               |                          |                   |
+     (3)       |--- POST /token --------->|                   |
+               |    grant_type=jwt-bearer |                   |
+               |    assertion=<WAG>       |                   |
+               |    resource=<RS>         |                   |
+               |<-- access token ---------|                   |
+               |--- request + access token ------------------>|
+
+     Figure 1: One-time Platform registration, then per-request grants
+
+4.  Agent Identity
+
+   An Agent is identified by its Agent Identifier, carried as the sub
+   claim in the assertion.  The Agent Identifier is opaque; it MUST be
+   unique among all Agent Identifiers issued under the same Platform,
+   MUST NOT be reassigned to a different Agent, and is compared as a
+   case-sensitive string [RFC7519], Section 2.  An Authorization Server
+   MUST key records about an Agent on its Platform together with sub,
+   never on sub alone, and MUST NOT convey to a Resource Server a
+   subject under which Agents of different Platforms could be confused.
+
+5.  Workload Authorization Grant
+
+   An Agent obtains an access token by presenting a JWT as an
+   authorization grant per [RFC7523], Section 2.1, issued by the
+   Platform as a third party in the sense of [RFC7521], Section 3.  The
+   token request carries grant_type=urn:ietf:params:oauth:grant-
+   type:jwt-bearer, the JWT in the assertion parameter, and the target
+   resource in the resource parameter [RFC8707].  The resource parameter
+   [RFC8707] is REQUIRED; an Authorization Server SHOULD restrict the
+   audience of the access token it issues to that resource and MAY
+   refuse a request that lacks it with invalid_target ([RFC8707],
+   Section 2).  An Agent MAY make the token request without client
+   authentication ([RFC7523], Section 3.1), and this specification
+   attaches no meaning to client_id.  An Authorization Server MUST NOT
+   require a client registration per Agent.  It MAY require the Platform
+   to authenticate as a client, for example to apply quotas or to cut
+   off a Platform.
+
+   Assertions SHOULD be short-lived.  The Authorization Server MUST NOT
+   issue refresh tokens for this grant and SHOULD NOT issue access
+   tokens that outlive the assertion by a significant period ([RFC7521],
+   Section 4.1), so that access ends soon after the Platform stops
+   signing for an Agent.
+
+5.1.  JWT Syntax
+
+   iss  REQUIRED - The issuer identifier of the Platform's issuer
+      (Section 6): a URL using the https scheme with no query or
+      fragment component, as for issuer in [RFC8414], Section 2.
+
+   sub  REQUIRED - The Agent Identifier (Section 4).
+
+   aud  REQUIRED - Identifies the Authorization Server: its issuer
+      identifier [RFC8414], as a single value, as in [IDJAG],
+      Section 3.1.  An Authorization Server MUST accept its issuer
+      identifier as the audience; it MAY also accept its token endpoint
+      URL, which [RFC7523BIS] continues to permit for authorization
+      grants.
+
+   exp, iat, jti  REQUIRED - As defined in [RFC7519].
+
+   scope  OPTIONAL - A space-separated list of scopes ([RFC6749],
+      Section 3.3) the Platform asserts for this request, as in [IDJAG],
+      Section 3.1.  The Authorization Server decides under its own
+      policy which of them to grant, and MAY grant a subset ([IDJAG],
+      Section 4.4.1).
+
+   The assertion is signed under a key configured from the Platform (see
+   Section 6) and MAY carry further claims about the Agent.  An
+   Authorization Server that publishes metadata [RFC8414] SHOULD list
+   the urn:ietf:params:oauth:grant-type:jwt-bearer grant type in
+   grant_types_supported.
+
+   { "iss": "https://acme.agents.platform.example", "sub":
+   "agent/7f3d9as3", "aud": "https://as.saas.example", "exp":
+   1785271980, "iat": 1785271680, "jti": "7d0f5a2b-93c8-4f0e-
+   9c33-1b6a0e6d5f10", "scope": "issues:read issues:write" }
+
+6.  Issuer Keys
+
+   On each assertion the Authorization Server finds the Platform
+   registration the assertion matches: iss equals the registration's
+   issuer identifier by Simple String Comparison ([RFC7523], Section 3)
+   and, where the registration names a claim (Section 10), the assertion
+   carries that claim with the registered value.  An Authorization
+   Server MUST ensure that an assertion can match at most one of its
+   Platform registrations.  The Authorization Server MUST reject an
+   assertion that matches no Platform registration, MUST verify the
+   signature only under a key configured or retrieved for the matched
+   registration's issuer identifier - never under key material or key
+   locations carried in the assertion ([RFC8725] §3.8 and §3.10) - and
+   MUST interpret sub and jti only within the scope of the matched
+   Platform registration.
+
+   How the keys get into a Platform registration is the administrator's
+   choice: a JWK Set [RFC7517] entered directly, a JWK Set URL the
+   Authorization Server fetches over HTTPS [RFC9525], or the jwks_uri in
+   metadata the issuer publishes under its issuer identifier ([RFC8414],
+   Section 3 or [OIDC-DISCOVERY]).  An Authorization Server that uses
+   issuer metadata MUST NOT use a document whose issuer value is not
+   identical to the registration's issuer identifier ([RFC8414],
+   Section 3.3).  A Platform SHOULD publish its keys at a URL, so that
+   keys can rotate without administrator action.
+
+7.  First-Seen Agents
+
+   An Authorization Server that trusts a Platform MUST NOT reject an
+   assertion solely because it has not seen the sub before: the Agent's
+   first assertion is how the Authorization Server learns that the Agent
+   exists.  It MUST NOT require an administrator to register, provision,
+   or otherwise make the sub known to it or the Resource Server before
+   the Agent's first assertion.
+
+   Whether a first-seen Agent receives any permission is governed by
+   Section 9, never by identifier structure.
+
+8.  Error Responses
+
+   When a token request fails, the Authorization Server SHOULD indicate
+   in error_description ([RFC6749], Section 5.2) who must act: an
+   administrator of the Authorization Server, if the Platform is not
+   trusted or the Agent holds no permission for the request; or the
+   Platform, if the assertion is invalid.  An untrusted Platform or an
+   invalid assertion yields invalid_grant ([RFC7523], Section 3.1); a
+   missing permission yields invalid_scope or invalid_target ([RFC8707])
+   where a specific scope or resource is refused, otherwise
+   invalid_grant.  When an action can be taken to resolve the issue, the
+   Authorization Server SHOULD include a link in error_uri.
+
+9.  Permissions
+
+   An accepted Agent may hold no permissions.  What it is permitted to
+   do is decided by the Authorization Server under local policy, which
+   MAY consult claims the Platform asserts about the Agent; A claim is
+   an assertion by the Platform, meaningful only within the context of
+   that Platform, and an Authorization Server MUST NOT assume that a
+   similarly named value from another Platform means the same thing.
+
+   The expected deployment of claims is for a Platform administrator to
+   delegate the ability to provision agents with particular claims to
+   groups of Platform users.  In that way, a user can create a new Agent
+   with the claims the user is permitted to assign to an Agent.  If
+   those claims are mapped to permissions in the Authorization Server,
+   then the new Agent can immediately get an access token with those
+   mapped permissions and perform useful actions at the Resource Server.
+
+   As an example, consider an organization with an engineering and a
+   support team.  An administrator in the Platform may configure a claim
+   that looks like "groups": ["eng-agent"].  The administrator then may
+   map that claim to a permission in the Authorization Server.  The
+   administrator then may allow engineering team members to create an
+   agent with that claim, but not permit support engineers to create an
+   agent with that claim.  In this manner, the engineering team is
+   trusted to create and organize its agents without requiring input
+   from the administrator while the administrator knows what permissions
+   those agents have.
+
+   For this deployment pattern it may be useful to use the roles, groups
+   and entitlements claim names of [RFC9068], Section 2.2.3.1, which
+   take them from the SCIM core schema ([RFC7643], Section 4.1.2),
+   however the claim names are only useful as a common conceptual
+   framework and to help interoperability between Platforms and
+   Authorization Servers, it is not expected to match a SCIM schema, or
+   be projected from an Enterprise IdP.
+
+10.  Multi-Tenancy
+
+   In many cases, a deployment (Platform or AS/RS) will partition its
+   infrastructure by customer organizations, or tenants.  For the
+   purposes of this document, a Platform and Authorization Server /
+   Resource Server refers to a single partition belonging to a single
+   organization (Section 2).  Where an Authorization Server serves
+   several organizations behind one issuer identifier and token
+   endpoint, aud is the same for all of them, so an assertion is for the
+   organization whose Platform registration it matches (Section 6).  A
+   Platform that knows the organization's identifier at the
+   Authorization Server can also carry it in the assertion, as the
+   aud_tenant claim of [IDJAG], Section 3.1 does; this document does not
+   require it.
+
+   Where each Platform has its own issuer identifier, the issuer
+   identifier alone identifies the Platform and nothing further in this
+   section applies.  Where several Platforms share one issuer
+   identifier, a claim in the assertion tells them apart.  Existing
+   issuers use different claims for this, so this document does not fix
+   the claim's name: the Platform registration names the claim and the
+   value it carries for that Platform, and the Authorization Server
+   applies both when matching an assertion (Section 6).  An assertion
+   that lacks the named claim, or carries another value, does not match
+   that registration.
+
+   It is RECOMMENDED that a new issuer shared by several Platforms use
+   the tenant claim ([IDJAG], Section 3.1) in order to simplify
+   interoperability.
+
+   How an Authorization Server determines whether a Platform needs a
+   differentiating claim, and which, is left to be discovered out of
+   band of this specification.
+
+11.  Open Issues
+
+   *  Claiming: whether an Authorization Server may withhold access
+      tokens for a first-seen Agent until a user of its organization
+      (any user, not an administrator) accepts ("claims") the Agent, so
+      that creating Agents stays self-service while a person confirms
+      each one; how that fits the rule in Section 7; and whether "a
+      person must act, then the request is retried" needs its own error
+      code ([RFC8628], Section 3.5 defines authorization_pending for a
+      similar case).
+
+   *  Proof of possession: the grant is a bearer assertion and no client
+      authentication is required; whether to name a hardening (sender-
+      constrained access tokens, authenticating the presenting instance,
+      or the Platform authenticating as a client) and which, if any, to
+      require.
+
+   *  JWT type: whether to define an explicit typ for this grant
+      ([RFC8725], Section 3.11), so that another kind of JWT signed by
+      the same issuer for the same audience cannot be taken for it.
+
+   *  Replay: whether an Authorization Server is required to reject a
+      jti it has already accepted while the assertion is still valid, or
+      whether that stays optional as in [RFC7523], Section 3.
+
+   *  aud: this revision uses the Authorization Server's issuer
+      identifier as a single value; [RFC7523BIS] requires that for
+      client authentication and still permits the token endpoint URL for
+      authorization grants.
+
+   *  Shared issuer identifiers: whether to name the claim that tells
+      Platforms apart, or a way for an issuer to declare it, instead of
+      leaving it to each Platform registration (Section 10).
+
+   *  Registering a Platform: where one Authorization Server serves
+      several organizations, whether anything should say who may create
+      a Platform registration for a given Platform.
+
+12.  Security Considerations
+
+   This revision lists the considerations it is aware of; a fuller
+   treatment will follow.
+
+   *  Trusting a Platform is trusting it for every Agent it vouches for,
+      for ceasing to sign for an Agent that is retired, and for its own
+      controls over who may assign which claims (Section 9).
+
+   *  Agents are accepted on their first assertion (Section 7), so the
+      set of acceptable Agents grows at the Platform with no action at
+      the Authorization Server, and each new Agent creates state there;
+      an Authorization Server can cap new Agents per Platform
+      registration, but not so low that the cap works as per-Agent
+      approval.
+
+   *  The assertion is a bearer credential: a short lifetime, its aud
+      and, where the Authorization Server enforces it, single use by jti
+      bound what a stolen one is worth.  Assertions and signing keys
+      belong in Platform infrastructure, not in an AI agent's model
+      context.  Proof of possession is an open issue (Section 11).
+
+   *  Keys are held per issuer identifier, so that one issuer's key
+      never verifies another's assertion (Section 6); whoever controls
+      an issuer identifier, or the DNS name under it, controls what
+      every trusting Authorization Server accepts.
+
+   *  Platforms under a shared issuer identifier share its keys, so the
+      claim that tells them apart (Section 10) is only as trustworthy as
+      the party signing for all of them, and a Platform registration for
+      a shared issuer identifier that names no claim trusts every
+      Platform under it.
+
+   *  Where one Authorization Server serves several organizations, a
+      Platform registration created by the wrong organization routes
+      another organization's Agents to it; who may register a given
+      Platform is out of scope.
+
+   *  Error responses (Section 8) tell any presenter which Platforms an
+      Authorization Server trusts, and error_uri hands a link to an
+      unauthenticated presenter.
+
+   *  This document defines no explicit JWT type, so an issuer that
+      signs other kinds of JWT for the same audience risks one being
+      taken for this grant ([RFC8725], Section 3.11).
+
+13.  IANA Considerations
+
+   This document has no IANA actions.
+
+14.  References
+
+14.1.  Normative References
+
+   [OIDC-DISCOVERY]
+              Sakimura, N., Bradley, J., Jones, M., and E. Jay, "OpenID
+              Connect Discovery 1.0 incorporating errata set 2",
+              December 2023, <https://openid.net/specs/openid-connect-
+              discovery-1_0.html>.
+
+   [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
+              Requirement Levels", BCP 14, RFC 2119,
+              DOI 10.17487/RFC2119, March 1997,
+              <https://www.rfc-editor.org/rfc/rfc2119>.
+
+   [RFC6749]  Hardt, D., Ed., "The OAuth 2.0 Authorization Framework",
+              RFC 6749, DOI 10.17487/RFC6749, October 2012,
+              <https://www.rfc-editor.org/rfc/rfc6749>.
+
+   [RFC7517]  Jones, M., "JSON Web Key (JWK)", RFC 7517,
+              DOI 10.17487/RFC7517, May 2015,
+              <https://www.rfc-editor.org/rfc/rfc7517>.
+
+   [RFC7519]  Jones, M., Bradley, J., and N. Sakimura, "JSON Web Token
+              (JWT)", RFC 7519, DOI 10.17487/RFC7519, May 2015,
+              <https://www.rfc-editor.org/rfc/rfc7519>.
+
+   [RFC7521]  Campbell, B., Mortimore, C., Jones, M., and Y. Goland,
+              "Assertion Framework for OAuth 2.0 Client Authentication
+              and Authorization Grants", RFC 7521, DOI 10.17487/RFC7521,
+              May 2015, <https://www.rfc-editor.org/rfc/rfc7521>.
+
+   [RFC7523]  Jones, M., Campbell, B., and C. Mortimore, "JSON Web Token
+              (JWT) Profile for OAuth 2.0 Client Authentication and
+              Authorization Grants", RFC 7523, DOI 10.17487/RFC7523, May
+              2015, <https://www.rfc-editor.org/rfc/rfc7523>.
+
+   [RFC8174]  Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
+              2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174,
+              May 2017, <https://www.rfc-editor.org/rfc/rfc8174>.
+
+   [RFC8414]  Jones, M., Sakimura, N., and J. Bradley, "OAuth 2.0
+              Authorization Server Metadata", RFC 8414,
+              DOI 10.17487/RFC8414, June 2018,
+              <https://www.rfc-editor.org/rfc/rfc8414>.
+
+   [RFC8707]  Campbell, B., Bradley, J., and H. Tschofenig, "Resource
+              Indicators for OAuth 2.0", RFC 8707, DOI 10.17487/RFC8707,
+              February 2020, <https://www.rfc-editor.org/rfc/rfc8707>.
+
+   [RFC8725]  Sheffer, Y., Hardt, D., and M. Jones, "JSON Web Token Best
+              Current Practices", BCP 225, RFC 8725,
+              DOI 10.17487/RFC8725, February 2020,
+              <https://www.rfc-editor.org/rfc/rfc8725>.
+
+   [RFC9525]  Saint-Andre, P. and R. Salz, "Service Identity in TLS",
+              RFC 9525, DOI 10.17487/RFC9525, November 2023,
+              <https://www.rfc-editor.org/rfc/rfc9525>.
+
+14.2.  Informative References
+
+   [IDJAG]    Parecki, A., McGuinness, K., and B. Campbell, "Identity
+              Assertion JWT Authorization Grant", Work in Progress,
+              Internet-Draft, draft-ietf-oauth-identity-assertion-authz-
+              grant-04, 21 May 2026,
+              <https://datatracker.ietf.org/doc/html/draft-ietf-oauth-
+              identity-assertion-authz-grant-04>.
+
+   [RFC7523BIS]
+              Jones, M. B., Campbell, B., Mortimore, C., and F. Skokan,
+              "Updates to OAuth 2.0 JSON Web Token (JWT) Client
+              Authentication and Assertion-Based Authorization Grants",
+              Work in Progress, Internet-Draft, draft-ietf-oauth-
+              rfc7523bis-11, 28 April 2026,
+              <https://datatracker.ietf.org/doc/html/draft-ietf-oauth-
+              rfc7523bis-11>.
+
+   [RFC7591]  Richer, J., Ed., Jones, M., Bradley, J., Machulak, M., and
+              P. Hunt, "OAuth 2.0 Dynamic Client Registration Protocol",
+              RFC 7591, DOI 10.17487/RFC7591, July 2015,
+              <https://www.rfc-editor.org/rfc/rfc7591>.
+
+   [RFC7643]  Hunt, P., Ed., Grizzle, K., Wahlstroem, E., and C.
+              Mortimore, "System for Cross-domain Identity Management:
+              Core Schema", RFC 7643, DOI 10.17487/RFC7643, September
+              2015, <https://www.rfc-editor.org/rfc/rfc7643>.
+
+   [RFC8628]  Denniss, W., Bradley, J., Jones, M., and H. Tschofenig,
+              "OAuth 2.0 Device Authorization Grant", RFC 8628,
+              DOI 10.17487/RFC8628, August 2019,
+              <https://www.rfc-editor.org/rfc/rfc8628>.
+
+   [RFC9068]  Bertocci, V., "JSON Web Token (JWT) Profile for OAuth 2.0
+              Access Tokens", RFC 9068, DOI 10.17487/RFC9068, October
+              2021, <https://www.rfc-editor.org/rfc/rfc9068>.
+
+Acknowledgments
+
+   The editors thank Pieter Kasselman, Karl McGuinness, Kevin Kelley,
+   Emily Lauber, and Maxwell Gerber for discussions that shaped this
+   document.
+
+Authors' Addresses
+
+   Paul Carleton (editor)
+   Anthropic
+   Email: paulc@anthropic.com
+
+
+   Nick Steele
+   OpenAI
+   Email: steele@openai.com
+
+
+   Aaron Parecki
+   Okta
+   Email: aaron@parecki.com
+
+
+   Arndt Schwenkschuster
+   Defakto Security
+   Email: arndts.ietf@gmail.com
+
+
+   Brian Campbell
+   Ping Identity
+   Email: bcampbell@pingidentity.com
