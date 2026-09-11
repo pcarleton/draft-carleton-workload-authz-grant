@@ -106,9 +106,9 @@ A platform that hosts many workloads -- an agent platform is a motivating case -
 
 This document defines one grant for that: a JWT authorization grant [RFC7523] signed by the platform and naming one workload, presented at the token endpoint of an authorization server that has been configured, once, to trust that platform.
 
-It specifies the grant, and that a workload the authorization server has never seen can be accepted on its first assertion.
+It specifies the grant, and that workloads are trusted based on the platform registration, allowing a previously unseen workloads to receive an access token.
 
-How trust in a platform is established and what an accepted workload may do are left to deployments.
+How trust in a platform is established and what a workload may do are left to deployments.
 
 # Conventions and Terminology {#conventions}
 
@@ -231,12 +231,6 @@ It is RECOMMENDED that a new issuer shared by several Platforms use the `tenant`
 
 How an Authorization Server determines whether a Platform needs a differentiating claim, and which, is left to be discovered out of band of this specification.
 
-# First-Seen Agents {#first-seen}
-
-An Authorization Server that trusts a Platform MUST NOT reject an assertion solely because it has not seen the `sub` before: the Agent's first assertion is how the Authorization Server learns that the Agent exists. It MUST NOT require an administrator to register, provision, or otherwise make the  `sub` known to it or the Resource Server before the Agent's first assertion.
-
-Whether a first-seen Agent receives any permission is governed by {{properties}}, never by identifier structure.
-
 
 # Error Responses {#errors}
 
@@ -245,21 +239,17 @@ When a token request fails, the Authorization Server SHOULD indicate in `error_d
 
 # Open Issues {#oi}
 
-* Claiming: whether an Authorization Server may withhold access tokens for a first-seen Agent until a user of its organization (any user, not an administrator) accepts ("claims") the Agent, so that creating Agents stays self-service while a person confirms each one; how that fits the rule in {{first-seen}}; and whether "a person must act, then the request is retried" needs its own error code ({{RFC8628, Section 3.5}} defines `authorization_pending` for a similar case).
+* Agent ownership: see issue #13.
 * Proof of possession: the grant is a bearer assertion and no client authentication is required; whether to name a hardening (sender-constrained access tokens, authenticating the presenting instance, or the Platform authenticating as a client) and which, if any, to require.
 * JWT type: whether to define an explicit `typ` for this grant ({{RFC8725, Section 3.11}}), so that another kind of JWT signed by the same issuer for the same audience cannot be taken for it.
 * Replay: whether an Authorization Server is required to reject a `jti` it has already accepted while the assertion is still valid, or whether that stays optional as in {{RFC7523, Section 3}}.
-* `aud`: this revision uses the Authorization Server's issuer identifier as a single value; {{RFC7523BIS}} requires that for client authentication and still permits the token endpoint URL for authorization grants.
-* Shared issuer identifiers: whether to name the claim that tells Platforms apart, or a way for an issuer to declare it, instead of leaving it to each Platform registration ({{tenants}}).
-* Registering a Platform: where one Authorization Server serves several organizations, whether anything should say who may create a Platform registration for a given Platform.
 
 # Security Considerations {#security-considerations}
 
 This revision lists the considerations it is aware of; a fuller treatment will follow.
 
-* Trusting a Platform is trusting it for every Agent it vouches for, for ceasing to sign for an Agent that is retired, and for its own controls over who may assign which claims ({{properties}}).
-* Agents are accepted on their first assertion ({{first-seen}}), so the set of acceptable Agents grows at the Platform with no action at the Authorization Server, and each new Agent creates state there; an Authorization Server can cap new Agents per Platform registration, but not so low that the cap works as per-Agent approval.
-* The assertion is a bearer credential: a short lifetime, its `aud` and, where the Authorization Server enforces it, single use by `jti` bound what a stolen one is worth.  Assertions and signing keys belong in Platform infrastructure, not in an AI agent's model context.  Proof of possession is an open issue ({{oi}}).
+* Agents are accepted on their first assertion ({{first-seen}}), so the set of acceptable Agents grows at the Platform with no action at the Authorization Server, and each new Agent creates state there; an Authorization Server can cap new Agents per Platform registration.
+* The assertion is a bearer credential: a short lifetime, its `aud` and, where the Authorization Server enforces it, single use by `jti` bound what a stolen assertion is worth.
 * Keys are held per issuer identifier, so that one issuer's key never verifies another's assertion ({{issuer-keys}}); whoever controls an issuer identifier, or the DNS name under it, controls what every trusting Authorization Server accepts.
 * Platforms under a shared issuer identifier share its keys, so the claim that tells them apart ({{tenants}}) is only as trustworthy as the party signing for all of them, and a Platform registration for a shared issuer identifier that names no claim trusts every Platform under it.
 * Where one Authorization Server serves several organizations, a Platform registration created by the wrong organization routes another organization's Agents to it; who may register a given Platform is out of scope.
