@@ -248,7 +248,7 @@ When a token request fails, the Authorization Server SHOULD indicate in `error_d
 
 This revision lists the considerations it is aware of; a fuller treatment will follow.
 
-* Agents are accepted on their first assertion ({{first-seen}}), so the set of acceptable Agents grows at the Platform with no action at the Authorization Server, and each new Agent creates state there; an Authorization Server can cap new Agents per Platform registration.
+* Agents are accepted on their first assertion, so the set of acceptable Agents grows at the Platform with no action at the Authorization Server, and each new Agent creates state there; an Authorization Server can cap new Agents per Platform registration.
 * The assertion is a bearer credential: a short lifetime, its `aud` and, where the Authorization Server enforces it, single use by `jti` bound what a stolen assertion is worth.
 * Keys are held per issuer identifier, so that one issuer's key never verifies another's assertion ({{issuer-keys}}); whoever controls an issuer identifier, or the DNS name under it, controls what every trusting Authorization Server accepts.
 * Platforms under a shared issuer identifier share its keys, so the claim that tells them apart ({{tenants}}) is only as trustworthy as the party signing for all of them, and a Platform registration for a shared issuer identifier that names no claim trusts every Platform under it.
