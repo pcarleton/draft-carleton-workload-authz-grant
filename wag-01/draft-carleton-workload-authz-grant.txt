@@ -105,14 +105,13 @@ Table of Contents
      6.2.  Permissions
        6.2.1.  Permissions Example
      6.3.  Multi-Tenancy
-   7.  First-Seen Agents
-   8.  Error Responses
-   9.  Open Issues
-   10. Security Considerations
-   11. IANA Considerations
-   12. References
-     12.1.  Normative References
-     12.2.  Informative References
+   7.  Error Responses
+   8.  Open Issues
+   9.  Security Considerations
+   10. IANA Considerations
+   11. References
+     11.1.  Normative References
+     11.2.  Informative References
    Acknowledgments
    Authors' Addresses
 
@@ -135,11 +134,12 @@ Table of Contents
    at the token endpoint of an authorization server that has been
    configured, once, to trust that platform.
 
-   It specifies the grant, and that a workload the authorization server
-   has never seen can be accepted on its first assertion.
+   It specifies the grant, and that workloads are trusted based on the
+   platform registration, allowing a previously unseen workloads to
+   receive an access token.
 
-   How trust in a platform is established and what an accepted workload
-   may do are left to deployments.
+   How trust in a platform is established and what a workload may do are
+   left to deployments.
 
 2.  Conventions and Terminology
 
@@ -181,8 +181,8 @@ Table of Contents
        an ordinary OAuth token request.  The Authorization Server
        matches it to a Platform registration, verifies it under that
        Platform's keys, does not reject it for carrying a sub it has not
-       seen before (Section 7), and issues an access token under its own
-       policy (Section 6.2).
+       seen before, and issues an access token under its own policy
+       (Section 6.2).
 
          Platform                    Authorization        Resource
          (issuer; Agents)            Server (AS)          Server (RS)
@@ -378,19 +378,7 @@ Table of Contents
    differentiating claim, and which, is left to be discovered out of
    band of this specification.
 
-7.  First-Seen Agents
-
-   An Authorization Server that trusts a Platform MUST NOT reject an
-   assertion solely because it has not seen the sub before: the Agent's
-   first assertion is how the Authorization Server learns that the Agent
-   exists.  It MUST NOT require an administrator to register, provision,
-   or otherwise make the sub known to it or the Resource Server before
-   the Agent's first assertion.
-
-   Whether a first-seen Agent receives any permission is governed by
-   Section 6.2, never by identifier structure.
-
-8.  Error Responses
+7.  Error Responses
 
    When a token request fails, the Authorization Server SHOULD indicate
    in error_description ([RFC6749], Section 5.2) who must act: an
@@ -403,16 +391,9 @@ Table of Contents
    invalid_grant.  When an action can be taken to resolve the issue, the
    Authorization Server SHOULD include a link in error_uri.
 
-9.  Open Issues
+8.  Open Issues
 
-   *  Claiming: whether an Authorization Server may withhold access
-      tokens for a first-seen Agent until a user of its organization
-      (any user, not an administrator) accepts ("claims") the Agent, so
-      that creating Agents stays self-service while a person confirms
-      each one; how that fits the rule in Section 7; and whether "a
-      person must act, then the request is retried" needs its own error
-      code ([RFC8628], Section 3.5 defines authorization_pending for a
-      similar case).
+   *  Agent ownership: see issue #13.
 
    *  Proof of possession: the grant is a bearer assertion and no client
       authentication is required; whether to name a hardening (sender-
@@ -428,40 +409,19 @@ Table of Contents
       jti it has already accepted while the assertion is still valid, or
       whether that stays optional as in [RFC7523], Section 3.
 
-   *  aud: this revision uses the Authorization Server's issuer
-      identifier as a single value; [RFC7523BIS] requires that for
-      client authentication and still permits the token endpoint URL for
-      authorization grants.
-
-   *  Shared issuer identifiers: whether to name the claim that tells
-      Platforms apart, or a way for an issuer to declare it, instead of
-      leaving it to each Platform registration (Section 6.3).
-
-   *  Registering a Platform: where one Authorization Server serves
-      several organizations, whether anything should say who may create
-      a Platform registration for a given Platform.
-
-10.  Security Considerations
+9.  Security Considerations
 
    This revision lists the considerations it is aware of; a fuller
    treatment will follow.
 
-   *  Trusting a Platform is trusting it for every Agent it vouches for,
-      for ceasing to sign for an Agent that is retired, and for its own
-      controls over who may assign which claims (Section 6.2).
-
-   *  Agents are accepted on their first assertion (Section 7), so the
-      set of acceptable Agents grows at the Platform with no action at
-      the Authorization Server, and each new Agent creates state there;
-      an Authorization Server can cap new Agents per Platform
-      registration, but not so low that the cap works as per-Agent
-      approval.
+   *  Agents are accepted on their first assertion, so the set of
+      acceptable Agents grows at the Platform with no action at the
+      Authorization Server, and each new Agent creates state there; an
+      Authorization Server can cap new Agents per Platform registration.
 
    *  The assertion is a bearer credential: a short lifetime, its aud
       and, where the Authorization Server enforces it, single use by jti
-      bound what a stolen one is worth.  Assertions and signing keys
-      belong in Platform infrastructure, not in an AI agent's model
-      context.  Proof of possession is an open issue (Section 9).
+      bound what a stolen assertion is worth.
 
    *  Keys are held per issuer identifier, so that one issuer's key
       never verifies another's assertion (Section 6.1); whoever controls
@@ -479,7 +439,7 @@ Table of Contents
       another organization's Agents to it; who may register a given
       Platform is out of scope.
 
-   *  Error responses (Section 8) tell any presenter which Platforms an
+   *  Error responses (Section 7) tell any presenter which Platforms an
       Authorization Server trusts, and error_uri hands a link to an
       unauthenticated presenter.
 
@@ -487,13 +447,13 @@ Table of Contents
       signs other kinds of JWT for the same audience risks one being
       taken for this grant ([RFC8725], Section 3.11).
 
-11.  IANA Considerations
+10.  IANA Considerations
 
    This document has no IANA actions.
 
-12.  References
+11.  References
 
-12.1.  Normative References
+11.1.  Normative References
 
    [OIDC-DISCOVERY]
               Sakimura, N., Bradley, J., Jones, M., and E. Jay, "OpenID
@@ -550,7 +510,7 @@ Table of Contents
               RFC 9525, DOI 10.17487/RFC9525, November 2023,
               <https://www.rfc-editor.org/rfc/rfc9525>.
 
-12.2.  Informative References
+11.2.  Informative References
 
    [IDJAG]    Parecki, A., McGuinness, K., and B. Campbell, "Identity
               Assertion JWT Authorization Grant", Work in Progress,
