@@ -41,14 +41,15 @@ author:
     email: bcampbell@pingidentity.com
 
 normative:
+  RFC6749:
   RFC7517:
   RFC7519:
   RFC7521:
   RFC7523:
   RFC8414:
   RFC8707:
+  RFC8725:
   RFC9525:
-  WIMSE-ID: I-D.ietf-wimse-identifier
   OIDC-DISCOVERY:
     title: OpenID Connect Discovery 1.0 incorporating errata set 2
     target: https://openid.net/specs/openid-connect-discovery-1_0.html
@@ -60,51 +61,30 @@ normative:
       - ins: E. Jay
 
 informative:
-  AIMS: I-D.klrc-aiagent-auth
   RFC7591:
+  RFC9068:
+  RFC7643:
+  RFC8628:
   RFC7523BIS: I-D.ietf-oauth-rfc7523bis
-  OIDC-CORE:
-    title: OpenID Connect Core 1.0 incorporating errata set 2
-    target: https://openid.net/specs/openid-connect-core-1_0.html
-    date: 2023-12
-    author:
-      - ins: N. Sakimura
-      - ins: J. Bradley
-      - ins: M. Jones
-      - ins: B. de Medeiros
-      - ins: C. Mortimore
-  RFC8693:
-  WIMSE-ARCH: I-D.ietf-wimse-arch
-  CIMD: I-D.ietf-oauth-client-id-metadata-document
-  ATTEST-CLIENT-AUTH: I-D.ietf-oauth-attestation-based-client-auth
-  TXN-TOKENS: I-D.ietf-oauth-transaction-tokens
-  SCIM-AGENT: I-D.wzdk-scim-agent-resource
   IDJAG: I-D.ietf-oauth-identity-assertion-authz-grant
-  MCP-WIF:
-    title: "Workload Identity Federation (proposed Model Context Protocol ext-auth extension, pull request 10)"
-    target: https://github.com/modelcontextprotocol/ext-auth/pull/10
-    author:
-      - org: Model Context Protocol Community
 
 --- abstract
 
-This document defines the Workload Authorization Grant (WAG), a mechanism
-by which a workload hosted on a platform -- an AI agent being the motivating
-case -- obtains access tokens from a third party's OAuth authorization
-server without requiring an administrator to perform a per-workload
-registration step.  Each
-workload is identified by an opaque, non-reassignable identifier; it obtains
-access tokens by presenting a JWT authorization grant (RFC 7523), signed by
-the platform's per-tenancy issuer, in the assertion parameter at the
-authorization server protecting the resource server.  Trust is established
-once, by reference to the issuer's published metadata and keys; workload
-creation requires no per-workload step at the authorization server or
-resource server; and authorization is expressed over platform-asserted
-properties that resource servers map locally to permissions.  This document
-addresses workloads acting on their own behalf; access on behalf of a user
-or other principal is out of scope, though the design is intended to compose
-with existing delegation mechanisms in which the workload appears as the
-actor.
+This document defines the Workload Authorization Grant (WAG), by which a
+workload hosted on a platform -- an AI agent is the motivating case --
+obtains access tokens from a third party's OAuth authorization server
+without requiring an administrator to perform a per-workload provisioning
+step.  Each workload is identified by an opaque identifier that is never
+reassigned.  The platform signs a JWT authorization grant (RFC 7523) that
+names one workload, and the workload presents it at the token endpoint of
+an authorization server that has been configured, once, to trust that
+platform.  The authorization server does not reject a workload because it
+has not seen it before; what the workload may then do is decided by the
+authorization server's own policy, which may consult claims the platform
+asserts about the workload.  This document covers workloads acting on
+their own behalf.  Access on behalf of a user or other principal is out of
+scope, though the grant is intended to compose with delegation mechanisms
+in which the workload is the actor.
 
 --- to_be_removed_note_Note_to_Readers
 
@@ -113,472 +93,176 @@ discussion of the deployment pattern it describes.  It is not a working group
 document, does not describe a shipped or committed design, and does not
 represent a position or roadmap of the editors' employers.  Every aspect of it
 is subject to change or withdrawal, including whether this mechanism should
-be specified in a separate document at all.  Most sections are placeholders.  Issues
-and pull requests:
+be specified in a separate document at all.  Issues and pull requests:
 https://github.com/pcarleton/draft-carleton-workload-authz-grant.
 
 --- middle
 
 # Introduction {#introduction}
 
-Agent platforms increasingly host many agent instances per customer, created
-and retired at the cadence at which the customer organizes its work -- per
-channel, repository, or pipeline.  An individual agent may persist for weeks
-or months, but the person creating it is typically not the person authorized
-to provision credentials at the resource servers it will access.  Per-agent
-credentials are therefore not issued in practice, and deployments collapse to
-a single credential shared across all agents of an installation -- a pattern
-the AI agent authentication and authorization framework {{AIMS}}, Section 7,
-identifies as an antipattern -- at the cost of any attribution of an
-individual agent's actions at the resource server.
+Agent platforms host many agents per customer, created and retired at the pace of the customer's work -- one per channel, repository, or pipeline.  The person creating an agent is rarely someone who can provision credentials at the services it will use, so in practice every agent of an installation ends up sharing one credential, at the cost of any attribution of an individual agent's actions.
 
-Existing workload identity federation {{WIMSE-ARCH}} addresses an analogous
-problem between an organization's workloads and infrastructure providers, but
-its claim and policy semantics are defined per provider rather than portably,
-and it has not been applied between agent platforms and SaaS resource
-servers.  The Model Context Protocol's proposed Workload Identity Federation
-extension {{MCP-WIF}} defines the corresponding wire mechanics for MCP servers; this
-document is intended to be interoperable with it.
+A platform that hosts many workloads -- an agent platform is a motivating case -- needs each workload to obtain an access token at third-party services without requiring an administrator to perform a per-workload provisioning step.
 
-This document specifies a mechanism for that deployment pattern, the
-Workload Authorization Grant (WAG): a platform-signed JWT authorization
-grant asserting a workload's identity and platform-asserted properties,
-presented at the token endpoint of an authorization server that has been
-configured, once, to trust the platform's issuer.  Thereafter workloads are
-accepted on first presentation with no per-workload registration step.
-Agent platforms are the motivating deployment, and the terminology
-throughout uses "Agent"; the mechanism itself is not agent-specific and
-applies to any platform hosting workloads that need federated access to
-third-party resource servers.  This document builds on
-the OAuth JWT authorization grant {{RFC7523}} and on published issuer
-metadata, and it can be implemented without reference to any other agent
-identity framework.  Readers arriving from the AI agent authentication
-and authorization framework {{AIMS}} will find how this mechanism relates to that document's
-conceptual model in {{aims}}.
+This document defines one grant for that: a JWT authorization grant [RFC7523] signed by the platform and naming one workload, presented at the token endpoint of an authorization server that has been configured, once, to trust that platform.
 
-A design goal of this document is a minimal adoption path for services that
-already operate an OAuth deployment: supporting it requires changes only at
-the authorization server's token endpoint, which accepts the JWT
-authorization grant from allowlisted issuers.  The access tokens the
-authorization server issues are unchanged in format and semantics, and
-resource servers continue to trust their authorization server exactly as
-they do today.
+It specifies the grant, and that workloads are trusted based on the platform registration, allowing a previously unseen workloads to receive an access token.
 
-## Scope
-
-In scope: agents acting on their own behalf.  Out of scope: on-behalf-of
-access, legacy integration via static credentials, runtime attestation,
-agent-to-agent protocols.  This document deliberately does not specify
-on-behalf-of flows; the design is intended to compose with
-delegation mechanisms in which the agent appears as the actor rather than
-the subject (e.g., the act claim and actor_token parameter of {{RFC8693}},
-or {{IDJAG}}), and that composition is left to future documents.
+How trust in a platform is established and what a workload may do are left to deployments.
 
 # Conventions and Terminology {#conventions}
 
 {::boilerplate bcp14-tagged}
 
-Agent Platform ("Platform"):
-: The service that hosts Agents and operates the per-tenancy issuers that
-  vouch for them.
+Platform: the party that creates workloads ("Agents") and signs assertions about them; the sending end of one trust relationship with an Authorization Server.  Where a provider serves several customer organizations under one issuer identifier, each customer's partition is a separate Platform ({{tenants}}).
 
-Agent:
-: A hosted workload with its own Agent Identifier, context, and
-  configuration.
+Platform registration: an Authorization Server's record of one Platform it trusts: the Platform's issuer identifier, its keys ({{issuer-keys}}) and, where several Platforms share that issuer identifier, the name of a claim and the value the claim carries for this Platform ({{tenants}}).  How a Platform registration comes to exist is out of scope.  It is not a client registration {{RFC7591}} and yields no client identifier or credential.
 
-Agent Property:
-: A Platform-asserted attribute carried as a claim in the authorization
-  grant.
+Authorization Server, Resource Server: as in [RFC6749].
 
-Authorization Server (AS):
-: The OAuth authorization server at which Agents present authorization
-  grants and obtain access tokens; commonly, but not necessarily, operated
-  by the same vendor as the Resource Server it protects.
+# Overview {#overview}
 
-Resource Server (RS):
-: The service holding customer resources, accessed with the access tokens
-  the Authorization Server issues.
-
-Enterprise IdP:
-: The customer's identity provider (optional).
-
-Customer Administrator:
-: The human who performs one-time trust establishment.
-
-# Concepts
-
-## Overview {#overview}
-
-The mechanism involves the following parties.  The Agent Platform hosts
-Agents and operates, for each customer tenancy, an issuer that signs
-assertions about that tenancy's Agents; each Agent presents its own
-assertion to the Authorization Server.  The Authorization Server
-protects a Resource Server and issues the access tokens the Resource
-Server accepts.  The Customer Administrator holds the authority, within
-a customer tenancy, to configure the Authorization Server to trust that
-tenancy's issuer.
-
-The mechanism has three steps, of which only the last recurs
-({{fig-overview}}):
-
-1. Trust establishment, once per tenancy ({{trust}}): the Customer
-   Administrator records at the Authorization Server that assertions from
-   the tenancy's issuer are accepted, identifying the issuer by its issuer
-   identifier.  The Authorization Server discovers the issuer's keys from
-   its published metadata; nothing is exchanged out of band.
-2. Agent instantiation, per Agent ({{instantiation}}): the Platform creates
-   an Agent and assigns it an Agent Identifier.  Nothing happens at the
-   Authorization Server or Resource Server.
-3. Token request, per access ({{workload-authorization-grant}}): the Agent
-   presents a Workload Authorization Grant -- a JWT signed by the tenancy's
-   issuer, naming the Agent as its subject and carrying the Agent's
-   Properties -- as the authorization grant in an ordinary OAuth token
-   request.  The Authorization Server validates the signature against the
-   allowlisted issuer's keys, accepts the Agent whether or not it has seen
-   the Agent Identifier before, and issues an access token whose format and
-   semantics are unchanged.
+1. Once per Platform and Authorization Server: an administrator of the
+   Authorization Server creates a Platform registration ({{conventions}}),
+   which records the Platform's issuer identifier and how to obtain its
+   keys ({{issuer-keys}}).  Nothing about individual Agents is exchanged.
+2. Per Agent: the Platform creates an Agent and assigns it an Agent
+   Identifier ({{identity-model}}).  Nothing is sent to the Authorization
+   Server or the Resource Server.
+3. Per access: the Agent presents a Workload Authorization Grant in an
+   ordinary OAuth token request.  The Authorization Server matches it to a
+   Platform registration, verifies it under that Platform's keys, does not
+   reject it for carrying a `sub` it has not seen before,
+   and issues an access token under its own policy ({{properties}}).
 
 ~~~
- Customer        Agent Platform        Authorization      Resource
- Administrator   (tenancy issuer)      Server (AS)        Server (RS)
-      |                 |                   |                 |
-  (1) |--- allowlist issuer identifier ---->|                 |
-      |                 |<-- GET metadata,  |                 |
-      |                 |    JWK Set -------|                 |
-      |                 |                   |                 |
-  (2) |         [Platform creates Agent;    |                 |
-      |          nothing sent to AS or RS]  |                 |
-      |                 |                   |                 |
-  (3) |                 |-- POST /token --->|                 |
-      |                 |   grant_type=     |                 |
-      |                 |     jwt-bearer    |                 |
-      |                 |   assertion=<WAG> |                 |
-      |                 |<-- access token --|                 |
-      |                 |-- request + access token ---------->|
-      |                 |                   |                 |
+      Platform                    Authorization        Resource
+      (issuer; Agents)            Server (AS)          Server (RS)
+            |                          |                   |
+  (1)  [administrator creates a Platform registration]     |
+            |                          |                   |
+  (2)  [Platform creates Agent; nothing sent to AS or RS]  |
+            |                          |                   |
+  (3)       |--- POST /token --------->|                   |
+            |    grant_type=jwt-bearer |                   |
+            |    assertion=<WAG>       |                   |
+            |    resource=<RS>         |                   |
+            |<-- access token ---------|                   |
+            |--- request + access token ------------------>|
 ~~~
-{: #fig-overview title="Overview: one-time trust establishment, then per-request grants"}
+{: #fig-overview title="One-time Platform registration, then per-request grants"}
 
-## Agent Identity Model {#identity-model}
+# Agent Identity {#identity-model}
 
-An Agent's identity has three units: the tenancy's issuer, which signs
-assertions about the Agent; the Agent Identifier, opaque, unique within the
-issuer, immutable, and never reassigned, carried as the assertion's sub
-({{workload-authorization-grant}}); and claims, carrying everything else
-({{properties}}).  Renaming an Agent MUST NOT change its Agent Identifier.
-Resource Servers MUST NOT parse or pattern-match the Agent Identifier for
-authorization; single-agent policy is an exact match on the sub value.
+An Agent is identified by its Agent Identifier, carried as the `sub` claim in the assertion.  The Agent Identifier is opaque; it MUST be unique among all Agent Identifiers issued under the same Platform, MUST NOT be reassigned to a different Agent, and is compared as a case-sensitive string {{RFC7519, Section 2}}. An Authorization Server MUST key records about an Agent on its Platform together with `sub`, never on `sub` alone, and MUST NOT convey to a Resource Server a subject under which Agents of different Platforms could be confused.
 
-The Agent Identifier MAY be, and is RECOMMENDED to be, a Workload
-Identifier URI {{WIMSE-ID}} with an opaque path; a bare opaque string is also
-permitted.  URI form costs no opacity -- the path remains meaningful only to
-the issuing Platform -- and carries the trust boundary inside the
-identifier's authority component, which is what relying parties that
-evaluate only subject and audience need ({{oi}}).  When the Agent Identifier
-is a URI, the Authorization Server validates its authority component against
-the allowlisted issuer's tenancy once, at token issuance; Resource Servers
-treat the complete identifier as an opaque, exact-match string regardless of
-form and MUST NOT derive trust from its components.
-
-## Relationship to AIMS {#aims}
-
-{{AIMS}} describes a framework for authentication and authorization of AI
-agents, with a conceptual model in which agents are treated as workloads with
-identifiers, credentials, and authorization.  This document is not a
-profile of {{AIMS}} and does not depend on it: nothing in {{AIMS}} is
-normative here, and where terminology overlaps, the definitions in
-{{conventions}} govern.  This section is informative; it exists so that a
-reader who knows {{AIMS}} can see where this mechanism sits in its model.
-
-In {{AIMS}} terms, WAG is one concrete answer for the case of an agent
-acting on its own behalf ({{AIMS}}, Section 10.4.2), in which the agent is a
-hosted workload and the platform that hosts it is the authority that vouches
-for it.  The correspondences are:
-
-| AIMS concept | In this document |
-|---|---|
-| Agent identifier (Sec. 6) | The Agent Identifier ({{identity-model}}): opaque, immutable, non-reassignable, scoped to its issuer, carried as `sub` |
-| Agent credentials (Sec. 7) and authentication (Sec. 9) | The Platform's per-tenancy issuer signs an {{RFC7523}} JWT authorization grant on the Agent's behalf ({{workload-authorization-grant}}); OAuth client identity is deliberately unspecified |
-| Credential provisioning (Sec. 8) | Platform-internal ({{instantiation}}); the Authorization Server learns of an Agent at first presentation |
-| Authorization (Sec. 10) | Platform-asserted Agent Properties mapped locally to permissions ({{properties}}), under trust established once by reference ({{trust}}) |
-| Monitoring and remediation (Sec. 11) | Attribution by (`iss`, `sub`) and `jti`; retirement by cessation ({{lifecycle}}); open items in {{oi}} |
-
-The shared-credential antipattern that {{AIMS}}, Section 7, describes is
-the deployment this mechanism is designed to replace ({{introduction}}).
-
-## Relationship to WIMSE and SPIFFE
-
-TODO.  A reader arriving from WIMSE or SPIFFE will ask where the Workload
-Identity Token and the SPIFFE ID are in this design.  Explain: why the
-assertion is an {{RFC7523}} authorization grant rather than a WIMSE WIT;
-how the Agent Identifier's RECOMMENDED {{WIMSE-ID}} URI form relates to a
-SPIFFE ID; and what changes if the Platform's issuer is backed by a
-SPIFFE/WIMSE-style workload identity plane rather than operated as a
-standalone OAuth issuer.
 
 # Workload Authorization Grant
 
-The Agent obtains access tokens from the Authorization Server by
-presenting a JWT as an authorization grant per {{RFC7523}},
-Section 2.1, issued by the Platform as a third party in the sense of
-{{RFC7521}}, Section 3.  The token request carries
-`grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer`, the JWT in the
-assertion parameter, and the target resource in the resource parameter
-{{RFC8707}}.  This document deliberately does not specify the OAuth client
-identity or attach semantics to `client_id`.  In the simplest deployment the
-token request is made without client authentication.  Deployments MAY layer
-client authentication on top -- for example, the Platform authenticating as
-an OAuth client in its own right with a Client ID Metadata Document {{CIMD}}
-and a `private_key_jwt` client assertion -- a composition that becomes natural
-when the authorization grant's issuer is the customer's Enterprise IdP
-rather than the Platform (obtained, e.g., by token exchange {{RFC8693}} with
-the IdP).  This document intentionally leaves that composition open rather
-than fully specifying it ({{oi}}).
+An Agent obtains an access token by presenting a JWT as an authorization grant per [RFC7523], Section 2.1, issued by the Platform as a third party in the sense of [RFC7521], Section 3. The token request carries `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer`, the JWT in the `assertion` parameter, and the target resource in the `resource` parameter [RFC8707]. The `resource` parameter {{RFC8707}} is REQUIRED; an Authorization Server SHOULD restrict the audience of the access token it issues to that resource and MAY refuse a request that lacks it with `invalid_target` ({{RFC8707, Section 2}}). An Agent MAY make the token request without client authentication ({{RFC7523, Section 3.1}}), and this specification attaches no meaning to `client_id`. An Authorization Server MUST NOT require a client registration per Agent. It MAY require the Platform to authenticate as a client, for example to apply quotas or to cut off a Platform.
+
+Assertions SHOULD be short-lived.  The Authorization Server MUST NOT issue refresh tokens for this grant and SHOULD NOT issue access tokens that outlive the assertion by a significant period ({{RFC7521, Section 4.1}}), so that access ends soon after the Platform stops signing for an Agent.
 
 ## JWT Syntax {#authorization-grant-claims}
 
-The following claims are used within the Workload Authorization Grant JWT:
+`iss`
+: REQUIRED - The issuer identifier of the Platform's issuer ({{issuer-keys}}): a URL using the `https` scheme with no query or fragment component, as for `issuer` in {{RFC8414, Section 2}}.
 
-`iss`:
-: REQUIRED - The issuer identifier of the Platform's per-tenancy issuer
-  ({{trust}}).
+`sub`
+: REQUIRED - The Agent Identifier ({{identity-model}}).
 
-`sub`:
-: REQUIRED - The Agent Identifier as defined in {{identity-model}}.
+`aud`
+: REQUIRED - Identifies the Authorization Server: its issuer identifier [RFC8414], as a single value, as in {{IDJAG, Section 3.1}}.  An Authorization Server MUST accept its issuer identifier as the audience; it MAY also accept its token endpoint URL, which {{RFC7523BIS}} continues to permit for authorization grants.
 
-`aud`:
-: REQUIRED. The value SHOULD include both the Authorization Server's
-  issuer identifier and its token endpoint URL; an Authorization Server
-  accepting Workload Authorization Grants MUST accept an assertion whose `aud` includes either
-  value ({{RFC7523}} itself leaves the audience strings to out-of-band
-  configuration).  {{RFC7523BIS}} adds the issuer identifier as an audience
-  option for authorization grants (while restricting client-authentication
-  assertions, a different slot, to it alone); carrying both values keeps an
-  assertion valid across deployed and future processing.
+`exp`, `iat`, `jti`
+: REQUIRED - As defined in [RFC7519].
 
-`jti`:
-: REQUIRED - Unique ID of this JWT as defined in {{Section 4.1.7 of RFC7519}}.
+`scope`
+: OPTIONAL - A space-separated list of scopes ({{RFC6749, Section 3.3}}) the Platform asserts for this request, as in {{IDJAG, Section 3.1}}.  The Authorization Server decides under its own policy which of them to grant, and MAY grant a subset ({{IDJAG, Section 4.4.1}}).
 
-`exp`:
-: REQUIRED - as defined in {{Section 4.1.4 of RFC7519}}.
 
-`iat`:
-: REQUIRED - as defined in {{Section 4.1.6 of RFC7519}}.
+The assertion is signed under a key configured from the Platform (see {{issuer-keys}}) and MAY carry further claims about the Agent. An Authorization Server that publishes metadata {{RFC8414}} SHOULD list the `urn:ietf:params:oauth:grant-type:jwt-bearer` grant type in `grant_types_supported`.
 
-The assertion is signed under a key in
-the issuer's published JWK Set {{RFC7517}}.  The Authorization Server MUST
-resolve the signing key by iss ({{trust}}), not via a client registration.
-The assertion carries the Agent's Properties ({{properties}}), and the
-Authorization Server MUST make them available to the Resource Server's
-authorization decision.
-
-An Agent Property records what the Platform asserted when it issued the
-authorization grant.  The grant's signature authenticates that assertion;
-`iat` records when it was made, and `exp` bounds how long the grant can be
-accepted.  Those checks do not by themselves establish that a mutable
-Property remains true when the grant is presented or when an access token is
-used.  If a local authorization rule requires a Property to remain true at
-one of those later times, the deployment MUST obtain evidence current for
-that time.  Otherwise, the deployment MUST bound its exposure to stale
-Properties through the grant and access token lifetimes.
-
-Authorization Servers accepting Workload Authorization Grants MUST
-include `urn:ietf:params:oauth:grant-type:jwt-bearer` in `grant_types_supported`
-in their metadata {{RFC8414}}.
-
-## Presentation
-
-{{fig-token-request}} shows an example token request (with extra line
-breaks for display purposes only):
-
-~~~
-POST /token HTTP/1.1
-Host: as.saas.example
-Content-Type: application/x-www-form-urlencoded
-
-grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer
-&assertion=eyJhbGciOiJFUzI1NiIsImtpZCI6IjIwMjYtMDctMTQi...
-&resource=https%3A%2F%2Fapi.saas.example%2F
-~~~
-{: #fig-token-request title="Example token request"}
-
-{{fig-assertion-claims}} shows the decoded claims of the assertion carried
-in that request; name, namespace, groups, roles, and ctx are Agent
-Properties ({{properties}}):
-
-~~~
+```
 {
   "iss": "https://acme.agents.platform.example",
-  "sub": "wimse://acme.agents.platform.example/agent/7f3d9a2e",
-  "aud": ["https://as.saas.example",
-          "https://as.saas.example/token"],
+  "sub": "agent/7f3d9as3",
+  "aud": "https://as.saas.example",
   "exp": 1785271980,
   "iat": 1785271680,
   "jti": "7d0f5a2b-93c8-4f0e-9c33-1b6a0e6d5f10",
-  "name": "Support Triage Agent",
-  "namespace": "acme/support",
-  "groups": ["support-eng"],
-  "roles": ["responder"],
-  "ctx": "channel:C0123456789"
+  "scope": "issues:read issues:write"
 }
-~~~
-{: #fig-assertion-claims title="Example assertion claims"}
+```
 
-The Authorization Server MUST NOT issue refresh tokens, as access tokens are short-lived and
-audience-restricted {{RFC8707}}.  Assertion lifetimes SHOULD be as short as
-system availability constraints allow.
+# Platform Registration {#platform-registration}
 
-TODO: proof-of-possession -- the assertion is a bearer grant; options are
-sender-constrained access tokens, or attestation-based client authentication
-{{ATTEST-CLIENT-AUTH}} (Platform as client attester, agent instance signs the
-PoP JWT) if agent instances hold keys.
+Prior to presenting a WAG to an Authorization Server, an administrator registers the Platform at the Authorization Server. During this registration step, the Authorization Server obtains the Platform's issuer identifier, the issuer's key, and tenant information (see {{tenants}}). The Authorization Server also decides on authorization policy for the Platform including optionally mapping claims provided by the platform to permissions. The specifics of this registration step are outside the scope of this document. It is not a client registration {{RFC7591}} and yields no client identifier or credential.
 
-# Deployment
+## Issuer Keys {#issuer-keys}
+As part of a Platform registration, the Authorization Server needs to record an issuer identifier and obtain a public key associated with that issuer.
 
-{{overview}} shows the three steps end to end: one-time trust establishment
-by the Customer Administrator ({{trust}}); agent creation by end users with
-no interaction with the Resource Server ({{instantiation}}); and the
-per-request JWT authorization grant ({{workload-authorization-grant}}).
-This section specifies the first two and the authorization model that
-connects them.
+A Platform may provide its public key via: a JWK Set {{RFC7517}} entered directly, a JWK Set URL the Authorization Server fetches over HTTPS {{RFC9525}}, or the `jwks_uri` in metadata the issuer publishes under its issuer identifier ({{RFC8414, Section 3}} or {{OIDC-DISCOVERY}}).  An Authorization Server that uses issuer metadata MUST NOT use a document whose `issuer` value is not identical to the registration's issuer identifier ({{RFC8414, Section 3.3}}).  A Platform SHOULD publish its keys at a URL, so that keys can rotate without administrator action.
 
-## Trust Establishment {#trust}
+On each assertion the Authorization Server finds the Platform registration the assertion matches: `iss` equals the registration's issuer identifier by Simple String Comparison ({{RFC7523, Section 3}}) and, where the registration names a claim ({{tenants}}), the assertion carries that claim with the registered value.  An Authorization Server MUST ensure that an assertion can match at most one of its Platform registrations.  The Authorization Server MUST reject an assertion that matches no Platform registration, MUST verify the signature only under a key configured or retrieved for the matched registration's issuer identifier - never under key material or key locations carried in the assertion ([RFC8725] §3.8 and §3.10) - and MUST interpret `sub` and `jti` only within the scope of the matched Platform registration.
 
-The Customer Administrator once records, at the Authorization Server, an
-allowlist entry binding one issuer to one tenancy: the issuer identifier, from which
-the issuer's metadata and JWK Set location are discovered per
-{{OIDC-DISCOVERY}} (retrieved over https {{RFC9525}}), and the tenancy's initial
-Property-to-permission mapping for the Resource Server ({{properties}}).  Establishment is by
-reference; no keys or secrets are transferred, and key rotation is by JWK Set
-update alone.  Platforms serving multiple customers MUST use a distinct
-issuer per tenancy: the issuer is the trust boundary the allowlist expresses,
-and a shared issuer would move tenancy enforcement into claim evaluation at
-every Authorization Server -- including relying parties that can evaluate
-only subject and audience ({{oi}}).  The proposed MCP Workload Identity
-Federation extension {{MCP-WIF}} recommends (SHOULD) that authorization
-servers rely only on issuing keys bound to a single tenant; this document deliberately tightens that boundary to a
-per-tenancy issuer MUST.
+## Permissions {#properties}
+During Platform registration, the Authorization Server sets local policy for what permissions to assign an access token given in return for a WAG.  This policy MAY involve consulting claims the Platform asserts about the Agent in the WAG. A claim is an assertion by the Platform, meaningful only within the context of that Platform, and an Authorization Server MUST NOT assume that a similarly named value from another Platform means the same thing.
 
-Multi-issuer operation is scoped by issuer throughout.  An Authorization
-Server MUST resolve and cache keys per allowlist entry and MUST NOT merge
-key sets across issuers, and it MUST interpret sub and jti only within the scope of the presenting
-iss.  A Resource Server that keeps a Property-to-permission mapping
-({{properties}}) likewise scopes it by iss.
-An Agent Identifier is unique within its issuer, not globally: policy and
-audit records are keyed on the (iss, sub) pair, or on the complete URI-form
-identifier, which carries the tenancy in its authority component.
+The specific claims a Platform provides, and what permissions an Authorization Server decides to grant are outside the scope of this document.  Below is an illustrative example of one shape this permission decision can take.
 
-## Agent Instantiation {#instantiation}
+### Permissions Example {#permissions-example}
+TODO: include non-normative example here w/ claims, and roles
+- Platform configured to provide claims like `"roles": ["developer"]` which represent human groups
+- Authorization Server also has a concept of groups
+- Administrator configures in the Platform that folks with the Developer role are allowed to create agents with that role as well.
+- Administrator configures in the Authorization Server that a "role" claim of "developer" corresponds to a set of permissions in the platform
+- A developer creates an agent that is able to access useful things in the Authorization Server
 
-Creating an Agent is Platform-internal and MUST NOT require any
-ahead-of-time interaction with the Resource Server, the Authorization
-Server, an Enterprise IdP, or the Customer Administrator.  The Authorization
-Server first learns that an Agent exists when the Agent presents its first
-authorization grant: it MUST accept a previously-unseen Agent Identifier
-presented as sub under an allowlisted issuer, and authorization -- at the
-Authorization Server and the Resource Server alike -- is via {{properties}},
-never identifier structure.  Agents are not
-dynamically registered clients {{RFC7591}}.
+For this deployment pattern it may be useful to use the `roles`, `groups` and `entitlements` claim names of {{RFC9068, Section 2.2.3.1}}, which take them from the SCIM core schema ({{RFC7643, Section 4.1.2}}), however the claim names are only useful as a common conceptual framework and to help interoperability between Platforms and Authorization Servers, it is not expected to match a SCIM schema, or be projected from an Enterprise IdP.  Specific deployment patterns are not required as part of this document.
 
-Optionally, a Platform MAY project Agents into an Enterprise IdP (e.g., as
-{{SCIM-AGENT}} resources) for inventory and lifecycle governance.  Such
-projection MUST NOT be required ahead of time: performing it just in time,
-including synchronously during first token issuance, is acceptable.  TODO:
-BYO-IdP deployment model.
+## Multi-Tenancy {#tenants}
 
-## Agent Properties and Authorization {#properties}
+In many cases, a deployment (Platform or AS/RS) will partition its infrastructure by customer organizations, or tenants.  For the purposes of this document, a Platform and Authorization Server / Resource Server refers to a single partition belonging to a single organization ({{conventions}}). A Platform that knows the organization's identifier at the Authorization Server can carry it in the assertion, as the `aud_tenant` claim of {{IDJAG, Section 3.1}} does; this document does not require it.
 
-TODO.  Initial standard property claims: name, a human-readable display
-name as in an OpenID Connect ID Token {{OIDC-CORE}} (mutable, and never a
-key for authorization or attribution -- that is the Agent Identifier);
-namespace, groups, roles, and an optional ctx naming the collaboration
-context; additional attributes use collision-resistant claim names per
-{{RFC7519}}, Section 4.3.  TODO: whether an Agent needs a human-usable,
-"@"-referenceable address within the Platform, analogous to sharing a
-document with an email address, distinct from both name and the opaque
-Agent Identifier; noted here, deliberately unsolved.  A Resource
-Server keeps a local, administrator-controlled mapping from Property
-predicates to permissions; possession of a Property is not itself
-authorization.  Property names and values cross a trust boundary as
-issuer assertions, not as portable permission assignments.  A Resource
-Server MUST interpret them under its own issuer-scoped mapping and MUST NOT
-assume that a role, group, entitlement, or similarly named value has the
-same meaning in another issuer's domain.  Deny semantics do not travel.
-TODO: worked example.
+Where each Platform has its own issuer identifier, the issuer identifier alone identifies the Platform and nothing further in this section applies.  Where several Platforms share one issuer identifier, a claim in the assertion tells them apart.  Existing issuers use different claims for this, so this document does not fix the claim's name: the Platform registration includes the claim and the value it carries for that Platform, and the Authorization Server applies both when matching an assertion ({{issuer-keys}}).  An assertion that lacks the named claim, or carries another value, does not match that registration.
 
-## Attribution
+It is RECOMMENDED that a new issuer shared by several Platforms use the `tenant` claim ({{IDJAG, Section 3.1}}) in order to simplify interoperability.
 
-TODO.  The Authorization Server logs jti at token issuance; Resource
-Servers log the Agent Identifier (sub) and referenced Properties; internal fan-out via {{TXN-TOKENS}} rather than
-forwarding the access token.
+How an Authorization Server determines whether a Platform needs a differentiating claim, and which, is left to be discovered out of band of this specification.
 
-## Retirement and Lifecycle {#lifecycle}
 
-Retirement is expressed by cessation: the Platform stops signing assertions
-for a retired Agent, so residual access is bounded by the remaining lifetime
-of any outstanding assertion plus the lifetime of any access token already
-issued.  Assertion and access-token lifetimes SHOULD be chosen with this
-bound in mind.  No signal yet informs an Authorization Server that an Agent
-Identifier is permanently retired; that gap is shared with neighboring
-workload identity ecosystems, whose common baseline is likewise short
-credential lifetimes plus ceasing issuance ({{oi}}).
+# Error Responses {#errors}
 
-Broader lifecycle management is out of scope for this document.  In
-particular, resources that come to be owned by an Agent (documents, records,
-long-lived artifacts) need succession planning when the Agent is retired;
-this document makes the retirement event's access consequences legible, but
-does not manage its downstream effects.
+When a token request fails, the Authorization Server SHOULD indicate in `error_description` ({{RFC6749, Section 5.2}}) who must act: an administrator of the Authorization Server, if the Platform is not trusted or the Agent holds no permission for the request; or the Platform, if the assertion is invalid.  An untrusted Platform or an invalid assertion yields `invalid_grant` ({{RFC7523, Section 3.1}}); a missing permission yields `invalid_scope` or `invalid_target` ({{RFC8707}}) where a specific scope or resource is refused, otherwise `invalid_grant`.  When an action can be taken to resolve the issue, the Authorization Server SHOULD include a link in `error_uri`.
+
 
 # Open Issues {#oi}
 
-- Relying parties that authorize only on subject and audience (e.g., cloud
-  IAM federation trust policies) and cannot evaluate Property predicates;
-  URI-form Agent Identifiers ({{identity-model}}) carry the tenancy inside
-  the identifier for this case, but the residual gap is unassessed.
-- Proof-of-possession: the authorization grant is bearer; see
-  {{workload-authorization-grant}}.
-- Issuer placement: issuer operated by the Platform versus by the Enterprise
-  IdP, with the Platform obtaining assertions by token exchange {{RFC8693}}
-  with the IdP; client authentication is redundant in the former case and
-  load-bearing in the latter; what, if anything, client_id means in each
-  case.
-- Staleness and retirement signaling in place of per-agent revocation
-  (issuer- or Property-scoped epoch versus event push versus lifetime
-  alone, {{lifecycle}}); a gap shared with neighboring workload identity
-  ecosystems.
-- Addressing: whether an Agent needs a human-usable, "@"-referenceable
-  address (to share a resource with an agent the way one shares with an
-  email address), distinct from the display name and the Agent Identifier.
+* Agent ownership: see issue #13.
+* Proof of possession: the grant is a bearer assertion and no client authentication is required; whether to name a hardening (sender-constrained access tokens, authenticating the presenting instance, or the Platform authenticating as a client) and which, if any, to require.
+* JWT type: whether to define an explicit `typ` for this grant ({{RFC8725, Section 3.11}}), so that another kind of JWT signed by the same issuer for the same audience cannot be taken for it.
+* Replay: whether an Authorization Server is required to reject a `jti` it has already accepted while the assertion is still valid, or whether that stays optional as in {{RFC7523, Section 3}}.
 
-# Privacy Considerations
+# Security Considerations {#security-considerations}
 
-# Security Considerations
+This revision lists the considerations it is aware of; a fuller treatment will follow.
 
-TODO: unseen agent identifiers under trusted issuers; issuer allowlist as the
-trust boundary; tenant confusion at multi-issuer Authorization Servers ({{trust}});
-bearer-assertion theft and assertion lifetime; Platform as root of trust;
-credential non-exposure to the model; automated trust establishment.
-
-Property freshness is distinct from JWT validity.  A valid signature proves
-that the Platform made the assertion, while `exp` only limits how long the
-grant may be accepted.  Neither proves that mutable runtime, posture, group,
-role, or entitlement state still holds at presentation or access time.  A
-deployment that authorizes on such state needs a current-status mechanism or
-lifetimes short enough for its risk bound.  Failure to obtain required
-current-status evidence MUST NOT be treated as evidence that the Property
-still holds.
+* Agents are accepted on their first assertion, so the set of acceptable Agents grows at the Platform with no action at the Authorization Server, and each new Agent creates state there; an Authorization Server can cap new Agents per Platform registration.
+* The assertion is a bearer credential: a short lifetime, its `aud` and, where the Authorization Server enforces it, single use by `jti` bound what a stolen assertion is worth.
+* Keys are held per issuer identifier, so that one issuer's key never verifies another's assertion ({{issuer-keys}}); whoever controls an issuer identifier, or the DNS name under it, controls what every trusting Authorization Server accepts.
+* Platforms under a shared issuer identifier share its keys, so the claim that tells them apart ({{tenants}}) is only as trustworthy as the party signing for all of them, and a Platform registration for a shared issuer identifier that names no claim trusts every Platform under it.
+* Where one Authorization Server serves several organizations, a Platform registration created by the wrong organization routes another organization's Agents to it; who may register a given Platform is out of scope.
+* Error responses ({{errors}}) tell any presenter which Platforms an Authorization Server trusts, and `error_uri` hands a link to an unauthenticated presenter.
+* This document defines no explicit JWT type, so an issuer that signs other kinds of JWT for the same audience risks one being taken for this grant ({{RFC8725, Section 3.11}}).
 
 # IANA Considerations
 
-This document has no IANA actions at this time; provisional claim names
-({{properties}}) may be registered in a future revision.
+This document has no IANA actions.
 
 --- back
 
 # Acknowledgments
 {:numbered="false"}
 
-The editors thank Pieter Kasselman, Karl McGuinness, Kevin Kelley, Emily
-Lauber, and Maxwell Gerber for discussions that shaped this document.  The
-conceptual model of agents as workloads in {{AIMS}} informed this design.
-Further acknowledgments will be added in a future revision.
+The editors thank Pieter Kasselman, Karl McGuinness, Kevin Kelley, Emily Lauber, and Maxwell Gerber for discussions that shaped this document.
