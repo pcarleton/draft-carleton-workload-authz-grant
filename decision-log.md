@@ -5,6 +5,8 @@ Most recent first within each state. Open items are at the bottom.
 
 ## Decided
 
+### D15 - WIP, see PR description
+
 ### D13 — WAG is a standalone mechanism, not a profile of AIMS (2026-08-31, closes #1)
 The draft no longer calls itself a profile of draft-klrc-aiagent-auth
 (AIMS). AIMS moves from the normative to the informative references; the
