@@ -132,7 +132,7 @@ Authorization Server, Resource Server: as in [RFC6749].
 3. Per access: the Agent presents a Workload Authorization Grant in an
    ordinary OAuth token request.  The Authorization Server matches it to a
    Platform registration, verifies it under that Platform's keys, does not
-   reject it for carrying a `sub` it has not seen before ({{first-seen}}),
+   reject it for carrying a `sub` it has not seen before,
    and issues an access token under its own policy ({{properties}}).
 
 ~~~
