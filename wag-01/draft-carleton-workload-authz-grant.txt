@@ -100,17 +100,19 @@ Table of Contents
    4.  Agent Identity
    5.  Workload Authorization Grant
      5.1.  JWT Syntax
-   6.  Issuer Keys
+   6.  Platform Registration
+     6.1.  Issuer Keys
+     6.2.  Permissions
+       6.2.1.  Permissions Example
+     6.3.  Multi-Tenancy
    7.  First-Seen Agents
    8.  Error Responses
-   9.  Permissions
-   10. Multi-Tenancy
-   11. Open Issues
-   12. Security Considerations
-   13. IANA Considerations
-   14. References
-     14.1.  Normative References
-     14.2.  Informative References
+   9.  Open Issues
+   10. Security Considerations
+   11. IANA Considerations
+   12. References
+     12.1.  Normative References
+     12.2.  Informative References
    Acknowledgments
    Authors' Addresses
 
@@ -151,13 +153,13 @@ Table of Contents
    assertions about them; the sending end of one trust relationship with
    an Authorization Server.  Where a provider serves several customer
    organizations under one issuer identifier, each customer's partition
-   is a separate Platform (Section 10).
+   is a separate Platform (Section 6.3).
 
    Platform registration: an Authorization Server's record of one
    Platform it trusts: the Platform's issuer identifier, its keys
-   (Section 6) and, where several Platforms share that issuer
+   (Section 6.1) and, where several Platforms share that issuer
    identifier, the name of a claim and the value the claim carries for
-   this Platform (Section 10).  How a Platform registration comes to
+   this Platform (Section 6.3).  How a Platform registration comes to
    exist is out of scope.  It is not a client registration [RFC7591] and
    yields no client identifier or credential.
 
@@ -168,7 +170,7 @@ Table of Contents
    1.  Once per Platform and Authorization Server: an administrator of
        the Authorization Server creates a Platform registration
        (Section 2), which records the Platform's issuer identifier and
-       how to obtain its keys (Section 6).  Nothing about individual
+       how to obtain its keys (Section 6.1).  Nothing about individual
        Agents is exchanged.
 
    2.  Per Agent: the Platform creates an Agent and assigns it an Agent
@@ -180,7 +182,7 @@ Table of Contents
        matches it to a Platform registration, verifies it under that
        Platform's keys, does not reject it for carrying a sub it has not
        seen before (Section 7), and issues an access token under its own
-       policy (Section 9).
+       policy (Section 6.2).
 
          Platform                    Authorization        Resource
          (issuer; Agents)            Server (AS)          Server (RS)
@@ -236,7 +238,7 @@ Table of Contents
 5.1.  JWT Syntax
 
    iss  REQUIRED - The issuer identifier of the Platform's issuer
-      (Section 6): a URL using the https scheme with no query or
+      (Section 6.1): a URL using the https scheme with no query or
       fragment component, as for issuer in [RFC8414], Section 2.
 
    sub  REQUIRED - The Agent Identifier (Section 4).
@@ -257,7 +259,7 @@ Table of Contents
       Section 4.4.1).
 
    The assertion is signed under a key configured from the Platform (see
-   Section 6) and MAY carry further claims about the Agent.  An
+   Section 6.1) and MAY carry further claims about the Agent.  An
    Authorization Server that publishes metadata [RFC8414] SHOULD list
    the urn:ietf:params:oauth:grant-type:jwt-bearer grant type in
    grant_types_supported.
@@ -267,31 +269,114 @@ Table of Contents
    1785271980, "iat": 1785271680, "jti": "7d0f5a2b-93c8-4f0e-
    9c33-1b6a0e6d5f10", "scope": "issues:read issues:write" }
 
-6.  Issuer Keys
+6.  Platform Registration
+
+   Prior to presenting a WAG to an Authorization Server, an
+   administrator registers the Platform at the Authorization Server.
+   During this registration step, the Authorization Server obtains the
+   Platform's issuer identifier, the issuer's key, and tenant
+   information (see Section 6.3).  The Authorization Server also decides
+   on authorization policy for the Platform including optionally mapping
+   claims provided by the platform to permissions.  The specifics of
+   this registration step are outside the scope of this document.  It is
+   not a client registration [RFC7591] and yields no client identifier
+   or credential.
+
+6.1.  Issuer Keys
+
+   As part of a Platform registration, the Authorization Server needs to
+   record an issuer identifier and obtain a public key associated with
+   that issuer.
+
+   A Platform may provide its public key via: a JWK Set [RFC7517]
+   entered directly, a JWK Set URL the Authorization Server fetches over
+   HTTPS [RFC9525], or the jwks_uri in metadata the issuer publishes
+   under its issuer identifier ([RFC8414], Section 3 or
+   [OIDC-DISCOVERY]).  An Authorization Server that uses issuer metadata
+   MUST NOT use a document whose issuer value is not identical to the
+   registration's issuer identifier ([RFC8414], Section 3.3).  A
+   Platform SHOULD publish its keys at a URL, so that keys can rotate
+   without administrator action.
 
    On each assertion the Authorization Server finds the Platform
    registration the assertion matches: iss equals the registration's
    issuer identifier by Simple String Comparison ([RFC7523], Section 3)
-   and, where the registration names a claim (Section 10), the assertion
-   carries that claim with the registered value.  An Authorization
-   Server MUST ensure that an assertion can match at most one of its
-   Platform registrations.  The Authorization Server MUST reject an
-   assertion that matches no Platform registration, MUST verify the
-   signature only under a key configured or retrieved for the matched
-   registration's issuer identifier - never under key material or key
-   locations carried in the assertion ([RFC8725] §3.8 and §3.10) - and
-   MUST interpret sub and jti only within the scope of the matched
+   and, where the registration names a claim (Section 6.3), the
+   assertion carries that claim with the registered value.  An
+   Authorization Server MUST ensure that an assertion can match at most
+   one of its Platform registrations.  The Authorization Server MUST
+   reject an assertion that matches no Platform registration, MUST
+   verify the signature only under a key configured or retrieved for the
+   matched registration's issuer identifier - never under key material
+   or key locations carried in the assertion ([RFC8725] §3.8 and §3.10)
+   - and MUST interpret sub and jti only within the scope of the matched
    Platform registration.
 
-   How the keys get into a Platform registration is the administrator's
-   choice: a JWK Set [RFC7517] entered directly, a JWK Set URL the
-   Authorization Server fetches over HTTPS [RFC9525], or the jwks_uri in
-   metadata the issuer publishes under its issuer identifier ([RFC8414],
-   Section 3 or [OIDC-DISCOVERY]).  An Authorization Server that uses
-   issuer metadata MUST NOT use a document whose issuer value is not
-   identical to the registration's issuer identifier ([RFC8414],
-   Section 3.3).  A Platform SHOULD publish its keys at a URL, so that
-   keys can rotate without administrator action.
+6.2.  Permissions
+
+   During Platform registration, the Authorization Server sets local
+   policy for what permissions to assign an access token given in return
+   for a WAG.  This policy MAY involve consulting claims the Platform
+   asserts about the Agent in the WAG.  A claim is an assertion by the
+   Platform, meaningful only within the context of that Platform, and an
+   Authorization Server MUST NOT assume that a similarly named value
+   from another Platform means the same thing.
+
+   The specific claims a Platform provides, and what permissions an
+   Authorization Server decides to grant are outside the scope of this
+   document.  Below is an illustrative example of one shape this
+   permission decision can take.
+
+6.2.1.  Permissions Example
+
+   TODO: include non-normative example here w/ claims, and roles -
+   Platform configured to provide claims like "roles": ["developer"]
+   which represent human groups - Authorization Server also has a
+   concept of groups - Administrator configures in the Platform that
+   folks with the Developer role are allowed to create agents with that
+   role as well. - Administrator configures in the Authorization Server
+   that a "role" claim of "developer" corresponds to a set of
+   permissions in the platform - A developer creates an agent that is
+   able to access useful things in the Authorization Server
+
+   For this deployment pattern it may be useful to use the roles, groups
+   and entitlements claim names of [RFC9068], Section 2.2.3.1, which
+   take them from the SCIM core schema ([RFC7643], Section 4.1.2),
+   however the claim names are only useful as a common conceptual
+   framework and to help interoperability between Platforms and
+   Authorization Servers, it is not expected to match a SCIM schema, or
+   be projected from an Enterprise IdP.  Specific deployment patterns
+   are not required as part of this document.
+
+6.3.  Multi-Tenancy
+
+   In many cases, a deployment (Platform or AS/RS) will partition its
+   infrastructure by customer organizations, or tenants.  For the
+   purposes of this document, a Platform and Authorization Server /
+   Resource Server refers to a single partition belonging to a single
+   organization (Section 2).  A Platform that knows the organization's
+   identifier at the Authorization Server can carry it in the assertion,
+   as the aud_tenant claim of [IDJAG], Section 3.1 does; this document
+   does not require it.
+
+   Where each Platform has its own issuer identifier, the issuer
+   identifier alone identifies the Platform and nothing further in this
+   section applies.  Where several Platforms share one issuer
+   identifier, a claim in the assertion tells them apart.  Existing
+   issuers use different claims for this, so this document does not fix
+   the claim's name: the Platform registration includes the claim and
+   the value it carries for that Platform, and the Authorization Server
+   applies both when matching an assertion (Section 6.1).  An assertion
+   that lacks the named claim, or carries another value, does not match
+   that registration.
+
+   It is RECOMMENDED that a new issuer shared by several Platforms use
+   the tenant claim ([IDJAG], Section 3.1) in order to simplify
+   interoperability.
+
+   How an Authorization Server determines whether a Platform needs a
+   differentiating claim, and which, is left to be discovered out of
+   band of this specification.
 
 7.  First-Seen Agents
 
@@ -303,7 +388,7 @@ Table of Contents
    the Agent's first assertion.
 
    Whether a first-seen Agent receives any permission is governed by
-   Section 9, never by identifier structure.
+   Section 6.2, never by identifier structure.
 
 8.  Error Responses
 
@@ -318,77 +403,7 @@ Table of Contents
    invalid_grant.  When an action can be taken to resolve the issue, the
    Authorization Server SHOULD include a link in error_uri.
 
-9.  Permissions
-
-   An accepted Agent may hold no permissions.  What it is permitted to
-   do is decided by the Authorization Server under local policy, which
-   MAY consult claims the Platform asserts about the Agent; A claim is
-   an assertion by the Platform, meaningful only within the context of
-   that Platform, and an Authorization Server MUST NOT assume that a
-   similarly named value from another Platform means the same thing.
-
-   The expected deployment of claims is for a Platform administrator to
-   delegate the ability to provision agents with particular claims to
-   groups of Platform users.  In that way, a user can create a new Agent
-   with the claims the user is permitted to assign to an Agent.  If
-   those claims are mapped to permissions in the Authorization Server,
-   then the new Agent can immediately get an access token with those
-   mapped permissions and perform useful actions at the Resource Server.
-
-   As an example, consider an organization with an engineering and a
-   support team.  An administrator in the Platform may configure a claim
-   that looks like "groups": ["eng-agent"].  The administrator then may
-   map that claim to a permission in the Authorization Server.  The
-   administrator then may allow engineering team members to create an
-   agent with that claim, but not permit support engineers to create an
-   agent with that claim.  In this manner, the engineering team is
-   trusted to create and organize its agents without requiring input
-   from the administrator while the administrator knows what permissions
-   those agents have.
-
-   For this deployment pattern it may be useful to use the roles, groups
-   and entitlements claim names of [RFC9068], Section 2.2.3.1, which
-   take them from the SCIM core schema ([RFC7643], Section 4.1.2),
-   however the claim names are only useful as a common conceptual
-   framework and to help interoperability between Platforms and
-   Authorization Servers, it is not expected to match a SCIM schema, or
-   be projected from an Enterprise IdP.
-
-10.  Multi-Tenancy
-
-   In many cases, a deployment (Platform or AS/RS) will partition its
-   infrastructure by customer organizations, or tenants.  For the
-   purposes of this document, a Platform and Authorization Server /
-   Resource Server refers to a single partition belonging to a single
-   organization (Section 2).  Where an Authorization Server serves
-   several organizations behind one issuer identifier and token
-   endpoint, aud is the same for all of them, so an assertion is for the
-   organization whose Platform registration it matches (Section 6).  A
-   Platform that knows the organization's identifier at the
-   Authorization Server can also carry it in the assertion, as the
-   aud_tenant claim of [IDJAG], Section 3.1 does; this document does not
-   require it.
-
-   Where each Platform has its own issuer identifier, the issuer
-   identifier alone identifies the Platform and nothing further in this
-   section applies.  Where several Platforms share one issuer
-   identifier, a claim in the assertion tells them apart.  Existing
-   issuers use different claims for this, so this document does not fix
-   the claim's name: the Platform registration names the claim and the
-   value it carries for that Platform, and the Authorization Server
-   applies both when matching an assertion (Section 6).  An assertion
-   that lacks the named claim, or carries another value, does not match
-   that registration.
-
-   It is RECOMMENDED that a new issuer shared by several Platforms use
-   the tenant claim ([IDJAG], Section 3.1) in order to simplify
-   interoperability.
-
-   How an Authorization Server determines whether a Platform needs a
-   differentiating claim, and which, is left to be discovered out of
-   band of this specification.
-
-11.  Open Issues
+9.  Open Issues
 
    *  Claiming: whether an Authorization Server may withhold access
       tokens for a first-seen Agent until a user of its organization
@@ -420,20 +435,20 @@ Table of Contents
 
    *  Shared issuer identifiers: whether to name the claim that tells
       Platforms apart, or a way for an issuer to declare it, instead of
-      leaving it to each Platform registration (Section 10).
+      leaving it to each Platform registration (Section 6.3).
 
    *  Registering a Platform: where one Authorization Server serves
       several organizations, whether anything should say who may create
       a Platform registration for a given Platform.
 
-12.  Security Considerations
+10.  Security Considerations
 
    This revision lists the considerations it is aware of; a fuller
    treatment will follow.
 
    *  Trusting a Platform is trusting it for every Agent it vouches for,
       for ceasing to sign for an Agent that is retired, and for its own
-      controls over who may assign which claims (Section 9).
+      controls over who may assign which claims (Section 6.2).
 
    *  Agents are accepted on their first assertion (Section 7), so the
       set of acceptable Agents grows at the Platform with no action at
@@ -446,17 +461,17 @@ Table of Contents
       and, where the Authorization Server enforces it, single use by jti
       bound what a stolen one is worth.  Assertions and signing keys
       belong in Platform infrastructure, not in an AI agent's model
-      context.  Proof of possession is an open issue (Section 11).
+      context.  Proof of possession is an open issue (Section 9).
 
    *  Keys are held per issuer identifier, so that one issuer's key
-      never verifies another's assertion (Section 6); whoever controls
+      never verifies another's assertion (Section 6.1); whoever controls
       an issuer identifier, or the DNS name under it, controls what
       every trusting Authorization Server accepts.
 
    *  Platforms under a shared issuer identifier share its keys, so the
-      claim that tells them apart (Section 10) is only as trustworthy as
-      the party signing for all of them, and a Platform registration for
-      a shared issuer identifier that names no claim trusts every
+      claim that tells them apart (Section 6.3) is only as trustworthy
+      as the party signing for all of them, and a Platform registration
+      for a shared issuer identifier that names no claim trusts every
       Platform under it.
 
    *  Where one Authorization Server serves several organizations, a
@@ -472,13 +487,13 @@ Table of Contents
       signs other kinds of JWT for the same audience risks one being
       taken for this grant ([RFC8725], Section 3.11).
 
-13.  IANA Considerations
+11.  IANA Considerations
 
    This document has no IANA actions.
 
-14.  References
+12.  References
 
-14.1.  Normative References
+12.1.  Normative References
 
    [OIDC-DISCOVERY]
               Sakimura, N., Bradley, J., Jones, M., and E. Jay, "OpenID
@@ -535,7 +550,7 @@ Table of Contents
               RFC 9525, DOI 10.17487/RFC9525, November 2023,
               <https://www.rfc-editor.org/rfc/rfc9525>.
 
-14.2.  Informative References
+12.2.  Informative References
 
    [IDJAG]    Parecki, A., McGuinness, K., and B. Campbell, "Identity
               Assertion JWT Authorization Grant", Work in Progress,
