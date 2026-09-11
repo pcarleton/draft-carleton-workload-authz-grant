@@ -5,9 +5,8 @@ Most recent first within each state. Open items are at the bottom.
 
 ## Decided
 
-### D15 — -01 is a reduction of -00: what changed and what was only cut (2026-09-10)
--01 is about a third the length of -00. The aim is a document that says
-only what two implementers have to agree on: the grant, whose keys verify
+### D15 — Trim down what changed and what was only cut (2026-09-10)
+Trim to what two implementers have to agree on: the grant, whose keys verify
 it, and that a workload the authorization server has not seen before is
 not turned away for that reason. Most of the difference is text removed
 without changing what was decided. Four things did change.
