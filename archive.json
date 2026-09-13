@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2026-09-10T03:45:24.905463+00:00",
+  "timestamp": "2026-09-13T03:54:39.536419+00:00",
   "repo": "pcarleton/draft-carleton-workload-authz-grant",
   "labels": [
     {
@@ -231,6 +231,22 @@
           "updatedAt": "2026-09-04T14:25:26Z"
         }
       ]
+    },
+    {
+      "number": 13,
+      "id": "I_kwDOTlTgBM8AAAABQ0QM8Q",
+      "title": "agent accountability in downstream systems",
+      "url": "https://github.com/pcarleton/draft-carleton-workload-authz-grant/issues/13",
+      "state": "OPEN",
+      "author": "pcarleton",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "AS's accept an Agent on its first assertion, this leaves a question of: who in the authorization server's organization answers for an Agent, and how is that established without an administrator?\n\nThe point of the Agent acting as itself is that access survives org changes (the person who set it up leaves, nothing breaks). Tying it to one person brings that fragility back; not tying it to anyone leaves the resource side with a potential gap in terms of audit and compliance.\n\nSome options to consider, although not clear they need to be specified in this document:\n1. Implicit from a Platform claim (e.g. team \u2192 that team's responsible person).\n2. Adoption on first use by any user. No access until a user takes it on. One extra interaction, still self-service; still has the hand-off problem when that user changes teams or leaves.\n3. An owner claim from the Platform. Simple on the wire, but the value is from the Platform's domain and the authorization server likely can't map it to one of its users.\n\nDoes the document need more than the open issue here, and if so, mechanism (2/3) or guidance (1)?",
+      "createdAt": "2026-09-11T10:56:06Z",
+      "updatedAt": "2026-09-11T10:56:06Z",
+      "closedAt": null,
+      "comments": []
     }
   ],
   "pulls": [
@@ -367,25 +383,33 @@
       "id": "PR_kwDOTlTgBM8AAAABCNovMA",
       "title": "[wip] rewrite the trust section",
       "url": "https://github.com/pcarleton/draft-carleton-workload-authz-grant/pull/10",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "pcarleton",
       "authorAssociation": "OWNER",
       "assignees": [],
       "labels": [],
       "body": "\r\nthis is combination of:\r\n* clarifying the constraints around the agent identifier\r\n* swapping from \"allowlist entry\" to \"tenancy registration\"\r\n* rewriting the Trust section to make more sense \r\n\r\nstill todo:\r\n* allow for `tenant` claim",
       "createdAt": "2026-09-04T14:29:18Z",
-      "updatedAt": "2026-09-08T08:30:00Z",
+      "updatedAt": "2026-09-10T18:18:17Z",
       "baseRepository": "pcarleton/draft-carleton-workload-authz-grant",
       "baseRefName": "main",
       "baseRefOid": "2c5222b411c6ff73bed92ec94622d0b2c8717bce",
       "headRepository": "pcarleton/draft-carleton-workload-authz-grant",
       "headRefName": "trust-rewrite",
       "headRefOid": "bdbf71ee78b8fe6712acba9055c42d6b3769c6d0",
-      "closedAt": null,
+      "closedAt": "2026-09-10T18:18:17Z",
       "mergedAt": null,
       "mergedBy": null,
       "mergeCommit": null,
-      "comments": [],
+      "comments": [
+        {
+          "author": "pcarleton",
+          "authorAssociation": "OWNER",
+          "body": "closing in favor of https://github.com/pcarleton/draft-carleton-workload-authz-grant/pull/12",
+          "createdAt": "2026-09-10T18:18:17Z",
+          "updatedAt": "2026-09-10T18:18:17Z"
+        }
+      ],
       "reviews": [
         {
           "id": "PRR_kwDOTlTgBM8AAAABMPlXeQ",
@@ -421,13 +445,60 @@
       "labels": [],
       "body": "Replaces the composite `ctx` Property in the example assertion and in the Properties section with flat collaboration-context claims: `platform`, naming the collaboration platform the Agent acts in (a chat or work application \u2014 not the Agent Platform), plus that platform's own workspace and channel identifiers under claim names prefixed with the platform name (`example_workspace_id`, `example_channel_id` for a platform named `example`). Records the choice as D15 in the decision log; O2 now points at it for registration.\n\nWhy: separate flat string claims can be matched directly by a Resource Server (cloud IAM trust-policy conditions included) without parsing a composite value, and the prefix keeps identifiers of different platforms apart. Which claims an issuer populates stays its choice.\n\nOffered as input per CONTRIBUTING.md \u2014 happy to turn this into an issue, or to move D15 to Open, if you'd rather settle it in review.\n",
       "createdAt": "2026-09-08T05:44:21Z",
-      "updatedAt": "2026-09-08T05:44:21Z",
+      "updatedAt": "2026-09-10T14:53:27Z",
       "baseRepository": "pcarleton/draft-carleton-workload-authz-grant",
       "baseRefName": "main",
       "baseRefOid": "2c5222b411c6ff73bed92ec94622d0b2c8717bce",
       "headRepository": "jiyun-ant/draft-carleton-workload-authz-grant",
       "headRefName": "context-claims-per-platform",
       "headRefOid": "571ba117e97669feb8c9b388e47d904a8cf64eb5",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABNBOAAg",
+          "commit": {
+            "abbreviatedOid": "571ba11"
+          },
+          "author": "pcarleton",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-10T14:53:27Z",
+          "updatedAt": "2026-09-10T14:53:27Z",
+          "comments": [
+            {
+              "originalPosition": 16,
+              "body": "if an agent is available in multiple platforms that e.g. have a channel notion, how would we want to represent that?",
+              "createdAt": "2026-09-10T14:53:27Z",
+              "updatedAt": "2026-09-10T14:53:27Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 12,
+      "id": "PR_kwDOTlTgBM8AAAABDCRm9w",
+      "title": "draft-01: slim down",
+      "url": "https://github.com/pcarleton/draft-carleton-workload-authz-grant/pull/12",
+      "state": "OPEN",
+      "author": "pcarleton",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "Proposed -01 text, cut down to be only what's required for interop.\r\n\r\n**Changed**\r\n\r\n- `aud` is the authorization server's issuer identifier, a single value\r\n- The Agent Identifier is an opaque string\r\n- JWK can be manually entered\r\n- \"Platform\" is one tenant; \"Platform registration\" is the authorization server's record of one trusted Platform. Under a shared issuer identifier the registration needs a claim that tells Platforms apart (`tenant` RECOMMENDED for new shared issuers). (Relates to #7)\r\n\r\n**Small normative additions**\r\n\r\n- `resource` REQUIRED\r\n- optional `scope` claim as in ID-JAG\r\n- no refresh tokens\r\n- first-seen stated as \"MUST NOT reject solely because the `sub` is unseen\"\r\n- error responses say who must act, using existing error codes;\r\n\r\n**Cut**\r\n\r\n- AIMS correspondence table (the Overview and figure stay, shortened)\r\n- Scope section (now in the abstract)\r\n- retirement prose (now the lifetime rule)\r\n- the property vocabulary (points at the `roles`/`groups`/`entitlements` names already in use, defines none). Unused references removed.\r\n\r\n**Added**\r\nSecurity Considerations is a list for now; a fuller treatment is coming separately.\r\n",
+      "createdAt": "2026-09-10T18:11:00Z",
+      "updatedAt": "2026-09-11T17:07:43Z",
+      "baseRepository": "pcarleton/draft-carleton-workload-authz-grant",
+      "baseRefName": "main",
+      "baseRefOid": "2c5222b411c6ff73bed92ec94622d0b2c8717bce",
+      "headRepository": "pcarleton/draft-carleton-workload-authz-grant",
+      "headRefName": "wag-01",
+      "headRefOid": "dd5bbfca421cf3df0f10fc61420cce6d88c0abe3",
       "closedAt": null,
       "mergedAt": null,
       "mergedBy": null,
