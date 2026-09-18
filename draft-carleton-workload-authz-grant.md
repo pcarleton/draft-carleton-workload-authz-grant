@@ -106,7 +106,7 @@ A platform that hosts many workloads -- an agent platform is a motivating case -
 
 This document defines one grant for that: a JWT authorization grant [RFC7523] signed by the platform and naming one workload, presented at the token endpoint of an authorization server that has been configured, once, to trust that platform.
 
-It specifies the grant, and that workloads are trusted based on the platform registration, allowing a previously unseen workloads to receive an access token.
+It specifies the grant, and that workloads are trusted based on the platform registration, allowing a previously unseen workload to receive an access token.
 
 How trust in a platform is established and what a workload may do are left to deployments.
 
