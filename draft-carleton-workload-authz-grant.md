@@ -75,7 +75,7 @@ workload hosted on a platform -- an AI agent is the motivating case --
 obtains access tokens from a third party's OAuth authorization server
 without requiring an administrator to perform a per-workload provisioning
 step.  Each workload is identified by an opaque identifier that is never
-reassigned.  The platform signs a JWT authorization grant (RFC 7523) that
+reassigned.  The platform signs a JWT authorization grant ({{RFC7523}}) that
 names one workload, and the workload presents it at the token endpoint of
 an authorization server that has been configured, once, to trust that
 platform.  The authorization server does not reject a workload because it
@@ -104,7 +104,7 @@ Agent platforms host many agents per customer, instantiated and torn down as app
 
 A platform that hosts many workloads -- an agent platform is a motivating case -- needs each workload to obtain an access token at third-party services without requiring an administrator to perform a per-workload provisioning step.
 
-This document defines one grant for that: a JWT authorization grant [RFC7523] signed by the platform and naming one workload, presented at the token endpoint of an authorization server that has been configured, once, to trust that platform.
+This document defines one grant for that: a JWT authorization grant {{RFC7523}} signed by the platform and naming one workload, presented at the token endpoint of an authorization server that has been configured, once, to trust that platform.
 
 It specifies the grant, and that workloads are trusted based on the platform registration, allowing a previously unseen workload to receive an access token.
 
@@ -118,7 +118,7 @@ Platform: the party that creates workloads ("Agents") and signs assertions about
 
 Platform registration: an Authorization Server's record of one Platform it trusts: the Platform's issuer identifier, its keys ({{issuer-keys}}) and, where several Platforms share that issuer identifier, the name of a claim and the value the claim carries for this Platform ({{tenants}}).  How a Platform registration comes to exist is out of scope (note: this is not a client registration {{RFC7591}} and yields no client identifier or credential).
 
-Authorization Server, Resource Server: as in [RFC6749].
+Authorization Server, Resource Server: as in {{RFC6749}}. Where an Authorization Server serves several customer organizations under one issuer identifier, each customer's partition is a separate Authorization Server ({{tenants}}).
 
 # Overview {#overview}
 
@@ -154,12 +154,12 @@ Authorization Server, Resource Server: as in [RFC6749].
 
 # Agent Identity {#identity-model}
 
-An Agent is identified by its Agent Identifier, carried as the `sub` claim in the assertion.  The Agent Identifier is opaque; it MUST be unique among all Agent Identifiers issued under the same Platform, MUST NOT be reassigned to a different Agent, and is compared as a case-sensitive string {{RFC7519, Section 2}}. An Authorization Server MUST associate records for an Agent with its Platform and `sub` value, never on its `sub` value alone.
+An Agent is identified by its Agent Identifier, carried as the `sub` claim in the assertion.  The Agent Identifier is opaque and immutable; it MUST be unique among all Agent Identifiers issued under the same Platform, MUST NOT be reassigned to a different Agent, and is compared as a case-sensitive string {{RFC7519, Section 2}}. An Authorization Server MUST associate records for an Agent with its Platform and `sub` value, never on its `sub` value alone.
 
 
 # Workload Authorization Grant
 
-An Agent obtains an access token by presenting a JWT as an authorization grant per [RFC7523], Section 2.1, issued by the Platform as a third party in the sense of [RFC7521], Section 3. The token request carries `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer`, the JWT in the `assertion` parameter, and the target resource in the `resource` parameter [RFC8707]. The `resource` parameter {{RFC8707}} is RECOMMENDED; an Authorization Server SHOULD restrict the audience of the access token it issues to that resource and MAY refuse a request that lacks it with `invalid_target` ({{RFC8707, Section 2}}). An Agent MAY make the token request without client authentication ({{RFC7523, Section 3.1}}), and this specification attaches no meaning to `client_id`. An Authorization Server MUST NOT require a client registration per Agent.
+An Agent obtains an access token by presenting a JWT as an authorization grant per {{RFC7523, Section 2.1}}, issued by the Platform as a third party in the sense of {{RFC7521, Section 3}}. The token request carries `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer`, the JWT in the `assertion` parameter, and the target resource in the `resource` parameter {{RFC8707}}. The `resource` parameter {{RFC8707}} is RECOMMENDED; an Authorization Server SHOULD restrict the audience of the access token it issues to that resource and MAY refuse a request that lacks it with `invalid_target` ({{RFC8707, Section 2}}). An Agent MAY make the token request without client authentication ({{RFC7523, Section 3.1}}), and this specification attaches no meaning to `client_id`. An Authorization Server MUST NOT require a client registration per Agent.
 
 Assertions SHOULD be short-lived.  The Authorization Server MUST NOT issue refresh tokens for this grant and SHOULD NOT issue access tokens that outlive the assertion by a significant period ({{RFC7521, Section 4.1}}).
 
@@ -172,10 +172,10 @@ Assertions SHOULD be short-lived.  The Authorization Server MUST NOT issue refre
 : REQUIRED - The Agent Identifier ({{identity-model}}).
 
 `aud`
-: REQUIRED - Identifies the Authorization Server: its issuer identifier [RFC8414], as a single value, as in {{IDJAG, Section 3.1}}.  An Authorization Server MUST accept its issuer identifier as the audience; it MAY also accept its token endpoint URL, which {{RFC7523BIS}} continues to permit for authorization grants.
+: REQUIRED - Identifies the Authorization Server: its issuer identifier {{RFC8414}}, as a single value, as in {{IDJAG, Section 3.1}}.  An Authorization Server MUST accept its issuer identifier as the audience; it MAY also accept its token endpoint URL, which {{RFC7523BIS}} continues to permit for authorization grants.
 
 `exp`, `iat`, `jti`
-: REQUIRED - As defined in [RFC7519].
+: REQUIRED - As defined in {{RFC7519}}.
 
 `scope`
 : OPTIONAL - A space-separated list of scopes ({{RFC6749, Section 3.3}}) the Platform asserts for this request, as in {{IDJAG, Section 3.1}}.  The Authorization Server decides under its own policy which of them to grant, and MAY grant a subset ({{IDJAG, Section 4.4.1}}).
@@ -204,7 +204,7 @@ As part of a Platform registration, the Authorization Server needs to record an 
 
 A Platform may provide its public key via: a JWK Set {{RFC7517}} entered directly, a JWK Set URL the Authorization Server fetches over HTTPS {{RFC9525}}, or the `jwks_uri` in metadata the issuer publishes under its issuer identifier ({{RFC8414, Section 3}} or {{OIDC-DISCOVERY}}).  An Authorization Server that uses issuer metadata MUST NOT use a document whose `issuer` value is not identical to the registration's issuer identifier ({{RFC8414, Section 3.3}}).  A Platform SHOULD publish its keys at a URL, so that keys can rotate without administrator action.
 
-On each assertion the Authorization Server finds the Platform registration the assertion matches: `iss` equals the registration's issuer identifier by Simple String Comparison ({{RFC7523, Section 3}}) and, where the registration names a claim ({{tenants}}), the assertion carries that claim with the registered value.  An Authorization Server MUST ensure that an assertion can match at most one of its Platform registrations.  The Authorization Server MUST reject an assertion that matches no Platform registration, MUST verify the signature only under a key configured or retrieved for the matched registration's issuer identifier - never under key material or key locations carried in the assertion ([RFC8725] §3.8 and §3.10) - and MUST interpret `sub` and `jti` only within the scope of the matched Platform registration.
+On each assertion the Authorization Server finds the Platform registration the assertion matches: `iss` equals the registration's issuer identifier by Simple String Comparison ({{RFC7523, Section 3}}) and, where the registration names a claim ({{tenants}}), the assertion carries that claim with the registered value.  An Authorization Server MUST ensure that an assertion can match at most one of its Platform registrations.  The Authorization Server MUST reject an assertion that matches no Platform registration, MUST verify the signature only under a key configured or retrieved for the matched registration's issuer identifier - never under key material or key locations carried in the assertion ({{RFC8725, Section 3.8}} and {{RFC8725, Section 3.10}}) - and MUST interpret `sub` and `jti` only within the scope of the matched Platform registration.
 
 ## Permissions {#properties}
 During Platform registration, the Authorization Server sets local policy for what permissions to assign an access token given in return for a WAG.  This policy MAY involve consulting claims the Platform asserts about the Agent in the WAG. A claim is an assertion by the Platform, meaningful only within the context of that Platform, and an Authorization Server MUST NOT assume that a similarly named value from another Platform means the same thing.
