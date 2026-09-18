@@ -232,8 +232,7 @@ Table of Contents
    Assertions SHOULD be short-lived.  The Authorization Server MUST NOT
    issue refresh tokens for this grant and SHOULD NOT issue access
    tokens that outlive the assertion by a significant period ([RFC7521],
-   Section 4.1), so that access ends soon after the Workload
-   Authorization Grant expired.
+   Section 4.1).
 
 5.1.  JWT Syntax
 
