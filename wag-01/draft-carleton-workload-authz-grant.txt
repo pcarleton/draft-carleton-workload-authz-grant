@@ -366,8 +366,9 @@ Table of Contents
    that lacks the named claim, or carries another value, does not match
    that registration.
 
-   It is RECOMMENDED that a new issuer shared by several Platforms use
-   the tenant claim ([IDJAG], Section 3.1) in order to simplify
+   It is RECOMMENDED that deployments use dedicated issuers for
+   partitions.  If that's not possible, it is RECOMMENDED to use the
+   tenant claim ([IDJAG], Section 3.1) in order to simplify
    interoperability.
 
    How an Authorization Server determines whether a Platform needs a
