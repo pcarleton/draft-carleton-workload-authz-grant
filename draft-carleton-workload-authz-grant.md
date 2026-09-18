@@ -116,7 +116,7 @@ How trust in a platform is established and what a workload may do are left to de
 
 Platform: the party that creates workloads ("Agents") and signs assertions about them; the sending end of one trust relationship with an Authorization Server.  Where a provider serves several customer organizations under one issuer identifier, each customer's partition is a separate Platform ({{tenants}}).
 
-Platform registration: an Authorization Server's record of one Platform it trusts: the Platform's issuer identifier, its keys ({{issuer-keys}}) and, where several Platforms share that issuer identifier, the name of a claim and the value the claim carries for this Platform ({{tenants}}).  How a Platform registration comes to exist is out of scope.  It is not a client registration {{RFC7591}} and yields no client identifier or credential.
+Platform registration: an Authorization Server's record of one Platform it trusts: the Platform's issuer identifier, its keys ({{issuer-keys}}) and, where several Platforms share that issuer identifier, the name of a claim and the value the claim carries for this Platform ({{tenants}}).  How a Platform registration comes to exist is out of scope (note: this is not a client registration {{RFC7591}} and yields no client identifier or credential).
 
 Authorization Server, Resource Server: as in [RFC6749].
 
