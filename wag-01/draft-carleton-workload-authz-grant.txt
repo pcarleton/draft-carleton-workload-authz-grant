@@ -207,9 +207,8 @@ Table of Contents
    unique among all Agent Identifiers issued under the same Platform,
    MUST NOT be reassigned to a different Agent, and is compared as a
    case-sensitive string [RFC7519], Section 2.  An Authorization Server
-   MUST key records about an Agent on its Platform together with sub,
-   never on sub alone, and MUST NOT convey to a Resource Server a
-   subject under which Agents of different Platforms could be confused.
+   MUST associate records for an Agent with its Platform and sub value,
+   never on its sub value alone.
 
 5.  Workload Authorization Grant
 
