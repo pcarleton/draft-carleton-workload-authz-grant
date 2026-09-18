@@ -285,8 +285,8 @@ Table of Contents
 6.1.  Issuer Keys
 
    As part of a Platform registration, the Authorization Server needs to
-   record an issuer identifier and obtain a public key associated with
-   that issuer.
+   record an issuer identifier and obtain the public keys associated
+   with that issuer.
 
    A Platform may provide its public key via: a JWK Set [RFC7517]
    entered directly, a JWK Set URL the Authorization Server fetches over
