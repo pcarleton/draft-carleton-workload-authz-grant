@@ -200,7 +200,7 @@ The assertion is signed under a key configured from the Platform (see {{issuer-k
 Prior to presenting a WAG to an Authorization Server, an administrator registers the Platform at the Authorization Server. During this registration step, the Authorization Server obtains the Platform's issuer identifier, the issuer's key, and tenant information (see {{tenants}}). The Authorization Server also decides on authorization policy for the Platform including optionally mapping claims provided by the platform to permissions. The specifics of this registration step are outside the scope of this document. It is not a client registration {{RFC7591}} and yields no client identifier or credential.
 
 ## Issuer Keys {#issuer-keys}
-As part of a Platform registration, the Authorization Server needs to record an issuer identifier and obtain a public key associated with that issuer.
+As part of a Platform registration, the Authorization Server needs to record an issuer identifier and obtain the public keys associated with that issuer.
 
 A Platform may provide its public key via: a JWK Set {{RFC7517}} entered directly, a JWK Set URL the Authorization Server fetches over HTTPS {{RFC9525}}, or the `jwks_uri` in metadata the issuer publishes under its issuer identifier ({{RFC8414, Section 3}} or {{OIDC-DISCOVERY}}).  An Authorization Server that uses issuer metadata MUST NOT use a document whose `issuer` value is not identical to the registration's issuer identifier ({{RFC8414, Section 3.3}}).  A Platform SHOULD publish its keys at a URL, so that keys can rotate without administrator action.
 
