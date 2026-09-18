@@ -154,7 +154,7 @@ Authorization Server, Resource Server: as in [RFC6749].
 
 # Agent Identity {#identity-model}
 
-An Agent is identified by its Agent Identifier, carried as the `sub` claim in the assertion.  The Agent Identifier is opaque; it MUST be unique among all Agent Identifiers issued under the same Platform, MUST NOT be reassigned to a different Agent, and is compared as a case-sensitive string {{RFC7519, Section 2}}. An Authorization Server MUST key records about an Agent on its Platform together with `sub`, never on `sub` alone, and MUST NOT convey to a Resource Server a subject under which Agents of different Platforms could be confused.
+An Agent is identified by its Agent Identifier, carried as the `sub` claim in the assertion.  The Agent Identifier is opaque; it MUST be unique among all Agent Identifiers issued under the same Platform, MUST NOT be reassigned to a different Agent, and is compared as a case-sensitive string {{RFC7519, Section 2}}. An Authorization Server MUST associate records for an Agent with its Platform and `sub` value, never on its `sub` value alone.
 
 
 # Workload Authorization Grant
