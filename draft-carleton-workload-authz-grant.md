@@ -100,7 +100,7 @@ https://github.com/pcarleton/draft-carleton-workload-authz-grant.
 
 # Introduction {#introduction}
 
-Agent platforms host many agents per customer, created and retired at the pace of the customer's work -- one per channel, repository, or pipeline.  The person creating an agent is rarely someone who can provision credentials at the services it will use, so in practice every agent of an installation ends up sharing one credential, at the cost of any attribution of an individual agent's actions.
+Agent platforms host many agents per customer, instantiated and torn down as appropriate for the context of the customer's work environment -- one per channel, repository, or pipeline.  Registering each agent individually at the Authorization Servers it uses is impractical and creates a heavy maintenance burden.  In practice every agent of an installation ends up sharing one credential, at the cost of any attribution of an individual agent's actions.
 
 A platform that hosts many workloads -- an agent platform is a motivating case -- needs each workload to obtain an access token at third-party services without requiring an administrator to perform a per-workload provisioning step.
 
@@ -131,8 +131,8 @@ Authorization Server, Resource Server: as in [RFC6749].
    Server or the Resource Server.
 3. Per access: the Agent presents a Workload Authorization Grant in an
    ordinary OAuth token request.  The Authorization Server matches it to a
-   Platform registration, verifies it under that Platform's keys, does not
-   reject it for carrying a `sub` it has not seen before,
+   Platform registration, verifies it under that Platform's keys, 
+   allowing for previously unseen `sub` values,
    and issues an access token under its own policy ({{properties}}).
 
 ~~~
