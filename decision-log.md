@@ -5,6 +5,8 @@ Most recent first within each state. Open items are at the bottom.
 
 ## Decided
 
+### D15 - WIP, see PR description
+
 ### D13 — WAG is a standalone mechanism, not a profile of AIMS (2026-08-31, closes #1)
 The draft no longer calls itself a profile of draft-klrc-aiagent-auth
 (AIMS). AIMS moves from the normative to the informative references; the
@@ -91,7 +93,7 @@ URI-form identifier. Alternative: leave tuple semantics implicit (rejected:
 an AS indexing agents by sub alone lets tenancy B's agent inherit tenancy
 A's mapping).
 
-### D7 — Agent Identifier: URI form RECOMMENDED, bare string permitted (2026-07-28)
+### D7 — [withdrawn in -01, see D15] Agent Identifier: URI form RECOMMENDED, bare string permitted (2026-07-28)
 The identifier MAY (and is RECOMMENDED to) be a URI-form workload identifier
 with an opaque path; a bare opaque string remains permitted. Role split: the
 AS validates the URI authority against the allowlisted issuer's tenancy once
@@ -102,7 +104,7 @@ Alternatives: bare-string only (conflicted with the normative WIMSE-ID
 citation, which requires absolute URIs); URI-required (excludes simple
 platforms for no gain).
 
-### D6 — aud carries both issuer identifier and token endpoint URL (2026-07-28)
+### D6 — [superseded by D15] aud carries both issuer identifier and token endpoint URL (2026-07-28)
 The assertion's aud SHOULD list both values; an AS MUST accept either.
 rfc7523bis adds the issuer identifier as an audience option for
 authorization grants (issuer-only is mandated only for the separate
@@ -208,6 +210,7 @@ vocabulary, avoiding all top-level collisions;
 Outline agreed (slot argument; identifier compatibility; identity-plane
 backing changes nothing at the RS boundary). Drafting waits on O1 and O2
 since both feed the section's content.
+-01 drops the section altogether (see D15); reopen if it returns.
 
 ### O4 — Agent as grant-subject vs agent as OAuth client
 The expected flashpoint of external review. D3/D4 put the agent in the
