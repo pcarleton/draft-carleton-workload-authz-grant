@@ -219,7 +219,7 @@ TODO: include non-normative example here w/ claims, and roles
 - Administrator configures in the Authorization Server that a "role" claim of "developer" corresponds to a set of permissions in the platform
 - A developer creates an agent that is able to access useful things in the Authorization Server
 
-For this deployment pattern it may be useful to use the `roles`, `groups` and `entitlements` claim names of {{RFC9068, Section 2.2.3.1}}, which take them from the SCIM core schema ({{RFC7643, Section 4.1.2}}), however the claim names are only useful as a common conceptual framework and to help interoperability between Platforms and Authorization Servers, it is not expected to match a SCIM schema, or be projected from an Enterprise IdP.  Specific deployment patterns are not required as part of this document.
+For this example the `roles`, `groups` and `entitlements` claim names were taken from {{RFC9068, Section 2.2.3.1}}, which take them from the SCIM core schema ({{RFC7643, Section 4.1.2}}), however the claim names are used for illustrative purposes only. Inclusion of such claims are optional and Platforms may define specific claims, depending on their deployment, supported access control models and ecosystem.
 
 ## Multi-Tenancy {#tenants}
 
