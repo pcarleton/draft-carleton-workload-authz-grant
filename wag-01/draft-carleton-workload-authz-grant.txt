@@ -160,8 +160,8 @@ Table of Contents
    (Section 6.1) and, where several Platforms share that issuer
    identifier, the name of a claim and the value the claim carries for
    this Platform (Section 6.3).  How a Platform registration comes to
-   exist is out of scope.  It is not a client registration [RFC7591] and
-   yields no client identifier or credential.
+   exist is out of scope (note: this is not a client registration
+   [RFC7591] and yields no client identifier or credential).
 
    Authorization Server, Resource Server: as in [RFC6749].
 
