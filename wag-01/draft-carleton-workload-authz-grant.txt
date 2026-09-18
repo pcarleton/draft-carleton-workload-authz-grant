@@ -218,7 +218,7 @@ Table of Contents
    token request carries grant_type=urn:ietf:params:oauth:grant-
    type:jwt-bearer, the JWT in the assertion parameter, and the target
    resource in the resource parameter [RFC8707].  The resource parameter
-   [RFC8707] is REQUIRED; an Authorization Server SHOULD restrict the
+   [RFC8707] is RECOMMENDED; an Authorization Server SHOULD restrict the
    audience of the access token it issues to that resource and MAY
    refuse a request that lacks it with invalid_target ([RFC8707],
    Section 2).  An Agent MAY make the token request without client
