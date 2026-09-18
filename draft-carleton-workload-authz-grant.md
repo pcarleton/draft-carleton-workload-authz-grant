@@ -227,7 +227,7 @@ In many cases, a deployment (Platform or AS/RS) will partition its infrastructur
 
 Where each Platform has its own issuer identifier, the issuer identifier alone identifies the Platform and nothing further in this section applies.  Where several Platforms share one issuer identifier, a claim in the assertion tells them apart.  Existing issuers use different claims for this, so this document does not fix the claim's name: the Platform registration includes the claim and the value it carries for that Platform, and the Authorization Server applies both when matching an assertion ({{issuer-keys}}).  An assertion that lacks the named claim, or carries another value, does not match that registration.
 
-It is RECOMMENDED that a new issuer shared by several Platforms use the `tenant` claim ({{IDJAG, Section 3.1}}) in order to simplify interoperability.
+It is RECOMMENDED that deployments use dedicated issuers for partitions. If that's not possible, it is RECOMMENDED to use the `tenant` claim ({{IDJAG, Section 3.1}}) in order to simplify interoperability.
 
 How an Authorization Server determines whether a Platform needs a differentiating claim, and which, is left to be discovered out of band of this specification.
 
