@@ -161,7 +161,7 @@ An Agent is identified by its Agent Identifier, carried as the `sub` claim in th
 
 An Agent obtains an access token by presenting a JWT as an authorization grant per [RFC7523], Section 2.1, issued by the Platform as a third party in the sense of [RFC7521], Section 3. The token request carries `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer`, the JWT in the `assertion` parameter, and the target resource in the `resource` parameter [RFC8707]. The `resource` parameter {{RFC8707}} is REQUIRED; an Authorization Server SHOULD restrict the audience of the access token it issues to that resource and MAY refuse a request that lacks it with `invalid_target` ({{RFC8707, Section 2}}). An Agent MAY make the token request without client authentication ({{RFC7523, Section 3.1}}), and this specification attaches no meaning to `client_id`. An Authorization Server MUST NOT require a client registration per Agent. It MAY require the Platform to authenticate as a client, for example to apply quotas or to cut off a Platform.
 
-Assertions SHOULD be short-lived.  The Authorization Server MUST NOT issue refresh tokens for this grant and SHOULD NOT issue access tokens that outlive the assertion by a significant period ({{RFC7521, Section 4.1}}), so that access ends soon after the Workload Authorization Grant expired.
+Assertions SHOULD be short-lived.  The Authorization Server MUST NOT issue refresh tokens for this grant and SHOULD NOT issue access tokens that outlive the assertion by a significant period ({{RFC7521, Section 4.1}}).
 
 ## JWT Syntax {#authorization-grant-claims}
 
