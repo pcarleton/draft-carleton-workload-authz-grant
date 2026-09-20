@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2026-09-13T03:54:39.536419+00:00",
+  "timestamp": "2026-09-20T04:03:47.638179+00:00",
   "repo": "pcarleton/draft-carleton-workload-authz-grant",
   "labels": [
     {
@@ -492,19 +492,940 @@
       "labels": [],
       "body": "Proposed -01 text, cut down to be only what's required for interop.\r\n\r\n**Changed**\r\n\r\n- `aud` is the authorization server's issuer identifier, a single value\r\n- The Agent Identifier is an opaque string\r\n- JWK can be manually entered\r\n- \"Platform\" is one tenant; \"Platform registration\" is the authorization server's record of one trusted Platform. Under a shared issuer identifier the registration needs a claim that tells Platforms apart (`tenant` RECOMMENDED for new shared issuers). (Relates to #7)\r\n\r\n**Small normative additions**\r\n\r\n- `resource` REQUIRED\r\n- optional `scope` claim as in ID-JAG\r\n- no refresh tokens\r\n- first-seen stated as \"MUST NOT reject solely because the `sub` is unseen\"\r\n- error responses say who must act, using existing error codes;\r\n\r\n**Cut**\r\n\r\n- AIMS correspondence table (the Overview and figure stay, shortened)\r\n- Scope section (now in the abstract)\r\n- retirement prose (now the lifetime rule)\r\n- the property vocabulary (points at the `roles`/`groups`/`entitlements` names already in use, defines none). Unused references removed.\r\n\r\n**Added**\r\nSecurity Considerations is a list for now; a fuller treatment is coming separately.\r\n",
       "createdAt": "2026-09-10T18:11:00Z",
-      "updatedAt": "2026-09-11T17:07:43Z",
+      "updatedAt": "2026-09-18T20:33:40Z",
       "baseRepository": "pcarleton/draft-carleton-workload-authz-grant",
       "baseRefName": "main",
       "baseRefOid": "2c5222b411c6ff73bed92ec94622d0b2c8717bce",
       "headRepository": "pcarleton/draft-carleton-workload-authz-grant",
       "headRefName": "wag-01",
-      "headRefOid": "dd5bbfca421cf3df0f10fc61420cce6d88c0abe3",
+      "headRefOid": "fcb429e61da4fe7c58095681968a802c2b746a74",
       "closedAt": null,
       "mergedAt": null,
       "mergedBy": null,
       "mergeCommit": null,
       "comments": [],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABOM4Ilw",
+          "commit": {
+            "abbreviatedOid": "dd5bbfc"
+          },
+          "author": "arndt-s",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-18T12:56:23Z",
+          "updatedAt": "2026-09-18T13:26:01Z",
+          "comments": [
+            {
+              "originalPosition": 152,
+              "body": "This gives the impressions that agents are still provisioned by humans. Would ephemeral agents be the stronger use case?",
+              "createdAt": "2026-09-18T12:56:23Z",
+              "updatedAt": "2026-09-18T13:26:01Z"
+            },
+            {
+              "originalPosition": 158,
+              "body": "```suggestion\nIt specifies the grant, and that workloads are trusted based on the platform registration, allowing a previously unseen workload to receive an access token.\n```",
+              "createdAt": "2026-09-18T12:56:23Z",
+              "updatedAt": "2026-09-18T13:26:01Z"
+            },
+            {
+              "originalPosition": 307,
+              "body": "I believe we need to specify multi-tenant here too. \n\nSomething like\n> Where an Authorization Server serves several customer organizations under one issuer identifier, each customer's partition is a separate Authorization Server ({{tenants}}).",
+              "createdAt": "2026-09-18T13:02:51Z",
+              "updatedAt": "2026-09-18T13:26:01Z"
+            },
+            {
+              "originalPosition": 384,
+              "body": "```\nIt MAY require the Platform to authenticate as a client, for example to apply quotas or to cut off a Platform.\n```\nAs in a shared client for the Platform that would need to be pre-registered?",
+              "createdAt": "2026-09-18T13:07:44Z",
+              "updatedAt": "2026-09-18T13:26:01Z"
+            },
+            {
+              "originalPosition": 388,
+              "body": "```suggestion\nAssertions SHOULD be short-lived.  The Authorization Server MUST NOT issue refresh tokens for this grant and SHOULD NOT issue access tokens that outlive the assertion by a significant period ({{RFC7521, Section 4.1}}), so that access ends soon after the Workload Authorization Grant expired.\n```",
+              "createdAt": "2026-09-18T13:09:02Z",
+              "updatedAt": "2026-09-18T13:26:01Z"
+            },
+            {
+              "originalPosition": 576,
+              "body": "I assume multiple keys are allowed. I wonder to just make it plural here:\n\n```suggestion\nAs part of a Platform registration, the Authorization Server needs to record an issuer identifier and obtain the public keys associated with that issuer.\n```",
+              "createdAt": "2026-09-18T13:14:08Z",
+              "updatedAt": "2026-09-18T13:26:01Z"
+            },
+            {
+              "originalPosition": 603,
+              "body": "```suggestion\nIt is RECOMMENDED that deployments use dedicated issuers for partitions. If that's not possible, it is RECOMMENDED to use the `tenant` claim ({{IDJAG, Section 3.1}}) in order to simplify interoperability.\n```",
+              "createdAt": "2026-09-18T13:24:38Z",
+              "updatedAt": "2026-09-18T13:26:01Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABONLrtw",
+          "commit": {
+            "abbreviatedOid": "dd5bbfc"
+          },
+          "author": "arndt-s",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-18T13:30:40Z",
+          "updatedAt": "2026-09-18T13:30:41Z",
+          "comments": [
+            {
+              "originalPosition": 366,
+              "body": "In the old text Agent Identifiers were immutable, that's not the case anymore.\n\nAre we making it a valid use case to assign multiple identifiers to an agent or make identifiers itself ephemeral? ",
+              "createdAt": "2026-09-18T13:30:40Z",
+              "updatedAt": "2026-09-18T13:30:41Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABOOQQEA",
+          "commit": {
+            "abbreviatedOid": "dd5bbfc"
+          },
+          "author": "pcarleton",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-18T15:18:41Z",
+          "updatedAt": "2026-09-18T15:18:41Z",
+          "comments": [
+            {
+              "originalPosition": 152,
+              "body": "hmm good question... \r\n\r\nI could see this going one of two ways:\r\n* deliberately emphasize ephemeral: that would simplify things. for example, the story around lifecycle would be much easier, and it would be clear that a human can't be in the loop to do any provisioning step.\r\n* stick with \"project-duration\" / semi-durable agents as the canonical use case: makes the \"how hands-free is it really?\" question more up in the air (which means we have to emphasize the difference between admins and users), and also makes our \"no lifecycle semantics defined\" stance a bit weaker.\r\n\r\n I find the semi-durable use case more compelling which is why I had it as the canonical one, and that pattern makes it clear why its valuable to have the stable `sub` (since you may want to have state associated it with the sub in the application, which wouldn't really make sense for an ephemeral one).\r\n\r\nOne middle ground could be to have the examples be around ephemeral, since it is the simplest version, and then have a section, maybe in deployment considerations, about \"stateful principals\" or something like that to call out that it's at least supported and what you want to consider if you're doing that. wdyt?",
+              "createdAt": "2026-09-18T15:18:41Z",
+              "updatedAt": "2026-09-18T15:18:41Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABOOQsWQ",
+          "commit": {
+            "abbreviatedOid": "dd5bbfc"
+          },
+          "author": "pcarleton",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-18T15:19:29Z",
+          "updatedAt": "2026-09-18T15:19:29Z",
+          "comments": [
+            {
+              "originalPosition": 307,
+              "body": "agree, will add",
+              "createdAt": "2026-09-18T15:19:29Z",
+              "updatedAt": "2026-09-18T15:19:29Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABOOR9lA",
+          "commit": {
+            "abbreviatedOid": "dd5bbfc"
+          },
+          "author": "pcarleton",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-18T15:21:40Z",
+          "updatedAt": "2026-09-18T15:21:41Z",
+          "comments": [
+            {
+              "originalPosition": 384,
+              "body": "Yea, we could just cut this sentence, I don't think it adds much...\r\n\r\nThe only time I think you want to do client registration is if the issuer is not the same as the client (e.g. you've got an IdP that's issuing, and a client that's hosting the agent), which is a pattern that I don't want to get into much detail on in this document.",
+              "createdAt": "2026-09-18T15:21:41Z",
+              "updatedAt": "2026-09-18T15:21:41Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABOOTR-w",
+          "commit": {
+            "abbreviatedOid": "dd5bbfc"
+          },
+          "author": "pcarleton",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-18T15:23:55Z",
+          "updatedAt": "2026-09-18T15:23:56Z",
+          "comments": [
+            {
+              "originalPosition": 366,
+              "body": "doh, I think they should still be immutable, I didn't mean to drop that.  Ephemeral is compatible with immutable in my mental model, does that match yours? Or do you think we'd need to say more if we wanted to make it clear ephemeral is okay?",
+              "createdAt": "2026-09-18T15:23:55Z",
+              "updatedAt": "2026-09-18T15:23:56Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABOOXEOw",
+          "commit": {
+            "abbreviatedOid": "dd5bbfc"
+          },
+          "author": "arndt-s",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-18T15:30:07Z",
+          "updatedAt": "2026-09-18T15:30:07Z",
+          "comments": [
+            {
+              "originalPosition": 152,
+              "body": "Some idea that keeps the original text but makes it a bit \"less human\"\r\n\r\n```suggestion\r\nAgent platforms host many agents per customer, instantiated and torn down at the pace of the customer's work -- one per channel, repository, or pipeline.  Registering each agent individually at the Authorization Servers it uses is impractical and creates a heavy maintenance burden.  In practice every agent of an installation ends up sharing one credential, at the cost of any attribution of an individual agent's actions.\r\n```",
+              "createdAt": "2026-09-18T15:30:07Z",
+              "updatedAt": "2026-09-18T15:30:08Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABOPILaA",
+          "commit": {
+            "abbreviatedOid": "519fd30"
+          },
+          "author": "bc-pi",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-18T16:54:23Z",
+          "updatedAt": "2026-09-18T16:54:23Z",
+          "comments": [
+            {
+              "originalPosition": 152,
+              "body": "I rather like the direction that Arndt is taking the wording here. But I have to be honest that I bristle at \"at the pace of the customer's work\" a little bit. It feels too much like marketing content, a al \"at machine-speed\" and that kind of thing. Something like this, I hope, says the effectively the same thing without making me sad: \n\n\n```suggestion\nAgent platforms host many agents per customer, instantiated and torn down as appropriate for the context of the customer's work environment -- one per channel, repository, or pipeline.  Registering each agent individually at the Authorization Servers it uses is impractical and creates a heavy maintenance burden.  In practice every agent of an installation ends up sharing one credential, at the cost of any attribution of an individual agent's actions.\n```",
+              "createdAt": "2026-09-18T16:54:23Z",
+              "updatedAt": "2026-09-18T16:54:23Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABOPRBiA",
+          "commit": {
+            "abbreviatedOid": "519fd30"
+          },
+          "author": "PieterKas",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-18T17:08:13Z",
+          "updatedAt": "2026-09-18T17:08:13Z",
+          "comments": [
+            {
+              "originalPosition": 78,
+              "body": "```suggestion\nhas not seen it before. The workload's access is determined by the\n```",
+              "createdAt": "2026-09-18T17:08:13Z",
+              "updatedAt": "2026-09-18T17:08:13Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABOPVt0Q",
+          "commit": {
+            "abbreviatedOid": "519fd30"
+          },
+          "author": "bc-pi",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-18T17:15:35Z",
+          "updatedAt": "2026-09-18T17:15:35Z",
+          "comments": [
+            {
+              "originalPosition": 304,
+              "body": "I agree w/ the sentiment but wonder if we can make the \"this is not\" more of a side bar thing and less part of the definition? \n\n```suggestion\nPlatform registration: an Authorization Server's record of one Platform it trusts: the Platform's issuer identifier, its keys ({{issuer-keys}}) and, where several Platforms share that issuer identifier, the name of a claim and the value the claim carries for this Platform ({{tenants}}).  How a Platform registration comes to exist is out of scope (note: this is not a client registration {{RFC7591}} and yields no client identifier or credential).\n```",
+              "createdAt": "2026-09-18T17:15:35Z",
+              "updatedAt": "2026-09-18T17:15:35Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABOPYLbw",
+          "commit": {
+            "abbreviatedOid": "356e7e7"
+          },
+          "author": "pcarleton",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-18T17:18:50Z",
+          "updatedAt": "2026-09-18T17:18:50Z",
+          "comments": [
+            {
+              "originalPosition": 304,
+              "body": "Makes sense!",
+              "createdAt": "2026-09-18T17:18:50Z",
+              "updatedAt": "2026-09-18T17:18:50Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABOPtBMw",
+          "commit": {
+            "abbreviatedOid": "1522641"
+          },
+          "author": "bc-pi",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-18T17:56:44Z",
+          "updatedAt": "2026-09-18T17:56:45Z",
+          "comments": [
+            {
+              "originalPosition": 156,
+              "body": "I feel like we should be more careful/consistent in how the references are done here and throught the document -- like `{{RFCxxxx}}` vs `[RFCxxxx]`. I'm a little surprised that this style works but maybe I misunderstand or something's changed in the tool-chain. But I'm also not sure how it'll work in downstream renditions like the htmlized text. I dunno, maybe it's fine and I'm just old and out of touch with modern tooling working at machine speed? I do know that `[RFC7523], Section 2.1` and `{{RFC7523, Section 3.1}}` (seen at https://github.com/pcarleton/draft-carleton-workload-authz-grant/pull/12/changes#diff-bb0889e6dbc37a9f5e932d7e01ea37c77c3050dad77c3025100628c55a549f95R162) end up looking very different, so maybe doing those at least. ",
+              "createdAt": "2026-09-18T17:56:45Z",
+              "updatedAt": "2026-09-18T17:56:45Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABOPurtg",
+          "commit": {
+            "abbreviatedOid": "519fd30"
+          },
+          "author": "PieterKas",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-18T17:59:59Z",
+          "updatedAt": "2026-09-18T17:59:59Z",
+          "comments": [
+            {
+              "originalPosition": 595,
+              "body": "Given that it is an example, I am not sure that it is aappropriate to talk about it being used for itneroperability. Perhaps easier to just remark that these are examples and the specific meanings of such claims may be specified by individual platforms and eco-systems, depending on the access control capabilities it supports. Something like:\n\n```suggestion\nFor this example the `roles`, `groups` and `entitlements` claim names were taken from {{RFC9068, Section 2.2.3.1}}, which take them from the SCIM core schema ({{RFC7643, Section 4.1.2}}), however the claim names are used for illustrative purposes only. Inclusion of such claims are optional and Platforms may define specific claims, depending on their deployment, supported access control models and ecosystem.\n```",
+              "createdAt": "2026-09-18T17:59:59Z",
+              "updatedAt": "2026-09-18T18:01:09Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABOPvdDg",
+          "commit": {
+            "abbreviatedOid": "1522641"
+          },
+          "author": "bc-pi",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-18T18:01:36Z",
+          "updatedAt": "2026-09-18T18:01:36Z",
+          "comments": [
+            {
+              "originalPosition": 338,
+              "body": "can we invert this \"does not reject\" language? \n```suggestion\n   Platform registration, verifies it under that Platform's keys, \n   accepting previously unseen `sub` values,\n```",
+              "createdAt": "2026-09-18T18:01:36Z",
+              "updatedAt": "2026-09-18T18:01:36Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABOPwfEg",
+          "commit": {
+            "abbreviatedOid": "1522641"
+          },
+          "author": "bc-pi",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-18T18:03:47Z",
+          "updatedAt": "2026-09-18T18:03:47Z",
+          "comments": [
+            {
+              "originalPosition": 366,
+              "body": "this feels like it reads better and makes it more clear that it's the Agent Platform rather than maybe the AS's. \n```suggestion\nAn Agent is identified by its Agent Identifier, carried as the `sub` claim in the assertion.  The Agent Identifier is opaque; it MUST be unique among all Agent Identifiers issued under the same Platform, MUST NOT be reassigned to a different Agent, and is compared as a case-sensitive string {{RFC7519, Section 2}}. An Authorization Server MUST key records about an Agent and its Platform together with `sub`, never on `sub` alone, and MUST NOT convey to a Resource Server a subject under which Agents of different Platforms could be confused.\n```",
+              "createdAt": "2026-09-18T18:03:47Z",
+              "updatedAt": "2026-09-18T18:04:58Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABOPx0_A",
+          "commit": {
+            "abbreviatedOid": "1522641"
+          },
+          "author": "PieterKas",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-18T18:06:30Z",
+          "updatedAt": "2026-09-18T18:06:30Z",
+          "comments": [
+            {
+              "originalPosition": 603,
+              "body": "Supportive of this - shared issuers is problematic as the verifiers of the tokens are not always reliable in parsing and checking for tenants. This kind of partitioning provides better security assurances.",
+              "createdAt": "2026-09-18T18:06:30Z",
+              "updatedAt": "2026-09-18T18:06:31Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABOPy_FQ",
+          "commit": {
+            "abbreviatedOid": "1522641"
+          },
+          "author": "bc-pi",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-18T18:08:53Z",
+          "updatedAt": "2026-09-18T18:08:53Z",
+          "comments": [
+            {
+              "originalPosition": 384,
+              "body": "RFC8707 as REQUIRED seems somewhat overreaching to me just from a layering and composition perspective. ",
+              "createdAt": "2026-09-18T18:08:53Z",
+              "updatedAt": "2026-09-18T18:08:53Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABOPz4qg",
+          "commit": {
+            "abbreviatedOid": "1522641"
+          },
+          "author": "bc-pi",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-18T18:10:35Z",
+          "updatedAt": "2026-09-18T18:10:36Z",
+          "comments": [
+            {
+              "originalPosition": 384,
+              "body": "I think I'd +1 to cutting that sentence ",
+              "createdAt": "2026-09-18T18:10:36Z",
+              "updatedAt": "2026-09-18T18:10:36Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABOQHjNQ",
+          "commit": {
+            "abbreviatedOid": "519fd30"
+          },
+          "author": "PieterKas",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-18T18:47:23Z",
+          "updatedAt": "2026-09-18T18:47:23Z",
+          "comments": [
+            {
+              "originalPosition": 225,
+              "body": "After reading the draft, I wonder if the term Platform is getting a little overloaded (and possibly limiting the re-usability of the draft).\n\nMy mental model is something like this:\n\nPlatform: The party that instantiates workloads (\"Agents\") (takes care of all sorts of provisioning steps, billing, security, deployment etc).\nWorkload Authorization Grant Issuer (WAGI): The component in the Platform that issues Workload Authorization Grants\n\nThen we can say something like this:\n\n```suggestion\nPlatform: the party that instantiates and manages the lifecycle of workloads (\"Agents\"). \n\nWorkload Authorization Grant Issuer (WAGI): The component in the Platform that issues Workload Authorization Grants. Where a provider serves several customer organizations under one issuer identifier, each customer's partition have a separate Workload Authorization Grant Issuer ({{tenants}}).\n```\n\n",
+              "createdAt": "2026-09-18T18:47:23Z",
+              "updatedAt": "2026-09-18T18:47:58Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABOQNHMw",
+          "commit": {
+            "abbreviatedOid": "519fd30"
+          },
+          "author": "pcarleton",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-18T18:57:34Z",
+          "updatedAt": "2026-09-18T18:57:34Z",
+          "comments": [
+            {
+              "originalPosition": 595,
+              "body": "I like that framing + wording better, ty!",
+              "createdAt": "2026-09-18T18:57:34Z",
+              "updatedAt": "2026-09-18T18:57:34Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABOQPHhQ",
+          "commit": {
+            "abbreviatedOid": "1522641"
+          },
+          "author": "bc-pi",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-18T19:00:54Z",
+          "updatedAt": "2026-09-18T19:00:54Z",
+          "comments": [
+            {
+              "originalPosition": 388,
+              "body": "while the general idea that super long term access shouldn't be given off a xAG is is fair, that language in 7521 was never meant to directly associate the lifetime of the grant with the lifetime of the access token. I'd take that last part out as such. \n```suggestion\nAssertions SHOULD be short-lived.  The Authorization Server MUST NOT issue refresh tokens for this grant and SHOULD NOT issue access tokens that outlive the assertion by a significant period ({{RFC7521, Section 4.1}}).\n```",
+              "createdAt": "2026-09-18T19:00:54Z",
+              "updatedAt": "2026-09-18T19:00:54Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABOQaLlg",
+          "commit": {
+            "abbreviatedOid": "1522641"
+          },
+          "author": "pcarleton",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-18T19:18:59Z",
+          "updatedAt": "2026-09-18T19:18:59Z",
+          "comments": [
+            {
+              "originalPosition": 156,
+              "body": "woops, yes, let me fix these",
+              "createdAt": "2026-09-18T19:18:59Z",
+              "updatedAt": "2026-09-18T19:18:59Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABOQbEHg",
+          "commit": {
+            "abbreviatedOid": "1522641"
+          },
+          "author": "pcarleton",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-18T19:20:42Z",
+          "updatedAt": "2026-09-18T19:20:42Z",
+          "comments": [
+            {
+              "originalPosition": 338,
+              "body": "do we need to define what \"accept\" means then? I agree the double negative is confusing",
+              "createdAt": "2026-09-18T19:20:42Z",
+              "updatedAt": "2026-09-18T19:20:42Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABOQcLdw",
+          "commit": {
+            "abbreviatedOid": "5fa11a2"
+          },
+          "author": "bc-pi",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-18T19:22:52Z",
+          "updatedAt": "2026-09-18T19:22:53Z",
+          "comments": [
+            {
+              "originalPosition": 603,
+              "body": "think I'm also supportive of this - it allows for some existing realities while generally nudging in the 'right' direction  ",
+              "createdAt": "2026-09-18T19:22:53Z",
+              "updatedAt": "2026-09-18T19:22:53Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABOQef8Q",
+          "commit": {
+            "abbreviatedOid": "1522641"
+          },
+          "author": "pcarleton",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-18T19:27:24Z",
+          "updatedAt": "2026-09-18T19:27:24Z",
+          "comments": [
+            {
+              "originalPosition": 366,
+              "body": "wdyt about this.  I think using `key` as the verb was making that sentence confusing.  I also chopped the `MUST NOT` since I think it's confusing there and we can cover it in a Security Consideration if we want it back. \r\n\r\n```suggestion\r\nAn Agent is identified by its Agent Identifier, carried as the `sub` claim in the assertion.  The Agent Identifier is opaque; it MUST be unique among all Agent Identifiers issued under the same Platform, MUST NOT be reassigned to a different Agent, and is compared as a case-sensitive string {{RFC7519, Section 2}}. An Authorization Server MUST associate records for an Agent with its Platform and `sub` value, never on its `sub` value alone.\r\n```",
+              "createdAt": "2026-09-18T19:27:24Z",
+              "updatedAt": "2026-09-18T19:27:24Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABOQfsXA",
+          "commit": {
+            "abbreviatedOid": "5fa11a2"
+          },
+          "author": "bc-pi",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-18T19:29:29Z",
+          "updatedAt": "2026-09-18T19:29:29Z",
+          "comments": [
+            {
+              "originalPosition": 658,
+              "body": "I think this is the first self-aware document I've had the opportunity to work with. Really excited for it! ",
+              "createdAt": "2026-09-18T19:29:29Z",
+              "updatedAt": "2026-09-18T19:29:29Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABOQf7LQ",
+          "commit": {
+            "abbreviatedOid": "1522641"
+          },
+          "author": "pcarleton",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-18T19:29:53Z",
+          "updatedAt": "2026-09-18T19:29:53Z",
+          "comments": [
+            {
+              "originalPosition": 384,
+              "body": "yea that's a good point, I had MCP in mind which already makes RFC 8707 required, so I defaulted to that here, but we can just make it required in MCP.  Do you think we should leave the mention of it out entirely or just downgrade to a SHOULD or MAY?",
+              "createdAt": "2026-09-18T19:29:53Z",
+              "updatedAt": "2026-09-18T19:29:53Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABOQh4rA",
+          "commit": {
+            "abbreviatedOid": "1522641"
+          },
+          "author": "bc-pi",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-18T19:32:41Z",
+          "updatedAt": "2026-09-18T19:32:42Z",
+          "comments": [
+            {
+              "originalPosition": 338,
+              "body": "I think \"accept\" on it's own here is okay but admit to having had that exact thought. But maybe \"allowing for\"? ",
+              "createdAt": "2026-09-18T19:32:42Z",
+              "updatedAt": "2026-09-18T19:32:42Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABOQiuyQ",
+          "commit": {
+            "abbreviatedOid": "1522641"
+          },
+          "author": "bc-pi",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-18T19:33:48Z",
+          "updatedAt": "2026-09-18T19:33:49Z",
+          "comments": [
+            {
+              "originalPosition": 366,
+              "body": "wfm, that's great too, thx",
+              "createdAt": "2026-09-18T19:33:49Z",
+              "updatedAt": "2026-09-18T19:33:49Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABOQkgTA",
+          "commit": {
+            "abbreviatedOid": "519fd30"
+          },
+          "author": "pcarleton",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-18T19:36:16Z",
+          "updatedAt": "2026-09-18T19:36:16Z",
+          "comments": [
+            {
+              "originalPosition": 225,
+              "body": "Conceptually I like separating the two (and it also makes it easier to explain moving the WAGI to an IdP if you want), but I think the name WAGI is a bit unfortunate just because it has the word `issuer` in it. My brain links that to the `issuer` string which is shared. It sounds weird to me to say its a separate issuer when it's the same issuer with just a different tenant claim.  I don't have a great alternative name right now, will try to think of one.  Let me know if that association trips you up as well or if it's just me\r\n",
+              "createdAt": "2026-09-18T19:36:16Z",
+              "updatedAt": "2026-09-18T19:36:16Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABOQktFg",
+          "commit": {
+            "abbreviatedOid": "1522641"
+          },
+          "author": "bc-pi",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-18T19:36:35Z",
+          "updatedAt": "2026-09-18T19:36:35Z",
+          "comments": [
+            {
+              "originalPosition": 384,
+              "body": "I think just downgrade is fine. RECOMMENDED even would slot in very easily. ",
+              "createdAt": "2026-09-18T19:36:35Z",
+              "updatedAt": "2026-09-18T19:36:35Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABOQlsOQ",
+          "commit": {
+            "abbreviatedOid": "1522641"
+          },
+          "author": "bc-pi",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-18T19:38:20Z",
+          "updatedAt": "2026-09-18T19:38:20Z",
+          "comments": [
+            {
+              "originalPosition": 156,
+              "body": "merci ",
+              "createdAt": "2026-09-18T19:38:20Z",
+              "updatedAt": "2026-09-18T19:38:20Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABOQmcUA",
+          "commit": {
+            "abbreviatedOid": "1522641"
+          },
+          "author": "bc-pi",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-18T19:40:00Z",
+          "updatedAt": "2026-09-18T19:40:00Z",
+          "comments": [
+            {
+              "originalPosition": 338,
+              "body": "i maybe kinda like that actually\r\n```suggestion\r\n   Platform registration, verifies it under that Platform's keys, \r\n   allowing for previously unseen `sub` values,\r\n```",
+              "createdAt": "2026-09-18T19:40:00Z",
+              "updatedAt": "2026-09-18T19:40:00Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABOQnP6w",
+          "commit": {
+            "abbreviatedOid": "5fa11a2"
+          },
+          "author": "pcarleton",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-18T19:41:49Z",
+          "updatedAt": "2026-09-18T19:41:49Z",
+          "comments": [
+            {
+              "originalPosition": 338,
+              "body": "nice, yes i like that",
+              "createdAt": "2026-09-18T19:41:49Z",
+              "updatedAt": "2026-09-18T19:41:49Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABOQpwnA",
+          "commit": {
+            "abbreviatedOid": "5fa11a2"
+          },
+          "author": "pcarleton",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-18T19:46:32Z",
+          "updatedAt": "2026-09-18T19:46:33Z",
+          "comments": [
+            {
+              "originalPosition": 658,
+              "body": "\ud83d\ude06 this section is my sheepish \"security consideration TODO list\", for things to flesh out once the rest of the document has settled a bit more.  I'm not sure if it's better to list things here or just have the whole section be TODO and keep the list in an issue.  lmkwyt",
+              "createdAt": "2026-09-18T19:46:33Z",
+              "updatedAt": "2026-09-18T19:46:33Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABOQtJqA",
+          "commit": {
+            "abbreviatedOid": "5fa11a2"
+          },
+          "author": "bc-pi",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-18T19:53:49Z",
+          "updatedAt": "2026-09-18T19:53:49Z",
+          "comments": [
+            {
+              "originalPosition": 658,
+              "body": "meh, I think it's fine, for now anyway. I just couldn't pass up the chance at a joke. ",
+              "createdAt": "2026-09-18T19:53:49Z",
+              "updatedAt": "2026-09-18T19:53:49Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABOQ0oPQ",
+          "commit": {
+            "abbreviatedOid": "1522641"
+          },
+          "author": "pcarleton",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-18T20:05:16Z",
+          "updatedAt": "2026-09-18T20:05:17Z",
+          "comments": [
+            {
+              "originalPosition": 384,
+              "body": "```suggestion\r\nAn Agent obtains an access token by presenting a JWT as an authorization grant per [RFC7523], Section 2.1, issued by the Platform as a third party in the sense of [RFC7521], Section 3. The token request carries `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer`, the JWT in the `assertion` parameter, and the target resource in the `resource` parameter [RFC8707]. The `resource` parameter {{RFC8707}} is RECOMMENDED; an Authorization Server SHOULD restrict the audience of the access token it issues to that resource and MAY refuse a request that lacks it with `invalid_target` ({{RFC8707, Section 2}}). An Agent MAY make the token request without client authentication ({{RFC7523, Section 3.1}}), and this specification attaches no meaning to `client_id`. An Authorization Server MUST NOT require a client registration per Agent. It MAY require the Platform to authenticate as a client, for example to apply quotas or to cut off a Platform.\r\n```\r\n\r\n(seeing if github will let me do it this way...)",
+              "createdAt": "2026-09-18T20:05:16Z",
+              "updatedAt": "2026-09-18T20:05:17Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABOQ2H2Q",
+          "commit": {
+            "abbreviatedOid": "dd5bbfc"
+          },
+          "author": "pcarleton",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-18T20:08:01Z",
+          "updatedAt": "2026-09-18T20:08:01Z",
+          "comments": [
+            {
+              "originalPosition": 603,
+              "body": "cool, yea i like this phrasing\r\n\r\nwe may also need a metadata declaration for shared issuers... I was trying to avoid it, but accidental shared issuer squatting came up this week.  I'd rather tackle that in a new PR though.",
+              "createdAt": "2026-09-18T20:08:01Z",
+              "updatedAt": "2026-09-18T20:08:01Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABOQ4C8Q",
+          "commit": {
+            "abbreviatedOid": "4bdca87"
+          },
+          "author": "pcarleton",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-18T20:11:41Z",
+          "updatedAt": "2026-09-18T20:11:41Z",
+          "comments": [
+            {
+              "originalPosition": 152,
+              "body": "\ud83d\ude4f  much less cringey, thanks both",
+              "createdAt": "2026-09-18T20:11:41Z",
+              "updatedAt": "2026-09-18T20:11:41Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABOQ9ccw",
+          "commit": {
+            "abbreviatedOid": "e484206"
+          },
+          "author": "pcarleton",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-18T20:23:03Z",
+          "updatedAt": "2026-09-18T20:23:03Z",
+          "comments": [
+            {
+              "originalPosition": 741,
+              "body": "```suggestion\nAn Agent is identified by its Agent Identifier, carried as the `sub` claim in the assertion.  The Agent Identifier is opaque and immutable; it MUST be unique among all Agent Identifiers issued under the same Platform, MUST NOT be reassigned to a different Agent, and is compared as a case-sensitive string {{RFC7519, Section 2}}. An Authorization Server MUST associate records for an Agent with its Platform and `sub` value, never on its `sub` value alone.\n```\n\n@arndt-s I think the other comment got swallowed by fresh commits. does this cover immutability or should we say more?",
+              "createdAt": "2026-09-18T20:23:03Z",
+              "updatedAt": "2026-09-18T20:23:03Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABOQ-d1w",
+          "commit": {
+            "abbreviatedOid": "e484206"
+          },
+          "author": "pcarleton",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-18T20:25:17Z",
+          "updatedAt": "2026-09-18T20:25:17Z",
+          "comments": [
+            {
+              "originalPosition": 705,
+              "body": "```suggestion\nAuthorization Server, Resource Server: as in {{RFC6749}}. Where an Authorization Server serves several customer organizations under one issuer identifier, each customer's partition is a separate Authorization Server ({{tenants}}).\n```",
+              "createdAt": "2026-09-18T20:25:17Z",
+              "updatedAt": "2026-09-18T20:26:05Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABOQ_QMQ",
+          "commit": {
+            "abbreviatedOid": "e484206"
+          },
+          "author": "pcarleton",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-18T20:27:01Z",
+          "updatedAt": "2026-09-18T20:27:01Z",
+          "comments": [
+            {
+              "originalPosition": 662,
+              "body": "```suggestion\nreassigned.  The platform signs a JWT authorization grant ({{RFC7523}}) that\n```",
+              "createdAt": "2026-09-18T20:27:01Z",
+              "updatedAt": "2026-09-18T20:27:01Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABOQ_g5g",
+          "commit": {
+            "abbreviatedOid": "e484206"
+          },
+          "author": "pcarleton",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "(fixing brackets)",
+          "createdAt": "2026-09-18T20:27:36Z",
+          "updatedAt": "2026-09-18T20:31:40Z",
+          "comments": [
+            {
+              "originalPosition": 691,
+              "body": "```suggestion\nThis document defines one grant for that: a JWT authorization grant {{RFC7523}} signed by the platform and naming one workload, presented at the token endpoint of an authorization server that has been configured, once, to trust that platform.\n```",
+              "createdAt": "2026-09-18T20:27:36Z",
+              "updatedAt": "2026-09-18T20:31:40Z"
+            },
+            {
+              "originalPosition": 746,
+              "body": "```suggestion\nAn Agent obtains an access token by presenting a JWT as an authorization grant per {{RFC7523, Section 2.1}}, issued by the Platform as a third party in the sense of {{RFC7521, Section 3}}. The token request carries `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer`, the JWT in the `assertion` parameter, and the target resource in the `resource` parameter {{RFC8707}}. The `resource` parameter {{RFC8707}} is RECOMMENDED; an Authorization Server SHOULD restrict the audience of the access token it issues to that resource and MAY refuse a request that lacks it with `invalid_target` ({{RFC8707, Section 2}}). An Agent MAY make the token request without client authentication ({{RFC7523, Section 3.1}}), and this specification attaches no meaning to `client_id`. An Authorization Server MUST NOT require a client registration per Agent.\n```",
+              "createdAt": "2026-09-18T20:28:19Z",
+              "updatedAt": "2026-09-18T20:31:40Z"
+            },
+            {
+              "originalPosition": 759,
+              "body": "```suggestion\n: REQUIRED - Identifies the Authorization Server: its issuer identifier {{RFC8414}}, as a single value, as in {{IDJAG, Section 3.1}}.  An Authorization Server MUST accept its issuer identifier as the audience; it MAY also accept its token endpoint URL, which {{RFC7523BIS}} continues to permit for authorization grants.\n```",
+              "createdAt": "2026-09-18T20:28:37Z",
+              "updatedAt": "2026-09-18T20:31:40Z"
+            },
+            {
+              "originalPosition": 762,
+              "body": "```suggestion\n: REQUIRED - As defined in {{RFC7519}}.\n```",
+              "createdAt": "2026-09-18T20:29:18Z",
+              "updatedAt": "2026-09-18T20:31:40Z"
+            },
+            {
+              "originalPosition": 791,
+              "body": "```suggestion\nOn each assertion the Authorization Server finds the Platform registration the assertion matches: `iss` equals the registration's issuer identifier by Simple String Comparison ({{RFC7523, Section 3}}) and, where the registration names a claim ({{tenants}}), the assertion carries that claim with the registered value.  An Authorization Server MUST ensure that an assertion can match at most one of its Platform registrations.  The Authorization Server MUST reject an assertion that matches no Platform registration, MUST verify the signature only under a key configured or retrieved for the matched registration's issuer identifier - never under key material or key locations carried in the assertion ({{RFC8725, Section 3.8}} and {{RFC8725, Section 3.10}}) - and MUST interpret `sub` and `jti` only within the scope of the matched Platform registration.\n```",
+              "createdAt": "2026-09-18T20:30:30Z",
+              "updatedAt": "2026-09-18T20:31:40Z"
+            }
+          ]
+        }
+      ]
     }
   ]
 }
