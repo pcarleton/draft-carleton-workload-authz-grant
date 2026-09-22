@@ -112,7 +112,9 @@ How trust in a platform is established and what a workload may do are left to de
 
 {::boilerplate bcp14-tagged}
 
-Platform: the party that creates workloads ("Agents") and signs assertions about them; the sending end of one trust relationship with an Authorization Server.  Where a provider serves several customer organizations under one issuer identifier, each customer's partition is a separate Platform ({{tenants}}).
+Platform: the party that instantiates and manages the lifecycle of workloads ("Agents").
+
+Workload Authorization Grant Issuer (WAGI): The component in the Platform that issues Workload Authorization Grants.  Where a provider serves several customer organizations under one issuer identifier, each customer's partition must be uniquely identified (see {{tenants}}).
 
 Platform registration: an Authorization Server's record of one Platform it trusts: the Platform's issuer identifier, its keys ({{issuer-keys}}) and, where several Platforms share that issuer identifier, the name of a claim and the value the claim carries for this Platform ({{tenants}}).  How a Platform registration comes to exist is out of scope (note: this is not a client registration {{RFC7591}} and yields no client identifier or credential).
 
