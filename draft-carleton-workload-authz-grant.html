@@ -11,44 +11,42 @@
 <meta content="Arndt Schwenkschuster" name="author">
 <meta content="Brian Campbell" name="author">
 <meta content="
-       This document defines the Workload Authorization Grant (WAG), a mechanism
-by which a workload hosted on a platform -- an AI agent being the motivating
-case -- obtains access tokens from a third party's OAuth authorization
-server without requiring an administrator to perform a per-workload
-registration step.  Each
-workload is identified by an opaque, non-reassignable identifier; it obtains
-access tokens by presenting a JWT authorization grant (RFC 7523), signed by
-the platform's per-tenancy issuer, in the assertion parameter at the
-authorization server protecting the resource server.  Trust is established
-once, by reference to the issuer's published metadata and keys; workload
-creation requires no per-workload step at the authorization server or
-resource server; and authorization is expressed over platform-asserted
-properties that resource servers map locally to permissions.  This document
-addresses workloads acting on their own behalf; access on behalf of a user
-or other principal is out of scope, though the design is intended to compose
-with existing delegation mechanisms in which the workload appears as the
-actor. 
+       This document defines the Workload Authorization Grant (WAG), by which a
+workload hosted on a platform -- an AI agent is the motivating case --
+obtains access tokens from a third party's OAuth authorization server
+without requiring an administrator to perform a per-workload provisioning
+step.  Each workload is identified by an opaque identifier that is never
+reassigned.  The platform signs a JWT authorization grant ( ) that
+names one workload, and the workload presents it at the token endpoint of
+an authorization server that has been configured, once, to trust that
+platform.  The authorization server does not reject a workload because it
+has not seen it before. The workload's access is determined by the
+authorization server's own policy, which may consult claims the platform
+asserts about the workload.  This document covers workloads acting on
+their own behalf.  Access on behalf of a user or other principal is out of
+scope, though the grant is intended to compose with delegation mechanisms
+in which the workload is the actor. 
     " name="description">
-<meta content="xml2rfc 3.34.0" name="generator">
+<meta content="xml2rfc 3.34.1" name="generator">
 <meta content="agent identity" name="keyword">
 <meta content="workload identity" name="keyword">
 <meta content="workload authorization grant" name="keyword">
 <meta content="jwt authorization grant" name="keyword">
 <meta content="draft-carleton-workload-authz-grant-latest" name="ietf.draft">
 <!-- Generator version information:
-  xml2rfc 3.34.0
+  xml2rfc 3.34.1
     Python 3.14.7
-    ConfigArgParse 1.7.5
+    ConfigArgParse 1.7.7
     google-i18n-address 3.1.1
     intervaltree 3.2.1
     Jinja2 3.1.6
     lxml 6.1.1
     natsort 8.4.0
-    platformdirs 4.11.7
+    platformdirs 4.11.10
     pycountry 24.6.1
     PyYAML 6.0.3
     requests 2.33.1
-    wcwidth 0.8.3
+    wcwidth 0.8.4
 -->
 <link href="draft-carleton-workload-authz-grant.xml" rel="alternate" type="application/rfc+xml">
 <link href="#copyright" rel="license">
@@ -1068,7 +1066,7 @@ svg {
 </tr></thead>
 <tfoot><tr>
 <td class="left">Carleton, et al.</td>
-<td class="center">Expires 7 March 2027</td>
+<td class="center">Expires 26 March 2027</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1081,12 +1079,12 @@ svg {
 <dd class="internet-draft">draft-carleton-workload-authz-grant-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2026-09-03" class="published">3 September 2026</time>
+<time datetime="2026-09-22" class="published">22 September 2026</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Informational</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2027-03-07">7 March 2027</time></dd>
+<dd class="expires"><time datetime="2027-03-26">26 March 2027</time></dd>
 <dt class="label-authors">Authors:</dt>
 <dd class="authors">
 <div class="author">
@@ -1116,23 +1114,21 @@ svg {
 <h1 id="title">Workload Authorization Grant</h1>
 <section id="section-abstract">
       <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
-<p id="section-abstract-1">This document defines the Workload Authorization Grant (WAG), a mechanism
-by which a workload hosted on a platform -- an AI agent being the motivating
-case -- obtains access tokens from a third party's OAuth authorization
-server without requiring an administrator to perform a per-workload
-registration step.  Each
-workload is identified by an opaque, non-reassignable identifier; it obtains
-access tokens by presenting a JWT authorization grant (RFC 7523), signed by
-the platform's per-tenancy issuer, in the assertion parameter at the
-authorization server protecting the resource server.  Trust is established
-once, by reference to the issuer's published metadata and keys; workload
-creation requires no per-workload step at the authorization server or
-resource server; and authorization is expressed over platform-asserted
-properties that resource servers map locally to permissions.  This document
-addresses workloads acting on their own behalf; access on behalf of a user
-or other principal is out of scope, though the design is intended to compose
-with existing delegation mechanisms in which the workload appears as the
-actor.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+<p id="section-abstract-1">This document defines the Workload Authorization Grant (WAG), by which a
+workload hosted on a platform -- an AI agent is the motivating case --
+obtains access tokens from a third party's OAuth authorization server
+without requiring an administrator to perform a per-workload provisioning
+step.  Each workload is identified by an opaque identifier that is never
+reassigned.  The platform signs a JWT authorization grant (<span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span>) that
+names one workload, and the workload presents it at the token endpoint of
+an authorization server that has been configured, once, to trust that
+platform.  The authorization server does not reject a workload because it
+has not seen it before. The workload's access is determined by the
+authorization server's own policy, which may consult claims the platform
+asserts about the workload.  This document covers workloads acting on
+their own behalf.  Access on behalf of a user or other principal is out of
+scope, though the grant is intended to compose with delegation mechanisms
+in which the workload is the actor.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
 </section>
 <section class="note rfcEditorRemove" id="section-note.1">
       <h2 id="name-about-this-document">
@@ -1154,8 +1150,7 @@ discussion of the deployment pattern it describes.  It is not a working group
 document, does not describe a shipped or committed design, and does not
 represent a position or roadmap of the editors' employers.  Every aspect of it
 is subject to change or withdrawal, including whether this mechanism should
-be specified in a separate document at all.  Most sections are placeholders.  Issues
-and pull requests:
+be specified in a separate document at all.  Issues and pull requests:
 https://github.com/pcarleton/draft-carleton-workload-authz-grant.<a href="#section-note.2-2" class="pilcrow">¶</a></p>
 </section>
 <div id="status-of-memo">
@@ -1177,7 +1172,7 @@ https://github.com/pcarleton/draft-carleton-workload-authz-grant.<a href="#secti
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 7 March 2027.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 26 March 2027.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1208,91 +1203,66 @@ https://github.com/pcarleton/draft-carleton-workload-authz-grant.<a href="#secti
 <nav class="toc"><ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1">
             <p id="section-toc.1-1.1.1" class="keepWithNext"><a href="#section-1" class="auto internal xref">1</a>.  <a href="#name-introduction" class="internal xref">Introduction</a></p>
-<ul class="compact toc ulBare ulEmpty">
-<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1.2.1">
-                <p id="section-toc.1-1.1.2.1.1" class="keepWithNext"><a href="#section-1.1" class="auto internal xref">1.1</a>.  <a href="#name-scope" class="internal xref">Scope</a></p>
-</li>
-            </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2">
             <p id="section-toc.1-1.2.1" class="keepWithNext"><a href="#section-2" class="auto internal xref">2</a>.  <a href="#name-conventions-and-terminology" class="internal xref">Conventions and Terminology</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3">
-            <p id="section-toc.1-1.3.1"><a href="#section-3" class="auto internal xref">3</a>.  <a href="#name-concepts" class="internal xref">Concepts</a></p>
-<ul class="compact toc ulBare ulEmpty">
-<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.1">
-                <p id="section-toc.1-1.3.2.1.1"><a href="#section-3.1" class="auto internal xref">3.1</a>.  <a href="#name-overview" class="internal xref">Overview</a></p>
-</li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.2">
-                <p id="section-toc.1-1.3.2.2.1"><a href="#section-3.2" class="auto internal xref">3.2</a>.  <a href="#name-agent-identity-model" class="internal xref">Agent Identity Model</a></p>
-</li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.3">
-                <p id="section-toc.1-1.3.2.3.1"><a href="#section-3.3" class="auto internal xref">3.3</a>.  <a href="#name-relationship-to-aims" class="internal xref">Relationship to AIMS</a></p>
-</li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.4">
-                <p id="section-toc.1-1.3.2.4.1"><a href="#section-3.4" class="auto internal xref">3.4</a>.  <a href="#name-relationship-to-wimse-and-s" class="internal xref">Relationship to WIMSE and SPIFFE</a></p>
-</li>
-            </ul>
+            <p id="section-toc.1-1.3.1" class="keepWithNext"><a href="#section-3" class="auto internal xref">3</a>.  <a href="#name-overview" class="internal xref">Overview</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4">
-            <p id="section-toc.1-1.4.1"><a href="#section-4" class="auto internal xref">4</a>.  <a href="#name-workload-authorization-gran" class="internal xref">Workload Authorization Grant</a></p>
-<ul class="compact toc ulBare ulEmpty">
-<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.1">
-                <p id="section-toc.1-1.4.2.1.1"><a href="#section-4.1" class="auto internal xref">4.1</a>.  <a href="#name-jwt-syntax" class="internal xref">JWT Syntax</a></p>
-</li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.2">
-                <p id="section-toc.1-1.4.2.2.1"><a href="#section-4.2" class="auto internal xref">4.2</a>.  <a href="#name-presentation" class="internal xref">Presentation</a></p>
-</li>
-            </ul>
+            <p id="section-toc.1-1.4.1"><a href="#section-4" class="auto internal xref">4</a>.  <a href="#name-agent-identity" class="internal xref">Agent Identity</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5">
-            <p id="section-toc.1-1.5.1"><a href="#section-5" class="auto internal xref">5</a>.  <a href="#name-deployment" class="internal xref">Deployment</a></p>
+            <p id="section-toc.1-1.5.1"><a href="#section-5" class="auto internal xref">5</a>.  <a href="#name-workload-authorization-gran" class="internal xref">Workload Authorization Grant</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.1">
-                <p id="section-toc.1-1.5.2.1.1"><a href="#section-5.1" class="auto internal xref">5.1</a>.  <a href="#name-trust-establishment" class="internal xref">Trust Establishment</a></p>
-</li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.2">
-                <p id="section-toc.1-1.5.2.2.1"><a href="#section-5.2" class="auto internal xref">5.2</a>.  <a href="#name-agent-instantiation" class="internal xref">Agent Instantiation</a></p>
-</li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.3">
-                <p id="section-toc.1-1.5.2.3.1"><a href="#section-5.3" class="auto internal xref">5.3</a>.  <a href="#name-agent-properties-and-author" class="internal xref">Agent Properties and Authorization</a></p>
-</li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.4">
-                <p id="section-toc.1-1.5.2.4.1"><a href="#section-5.4" class="auto internal xref">5.4</a>.  <a href="#name-attribution" class="internal xref">Attribution</a></p>
-</li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.5">
-                <p id="section-toc.1-1.5.2.5.1"><a href="#section-5.5" class="auto internal xref">5.5</a>.  <a href="#name-retirement-and-lifecycle" class="internal xref">Retirement and Lifecycle</a></p>
+                <p id="section-toc.1-1.5.2.1.1"><a href="#section-5.1" class="auto internal xref">5.1</a>.  <a href="#name-jwt-syntax" class="internal xref">JWT Syntax</a></p>
 </li>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6">
-            <p id="section-toc.1-1.6.1"><a href="#section-6" class="auto internal xref">6</a>.  <a href="#name-open-issues" class="internal xref">Open Issues</a></p>
-</li>
-          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7">
-            <p id="section-toc.1-1.7.1"><a href="#section-7" class="auto internal xref">7</a>.  <a href="#name-privacy-considerations" class="internal xref">Privacy Considerations</a></p>
-</li>
-          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8">
-            <p id="section-toc.1-1.8.1"><a href="#section-8" class="auto internal xref">8</a>.  <a href="#name-security-considerations" class="internal xref">Security Considerations</a></p>
-</li>
-          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9">
-            <p id="section-toc.1-1.9.1"><a href="#section-9" class="auto internal xref">9</a>.  <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
-</li>
-          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10">
-            <p id="section-toc.1-1.10.1"><a href="#section-10" class="auto internal xref">10</a>. <a href="#name-references" class="internal xref">References</a></p>
+            <p id="section-toc.1-1.6.1"><a href="#section-6" class="auto internal xref">6</a>.  <a href="#name-platform-registration" class="internal xref">Platform Registration</a></p>
 <ul class="compact toc ulBare ulEmpty">
-<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.1">
-                <p id="section-toc.1-1.10.2.1.1"><a href="#section-10.1" class="auto internal xref">10.1</a>.  <a href="#name-normative-references" class="internal xref">Normative References</a></p>
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.1">
+                <p id="section-toc.1-1.6.2.1.1"><a href="#section-6.1" class="auto internal xref">6.1</a>.  <a href="#name-issuer-keys" class="internal xref">Issuer Keys</a></p>
 </li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.2">
-                <p id="section-toc.1-1.10.2.2.1"><a href="#section-10.2" class="auto internal xref">10.2</a>.  <a href="#name-informative-references" class="internal xref">Informative References</a></p>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.2">
+                <p id="section-toc.1-1.6.2.2.1"><a href="#section-6.2" class="auto internal xref">6.2</a>.  <a href="#name-permissions" class="internal xref">Permissions</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.3">
+                <p id="section-toc.1-1.6.2.3.1"><a href="#section-6.3" class="auto internal xref">6.3</a>.  <a href="#name-multi-tenancy" class="internal xref">Multi-Tenancy</a></p>
 </li>
             </ul>
 </li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7">
+            <p id="section-toc.1-1.7.1"><a href="#section-7" class="auto internal xref">7</a>.  <a href="#name-error-responses" class="internal xref">Error Responses</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8">
+            <p id="section-toc.1-1.8.1"><a href="#section-8" class="auto internal xref">8</a>.  <a href="#name-open-issues" class="internal xref">Open Issues</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9">
+            <p id="section-toc.1-1.9.1"><a href="#section-9" class="auto internal xref">9</a>.  <a href="#name-security-considerations" class="internal xref">Security Considerations</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10">
+            <p id="section-toc.1-1.10.1"><a href="#section-10" class="auto internal xref">10</a>. <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
+</li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11">
-            <p id="section-toc.1-1.11.1"><a href="#appendix-A" class="auto internal xref"></a><a href="#name-acknowledgments" class="internal xref">Acknowledgments</a></p>
+            <p id="section-toc.1-1.11.1"><a href="#section-11" class="auto internal xref">11</a>. <a href="#name-references" class="internal xref">References</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.1">
+                <p id="section-toc.1-1.11.2.1.1"><a href="#section-11.1" class="auto internal xref">11.1</a>.  <a href="#name-normative-references" class="internal xref">Normative References</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.2">
+                <p id="section-toc.1-1.11.2.2.1"><a href="#section-11.2" class="auto internal xref">11.2</a>.  <a href="#name-informative-references" class="internal xref">Informative References</a></p>
+</li>
+            </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12">
-            <p id="section-toc.1-1.12.1"><a href="#appendix-B" class="auto internal xref"></a><a href="#name-authors-addresses" class="internal xref">Authors' Addresses</a></p>
+            <p id="section-toc.1-1.12.1"><a href="#appendix-A" class="auto internal xref"></a><a href="#name-acknowledgments" class="internal xref">Acknowledgments</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13">
+            <p id="section-toc.1-1.13.1"><a href="#appendix-B" class="auto internal xref"></a><a href="#name-authors-addresses" class="internal xref">Authors' Addresses</a></p>
 </li>
         </ul>
 </nav>
@@ -1303,59 +1273,11 @@ https://github.com/pcarleton/draft-carleton-workload-authz-grant.<a href="#secti
       <h2 id="name-introduction">
 <a href="#section-1" class="section-number selfRef">1. </a><a href="#name-introduction" class="section-name selfRef">Introduction</a>
       </h2>
-<p id="section-1-1">Agent platforms increasingly host many agent instances per customer, created
-and retired at the cadence at which the customer organizes its work -- per
-channel, repository, or pipeline.  An individual agent may persist for weeks
-or months, but the person creating it is typically not the person authorized
-to provision credentials at the resource servers it will access.  Per-agent
-credentials are therefore not issued in practice, and deployments collapse to
-a single credential shared across all agents of an installation -- a pattern
-the AI agent authentication and authorization framework <span>[<a href="#AIMS" class="cite xref">AIMS</a>]</span>, Section 7,
-identifies as an antipattern -- at the cost of any attribution of an
-individual agent's actions at the resource server.<a href="#section-1-1" class="pilcrow">¶</a></p>
-<p id="section-1-2">Existing workload identity federation <span>[<a href="#WIMSE-ARCH" class="cite xref">WIMSE-ARCH</a>]</span> addresses an analogous
-problem between an organization's workloads and infrastructure providers, but
-its claim and policy semantics are defined per provider rather than portably,
-and it has not been applied between agent platforms and SaaS resource
-servers.  The Model Context Protocol's proposed Workload Identity Federation
-extension <span>[<a href="#MCP-WIF" class="cite xref">MCP-WIF</a>]</span> defines the corresponding wire mechanics for MCP servers; this
-document is intended to be interoperable with it.<a href="#section-1-2" class="pilcrow">¶</a></p>
-<p id="section-1-3">This document specifies a mechanism for that deployment pattern, the
-Workload Authorization Grant (WAG): a platform-signed JWT authorization
-grant asserting a workload's identity and platform-asserted properties,
-presented at the token endpoint of an authorization server that has been
-configured, once, to trust the platform's issuer.  Thereafter workloads are
-accepted on first presentation with no per-workload registration step.
-Agent platforms are the motivating deployment, and the terminology
-throughout uses "Agent"; the mechanism itself is not agent-specific and
-applies to any platform hosting workloads that need federated access to
-third-party resource servers.  This document builds on
-the OAuth JWT authorization grant <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span> and on published issuer
-metadata, and it can be implemented without reference to any other agent
-identity framework.  Readers arriving from the AI agent authentication
-and authorization framework <span>[<a href="#AIMS" class="cite xref">AIMS</a>]</span> will find how this mechanism relates to that document's
-conceptual model in <a href="#aims" class="auto internal xref">Section 3.3</a>.<a href="#section-1-3" class="pilcrow">¶</a></p>
-<p id="section-1-4">A design goal of this document is a minimal adoption path for services that
-already operate an OAuth deployment: supporting it requires changes only at
-the authorization server's token endpoint, which accepts the JWT
-authorization grant from allowlisted issuers.  The access tokens the
-authorization server issues are unchanged in format and semantics, and
-resource servers continue to trust their authorization server exactly as
-they do today.<a href="#section-1-4" class="pilcrow">¶</a></p>
-<div id="scope">
-<section id="section-1.1">
-        <h3 id="name-scope">
-<a href="#section-1.1" class="section-number selfRef">1.1. </a><a href="#name-scope" class="section-name selfRef">Scope</a>
-        </h3>
-<p id="section-1.1-1">In scope: agents acting on their own behalf.  Out of scope: on-behalf-of
-access, legacy integration via static credentials, runtime attestation,
-agent-to-agent protocols.  This document deliberately does not specify
-on-behalf-of flows; the design is intended to compose with
-delegation mechanisms in which the agent appears as the actor rather than
-the subject (e.g., the act claim and actor_token parameter of <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>,
-or <span>[<a href="#IDJAG" class="cite xref">IDJAG</a>]</span>), and that composition is left to future documents.<a href="#section-1.1-1" class="pilcrow">¶</a></p>
-</section>
-</div>
+<p id="section-1-1">Agent platforms host many agents per customer, instantiated and torn down as appropriate for the context of the customer's work environment -- one per channel, repository, or pipeline.  Registering each agent individually at the Authorization Servers it uses is impractical and creates a heavy maintenance burden.  In practice every agent of an installation ends up sharing one credential, at the cost of any attribution of an individual agent's actions.<a href="#section-1-1" class="pilcrow">¶</a></p>
+<p id="section-1-2">A platform that hosts many workloads -- an agent platform is a motivating case -- needs each workload to obtain an access token at third-party services without requiring an administrator to perform a per-workload provisioning step.<a href="#section-1-2" class="pilcrow">¶</a></p>
+<p id="section-1-3">This document defines one grant for that: a JWT authorization grant <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span> signed by the platform and naming one workload, presented at the token endpoint of an authorization server that has been configured, once, to trust that platform.<a href="#section-1-3" class="pilcrow">¶</a></p>
+<p id="section-1-4">It specifies the grant, and that workloads are trusted based on the platform registration, allowing a previously unseen workload to receive an access token.<a href="#section-1-4" class="pilcrow">¶</a></p>
+<p id="section-1-5">How trust in a platform is established and what a workload may do are left to deployments.<a href="#section-1-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="conventions">
@@ -1367,570 +1289,241 @@ or <span>[<a href="#IDJAG" class="cite xref">IDJAG</a>]</span>), and that compos
 "<span class="bcp14">MAY</span>", and "<span class="bcp14">OPTIONAL</span>" in this document are to be interpreted as
 described in BCP 14 <span>[<a href="#RFC2119" class="cite xref">RFC2119</a>]</span> <span>[<a href="#RFC8174" class="cite xref">RFC8174</a>]</span> when, and only when, they
 appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶</a></p>
-<span class="break"></span><dl class="dlParallel" id="section-2-2">
-        <dt id="section-2-2.1">Agent Platform ("Platform"):</dt>
-        <dd style="margin-left: 1.5em" id="section-2-2.2">
-          <p id="section-2-2.2.1">The service that hosts Agents and operates the per-tenancy issuers that
-vouch for them.<a href="#section-2-2.2.1" class="pilcrow">¶</a></p>
-</dd>
-        <dd class="break"></dd>
-<dt id="section-2-2.3">Agent:</dt>
-        <dd style="margin-left: 1.5em" id="section-2-2.4">
-          <p id="section-2-2.4.1">A hosted workload with its own Agent Identifier, context, and
-configuration.<a href="#section-2-2.4.1" class="pilcrow">¶</a></p>
-</dd>
-        <dd class="break"></dd>
-<dt id="section-2-2.5">Agent Property:</dt>
-        <dd style="margin-left: 1.5em" id="section-2-2.6">
-          <p id="section-2-2.6.1">A Platform-asserted attribute carried as a claim in the authorization
-grant.<a href="#section-2-2.6.1" class="pilcrow">¶</a></p>
-</dd>
-        <dd class="break"></dd>
-<dt id="section-2-2.7">Authorization Server (AS):</dt>
-        <dd style="margin-left: 1.5em" id="section-2-2.8">
-          <p id="section-2-2.8.1">The OAuth authorization server at which Agents present authorization
-grants and obtain access tokens; commonly, but not necessarily, operated
-by the same vendor as the Resource Server it protects.<a href="#section-2-2.8.1" class="pilcrow">¶</a></p>
-</dd>
-        <dd class="break"></dd>
-<dt id="section-2-2.9">Resource Server (RS):</dt>
-        <dd style="margin-left: 1.5em" id="section-2-2.10">
-          <p id="section-2-2.10.1">The service holding customer resources, accessed with the access tokens
-the Authorization Server issues.<a href="#section-2-2.10.1" class="pilcrow">¶</a></p>
-</dd>
-        <dd class="break"></dd>
-<dt id="section-2-2.11">Enterprise IdP:</dt>
-        <dd style="margin-left: 1.5em" id="section-2-2.12">
-          <p id="section-2-2.12.1">The customer's identity provider (optional).<a href="#section-2-2.12.1" class="pilcrow">¶</a></p>
-</dd>
-        <dd class="break"></dd>
-<dt id="section-2-2.13">Customer Administrator:</dt>
-        <dd style="margin-left: 1.5em" id="section-2-2.14">
-          <p id="section-2-2.14.1">The human who performs one-time trust establishment.<a href="#section-2-2.14.1" class="pilcrow">¶</a></p>
-</dd>
-      <dd class="break"></dd>
-</dl>
+<p id="section-2-2">Platform: the party that creates workloads ("Agents") and signs assertions about them; the sending end of one trust relationship with an Authorization Server.  Where a provider serves several customer organizations under one issuer identifier, each customer's partition is a separate Platform (<a href="#tenants" class="auto internal xref">Section 6.3</a>).<a href="#section-2-2" class="pilcrow">¶</a></p>
+<p id="section-2-3">Platform registration: an Authorization Server's record of one Platform it trusts: the Platform's issuer identifier, its keys (<a href="#issuer-keys" class="auto internal xref">Section 6.1</a>) and, where several Platforms share that issuer identifier, the name of a claim and the value the claim carries for this Platform (<a href="#tenants" class="auto internal xref">Section 6.3</a>).  How a Platform registration comes to exist is out of scope (note: this is not a client registration <span>[<a href="#RFC7591" class="cite xref">RFC7591</a>]</span> and yields no client identifier or credential).<a href="#section-2-3" class="pilcrow">¶</a></p>
+<p id="section-2-4">Authorization Server, Resource Server: as in <span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span>. Where an Authorization Server serves several customer organizations under one issuer identifier, each customer's partition is a separate Authorization Server (<a href="#tenants" class="auto internal xref">Section 6.3</a>).<a href="#section-2-4" class="pilcrow">¶</a></p>
 </section>
 </div>
-<div id="concepts">
-<section id="section-3">
-      <h2 id="name-concepts">
-<a href="#section-3" class="section-number selfRef">3. </a><a href="#name-concepts" class="section-name selfRef">Concepts</a>
-      </h2>
 <div id="overview">
-<section id="section-3.1">
-        <h3 id="name-overview">
-<a href="#section-3.1" class="section-number selfRef">3.1. </a><a href="#name-overview" class="section-name selfRef">Overview</a>
-        </h3>
-<p id="section-3.1-1">The mechanism involves the following parties.  The Agent Platform hosts
-Agents and operates, for each customer tenancy, an issuer that signs
-assertions about that tenancy's Agents; each Agent presents its own
-assertion to the Authorization Server.  The Authorization Server
-protects a Resource Server and issues the access tokens the Resource
-Server accepts.  The Customer Administrator holds the authority, within
-a customer tenancy, to configure the Authorization Server to trust that
-tenancy's issuer.<a href="#section-3.1-1" class="pilcrow">¶</a></p>
-<p id="section-3.1-2">The mechanism has three steps, of which only the last recurs
-(<a href="#fig-overview" class="auto internal xref">Figure 1</a>):<a href="#section-3.1-2" class="pilcrow">¶</a></p>
-<ol start="1" type="1" class="normal type-1" id="section-3.1-3">
-<li id="section-3.1-3.1">
-            <p id="section-3.1-3.1.1">Trust establishment, once per tenancy (<a href="#trust" class="auto internal xref">Section 5.1</a>): the Customer
-Administrator records at the Authorization Server that assertions from
-the tenancy's issuer are accepted, identifying the issuer by its issuer
-identifier.  The Authorization Server discovers the issuer's keys from
-its published metadata; nothing is exchanged out of band.<a href="#section-3.1-3.1.1" class="pilcrow">¶</a></p>
+<section id="section-3">
+      <h2 id="name-overview">
+<a href="#section-3" class="section-number selfRef">3. </a><a href="#name-overview" class="section-name selfRef">Overview</a>
+      </h2>
+<ol start="1" type="1" class="normal type-1" id="section-3-1">
+<li id="section-3-1.1">
+          <p id="section-3-1.1.1">Once per Platform and Authorization Server: an administrator of the
+Authorization Server creates a Platform registration (<a href="#conventions" class="auto internal xref">Section 2</a>),
+which records the Platform's issuer identifier and how to obtain its
+keys (<a href="#issuer-keys" class="auto internal xref">Section 6.1</a>).  Nothing about individual Agents is exchanged.<a href="#section-3-1.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li id="section-3.1-3.2">
-            <p id="section-3.1-3.2.1">Agent instantiation, per Agent (<a href="#instantiation" class="auto internal xref">Section 5.2</a>): the Platform creates
-an Agent and assigns it an Agent Identifier.  Nothing happens at the
-Authorization Server or Resource Server.<a href="#section-3.1-3.2.1" class="pilcrow">¶</a></p>
+        <li id="section-3-1.2">
+          <p id="section-3-1.2.1">Per Agent: the Platform creates an Agent and assigns it an Agent
+Identifier (<a href="#identity-model" class="auto internal xref">Section 4</a>).  Nothing is sent to the Authorization
+Server or the Resource Server.<a href="#section-3-1.2.1" class="pilcrow">¶</a></p>
 </li>
-          <li id="section-3.1-3.3">
-            <p id="section-3.1-3.3.1">Token request, per access (<a href="#workload-authorization-grant" class="auto internal xref">Section 4</a>): the Agent
-presents a Workload Authorization Grant -- a JWT signed by the tenancy's
-issuer, naming the Agent as its subject and carrying the Agent's
-Properties -- as the authorization grant in an ordinary OAuth token
-request.  The Authorization Server validates the signature against the
-allowlisted issuer's keys, accepts the Agent whether or not it has seen
-the Agent Identifier before, and issues an access token whose format and
-semantics are unchanged.<a href="#section-3.1-3.3.1" class="pilcrow">¶</a></p>
+        <li id="section-3-1.3">
+          <p id="section-3-1.3.1">Per access: the Agent presents a Workload Authorization Grant in an
+ordinary OAuth token request.  The Authorization Server matches it to a
+Platform registration, verifies it under that Platform's keys,
+allowing for previously unseen <code>sub</code> values,
+and issues an access token under its own policy (<a href="#properties" class="auto internal xref">Section 6.2</a>).<a href="#section-3-1.3.1" class="pilcrow">¶</a></p>
 </li>
-        </ol>
-<span id="name-overview-one-time-trust-est"></span><div id="fig-overview">
+      </ol>
+<span id="name-one-time-platform-registrat"></span><div id="fig-overview">
 <figure id="figure-1">
-          <div class="alignLeft art-text artwork" id="section-3.1-4.1">
+        <div class="alignLeft art-text artwork" id="section-3-2.1">
 <pre>
- Customer        Agent Platform        Authorization      Resource
- Administrator   (tenancy issuer)      Server (AS)        Server (RS)
-      |                 |                   |                 |
-  (1) |--- allowlist issuer identifier ----&gt;|                 |
-      |                 |&lt;-- GET metadata,  |                 |
-      |                 |    JWK Set -------|                 |
-      |                 |                   |                 |
-  (2) |         [Platform creates Agent;    |                 |
-      |          nothing sent to AS or RS]  |                 |
-      |                 |                   |                 |
-  (3) |                 |-- POST /token ---&gt;|                 |
-      |                 |   grant_type=     |                 |
-      |                 |     jwt-bearer    |                 |
-      |                 |   assertion=&lt;WAG&gt; |                 |
-      |                 |&lt;-- access token --|                 |
-      |                 |-- request + access token ----------&gt;|
-      |                 |                   |                 |
+      Platform                    Authorization        Resource
+      (issuer; Agents)            Server (AS)          Server (RS)
+            |                          |                   |
+  (1)  [administrator creates a Platform registration]     |
+            |                          |                   |
+  (2)  [Platform creates Agent; nothing sent to AS or RS]  |
+            |                          |                   |
+  (3)       |--- POST /token ---------&gt;|                   |
+            |    grant_type=jwt-bearer |                   |
+            |    assertion=&lt;WAG&gt;       |                   |
+            |    resource=&lt;RS&gt;         |                   |
+            |&lt;-- access token ---------|                   |
+            |--- request + access token ------------------&gt;|
 </pre>
 </div>
 <figcaption><a href="#figure-1" class="selfRef">Figure 1</a>:
-<a href="#name-overview-one-time-trust-est" class="selfRef">Overview: one-time trust establishment, then per-request grants</a>
-          </figcaption></figure>
+<a href="#name-one-time-platform-registrat" class="selfRef">One-time Platform registration, then per-request grants</a>
+        </figcaption></figure>
 </div>
 </section>
 </div>
 <div id="identity-model">
-<section id="section-3.2">
-        <h3 id="name-agent-identity-model">
-<a href="#section-3.2" class="section-number selfRef">3.2. </a><a href="#name-agent-identity-model" class="section-name selfRef">Agent Identity Model</a>
-        </h3>
-<p id="section-3.2-1">An Agent's identity has three units: the tenancy's issuer, which signs
-assertions about the Agent; the Agent Identifier, opaque, unique within the
-issuer, immutable, and never reassigned, carried as the assertion's sub
-(<a href="#workload-authorization-grant" class="auto internal xref">Section 4</a>); and claims, carrying everything else
-(<a href="#properties" class="auto internal xref">Section 5.3</a>).  Renaming an Agent <span class="bcp14">MUST NOT</span> change its Agent Identifier.
-Resource Servers <span class="bcp14">MUST NOT</span> parse or pattern-match the Agent Identifier for
-authorization; single-agent policy is an exact match on the sub value.<a href="#section-3.2-1" class="pilcrow">¶</a></p>
-<p id="section-3.2-2">The Agent Identifier <span class="bcp14">MAY</span> be, and is <span class="bcp14">RECOMMENDED</span> to be, a Workload
-Identifier URI <span>[<a href="#WIMSE-ID" class="cite xref">WIMSE-ID</a>]</span> with an opaque path; a bare opaque string is also
-permitted.  URI form costs no opacity -- the path remains meaningful only to
-the issuing Platform -- and carries the trust boundary inside the
-identifier's authority component, which is what relying parties that
-evaluate only subject and audience need (<a href="#oi" class="auto internal xref">Section 6</a>).  When the Agent Identifier
-is a URI, the Authorization Server validates its authority component against
-the allowlisted issuer's tenancy once, at token issuance; Resource Servers
-treat the complete identifier as an opaque, exact-match string regardless of
-form and <span class="bcp14">MUST NOT</span> derive trust from its components.<a href="#section-3.2-2" class="pilcrow">¶</a></p>
-</section>
-</div>
-<div id="aims">
-<section id="section-3.3">
-        <h3 id="name-relationship-to-aims">
-<a href="#section-3.3" class="section-number selfRef">3.3. </a><a href="#name-relationship-to-aims" class="section-name selfRef">Relationship to AIMS</a>
-        </h3>
-<p id="section-3.3-1"><span>[<a href="#AIMS" class="cite xref">AIMS</a>]</span> describes a framework for authentication and authorization of AI
-agents, with a conceptual model in which agents are treated as workloads with
-identifiers, credentials, and authorization.  This document is not a
-profile of <span>[<a href="#AIMS" class="cite xref">AIMS</a>]</span> and does not depend on it: nothing in <span>[<a href="#AIMS" class="cite xref">AIMS</a>]</span> is
-normative here, and where terminology overlaps, the definitions in
-<a href="#conventions" class="auto internal xref">Section 2</a> govern.  This section is informative; it exists so that a
-reader who knows <span>[<a href="#AIMS" class="cite xref">AIMS</a>]</span> can see where this mechanism sits in its model.<a href="#section-3.3-1" class="pilcrow">¶</a></p>
-<p id="section-3.3-2">In <span>[<a href="#AIMS" class="cite xref">AIMS</a>]</span> terms, WAG is one concrete answer for the case of an agent
-acting on its own behalf (<span>[<a href="#AIMS" class="cite xref">AIMS</a>]</span>, Section 10.4.2), in which the agent is a
-hosted workload and the platform that hosts it is the authority that vouches
-for it.  The correspondences are:<a href="#section-3.3-2" class="pilcrow">¶</a></p>
-<table class="center" id="table-1">
-          <caption><a href="#table-1" class="selfRef">Table 1</a></caption>
-<thead>
-            <tr>
-              <th class="text-left" rowspan="1" colspan="1">AIMS concept</th>
-              <th class="text-left" rowspan="1" colspan="1">In this document</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">Agent identifier (Sec. 6)</td>
-              <td class="text-left" rowspan="1" colspan="1">The Agent Identifier (<a href="#identity-model" class="auto internal xref">Section 3.2</a>): opaque, immutable, non-reassignable, scoped to its issuer, carried as <code>sub</code>
-</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">Agent credentials (Sec. 7) and authentication (Sec. 9)</td>
-              <td class="text-left" rowspan="1" colspan="1">The Platform's per-tenancy issuer signs an <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span> JWT authorization grant on the Agent's behalf (<a href="#workload-authorization-grant" class="auto internal xref">Section 4</a>); OAuth client identity is deliberately unspecified</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">Credential provisioning (Sec. 8)</td>
-              <td class="text-left" rowspan="1" colspan="1">Platform-internal (<a href="#instantiation" class="auto internal xref">Section 5.2</a>); the Authorization Server learns of an Agent at first presentation</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">Authorization (Sec. 10)</td>
-              <td class="text-left" rowspan="1" colspan="1">Platform-asserted Agent Properties mapped locally to permissions (<a href="#properties" class="auto internal xref">Section 5.3</a>), under trust established once by reference (<a href="#trust" class="auto internal xref">Section 5.1</a>)</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">Monitoring and remediation (Sec. 11)</td>
-              <td class="text-left" rowspan="1" colspan="1">Attribution by (<code>iss</code>, <code>sub</code>) and <code>jti</code>; retirement by cessation (<a href="#lifecycle" class="auto internal xref">Section 5.5</a>); open items in <a href="#oi" class="auto internal xref">Section 6</a>
-</td>
-            </tr>
-          </tbody>
-        </table>
-<p id="section-3.3-4">The shared-credential antipattern that <span>[<a href="#AIMS" class="cite xref">AIMS</a>]</span>, Section 7, describes is
-the deployment this mechanism is designed to replace (<a href="#introduction" class="auto internal xref">Section 1</a>).<a href="#section-3.3-4" class="pilcrow">¶</a></p>
-</section>
-</div>
-<div id="relationship-to-wimse-and-spiffe">
-<section id="section-3.4">
-        <h3 id="name-relationship-to-wimse-and-s">
-<a href="#section-3.4" class="section-number selfRef">3.4. </a><a href="#name-relationship-to-wimse-and-s" class="section-name selfRef">Relationship to WIMSE and SPIFFE</a>
-        </h3>
-<p id="section-3.4-1">TODO.  A reader arriving from WIMSE or SPIFFE will ask where the Workload
-Identity Token and the SPIFFE ID are in this design.  Explain: why the
-assertion is an <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span> authorization grant rather than a WIMSE WIT;
-how the Agent Identifier's <span class="bcp14">RECOMMENDED</span> <span>[<a href="#WIMSE-ID" class="cite xref">WIMSE-ID</a>]</span> URI form relates to a
-SPIFFE ID; and what changes if the Platform's issuer is backed by a
-SPIFFE/WIMSE-style workload identity plane rather than operated as a
-standalone OAuth issuer.<a href="#section-3.4-1" class="pilcrow">¶</a></p>
-</section>
-</div>
+<section id="section-4">
+      <h2 id="name-agent-identity">
+<a href="#section-4" class="section-number selfRef">4. </a><a href="#name-agent-identity" class="section-name selfRef">Agent Identity</a>
+      </h2>
+<p id="section-4-1">An Agent is identified by its Agent Identifier, carried as the <code>sub</code> claim in the assertion.  The Agent Identifier is opaque and immutable; it <span class="bcp14">MUST</span> be unique among all Agent Identifiers issued under the same Platform, <span class="bcp14">MUST NOT</span> be reassigned to a different Agent, and is compared as a case-sensitive string <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>], <a href="https://rfc-editor.org/rfc/rfc7519#section-2" class="relref">Section 2</a></span>. An Authorization Server <span class="bcp14">MUST</span> associate records for an Agent with its Platform and <code>sub</code> value, never on its <code>sub</code> value alone.<a href="#section-4-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="workload-authorization-grant">
-<section id="section-4">
+<section id="section-5">
       <h2 id="name-workload-authorization-gran">
-<a href="#section-4" class="section-number selfRef">4. </a><a href="#name-workload-authorization-gran" class="section-name selfRef">Workload Authorization Grant</a>
+<a href="#section-5" class="section-number selfRef">5. </a><a href="#name-workload-authorization-gran" class="section-name selfRef">Workload Authorization Grant</a>
       </h2>
-<p id="section-4-1">The Agent obtains access tokens from the Authorization Server by
-presenting a JWT as an authorization grant per <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span>,
-Section 2.1, issued by the Platform as a third party in the sense of
-<span>[<a href="#RFC7521" class="cite xref">RFC7521</a>]</span>, Section 3.  The token request carries
-<code>grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer</code>, the JWT in the
-assertion parameter, and the target resource in the resource parameter
-<span>[<a href="#RFC8707" class="cite xref">RFC8707</a>]</span>.  This document deliberately does not specify the OAuth client
-identity or attach semantics to <code>client_id</code>.  In the simplest deployment the
-token request is made without client authentication.  Deployments <span class="bcp14">MAY</span> layer
-client authentication on top -- for example, the Platform authenticating as
-an OAuth client in its own right with a Client ID Metadata Document <span>[<a href="#CIMD" class="cite xref">CIMD</a>]</span>
-and a <code>private_key_jwt</code> client assertion -- a composition that becomes natural
-when the authorization grant's issuer is the customer's Enterprise IdP
-rather than the Platform (obtained, e.g., by token exchange <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> with
-the IdP).  This document intentionally leaves that composition open rather
-than fully specifying it (<a href="#oi" class="auto internal xref">Section 6</a>).<a href="#section-4-1" class="pilcrow">¶</a></p>
+<p id="section-5-1">An Agent obtains an access token by presenting a JWT as an authorization grant per <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>], <a href="https://rfc-editor.org/rfc/rfc7523#section-2.1" class="relref">Section 2.1</a></span>, issued by the Platform as a third party in the sense of <span>[<a href="#RFC7521" class="cite xref">RFC7521</a>], <a href="https://rfc-editor.org/rfc/rfc7521#section-3" class="relref">Section 3</a></span>. The token request carries <code>grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer</code>, the JWT in the <code>assertion</code> parameter, and the target resource in the <code>resource</code> parameter <span>[<a href="#RFC8707" class="cite xref">RFC8707</a>]</span>. The <code>resource</code> parameter <span>[<a href="#RFC8707" class="cite xref">RFC8707</a>]</span> is <span class="bcp14">RECOMMENDED</span>; an Authorization Server <span class="bcp14">SHOULD</span> restrict the audience of the access token it issues to that resource and <span class="bcp14">MAY</span> refuse a request that lacks it with <code>invalid_target</code> (<span>[<a href="#RFC8707" class="cite xref">RFC8707</a>], <a href="https://rfc-editor.org/rfc/rfc8707#section-2" class="relref">Section 2</a></span>). An Agent <span class="bcp14">MAY</span> make the token request without client authentication (<span>[<a href="#RFC7523" class="cite xref">RFC7523</a>], <a href="https://rfc-editor.org/rfc/rfc7523#section-3.1" class="relref">Section 3.1</a></span>), and this specification attaches no meaning to <code>client_id</code>. An Authorization Server <span class="bcp14">MUST NOT</span> require a client registration per Agent.<a href="#section-5-1" class="pilcrow">¶</a></p>
+<p id="section-5-2">Assertions <span class="bcp14">SHOULD</span> be short-lived.  The Authorization Server <span class="bcp14">MUST NOT</span> issue refresh tokens for this grant and <span class="bcp14">SHOULD NOT</span> issue access tokens that outlive the assertion by a significant period (<span>[<a href="#RFC7521" class="cite xref">RFC7521</a>], <a href="https://rfc-editor.org/rfc/rfc7521#section-4.1" class="relref">Section 4.1</a></span>).<a href="#section-5-2" class="pilcrow">¶</a></p>
 <div id="authorization-grant-claims">
-<section id="section-4.1">
+<section id="section-5.1">
         <h3 id="name-jwt-syntax">
-<a href="#section-4.1" class="section-number selfRef">4.1. </a><a href="#name-jwt-syntax" class="section-name selfRef">JWT Syntax</a>
+<a href="#section-5.1" class="section-number selfRef">5.1. </a><a href="#name-jwt-syntax" class="section-name selfRef">JWT Syntax</a>
         </h3>
-<p id="section-4.1-1">The following claims are used within the Workload Authorization Grant JWT:<a href="#section-4.1-1" class="pilcrow">¶</a></p>
-<span class="break"></span><dl class="dlParallel" id="section-4.1-2">
-          <dt id="section-4.1-2.1">
-<code>iss</code>:</dt>
-          <dd style="margin-left: 1.5em" id="section-4.1-2.2">
-            <p id="section-4.1-2.2.1"><span class="bcp14">REQUIRED</span> - The issuer identifier of the Platform's per-tenancy issuer
-(<a href="#trust" class="auto internal xref">Section 5.1</a>).<a href="#section-4.1-2.2.1" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-5.1-1">
+          <dt id="section-5.1-1.1"><code>iss</code></dt>
+          <dd style="margin-left: 1.5em" id="section-5.1-1.2">
+            <p id="section-5.1-1.2.1"><span class="bcp14">REQUIRED</span> - The issuer identifier of the Platform's issuer (<a href="#issuer-keys" class="auto internal xref">Section 6.1</a>): a URL using the <code>https</code> scheme with no query or fragment component, as for <code>issuer</code> in <span>[<a href="#RFC8414" class="cite xref">RFC8414</a>], <a href="https://rfc-editor.org/rfc/rfc8414#section-2" class="relref">Section 2</a></span>.<a href="#section-5.1-1.2.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-4.1-2.3">
-<code>sub</code>:</dt>
-          <dd style="margin-left: 1.5em" id="section-4.1-2.4">
-            <p id="section-4.1-2.4.1"><span class="bcp14">REQUIRED</span> - The Agent Identifier as defined in <a href="#identity-model" class="auto internal xref">Section 3.2</a>.<a href="#section-4.1-2.4.1" class="pilcrow">¶</a></p>
+<dt id="section-5.1-1.3"><code>sub</code></dt>
+          <dd style="margin-left: 1.5em" id="section-5.1-1.4">
+            <p id="section-5.1-1.4.1"><span class="bcp14">REQUIRED</span> - The Agent Identifier (<a href="#identity-model" class="auto internal xref">Section 4</a>).<a href="#section-5.1-1.4.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-4.1-2.5">
-<code>aud</code>:</dt>
-          <dd style="margin-left: 1.5em" id="section-4.1-2.6">
-            <p id="section-4.1-2.6.1"><span class="bcp14">REQUIRED</span>. The value <span class="bcp14">SHOULD</span> include both the Authorization Server's
-issuer identifier and its token endpoint URL; an Authorization Server
-accepting Workload Authorization Grants <span class="bcp14">MUST</span> accept an assertion whose <code>aud</code> includes either
-value (<span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span> itself leaves the audience strings to out-of-band
-configuration).  <span>[<a href="#RFC7523BIS" class="cite xref">RFC7523BIS</a>]</span> adds the issuer identifier as an audience
-option for authorization grants (while restricting client-authentication
-assertions, a different slot, to it alone); carrying both values keeps an
-assertion valid across deployed and future processing.<a href="#section-4.1-2.6.1" class="pilcrow">¶</a></p>
+<dt id="section-5.1-1.5"><code>aud</code></dt>
+          <dd style="margin-left: 1.5em" id="section-5.1-1.6">
+            <p id="section-5.1-1.6.1"><span class="bcp14">REQUIRED</span> - Identifies the Authorization Server: its issuer identifier <span>[<a href="#RFC8414" class="cite xref">RFC8414</a>]</span>, as a single value, as in <span>[<a href="#IDJAG" class="cite xref">IDJAG</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04#section-3.1" class="relref">Section 3.1</a></span>.  An Authorization Server <span class="bcp14">MUST</span> accept its issuer identifier as the audience; it <span class="bcp14">MAY</span> also accept its token endpoint URL, which <span>[<a href="#RFC7523BIS" class="cite xref">RFC7523BIS</a>]</span> continues to permit for authorization grants.<a href="#section-5.1-1.6.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-4.1-2.7">
-<code>jti</code>:</dt>
-          <dd style="margin-left: 1.5em" id="section-4.1-2.8">
-            <p id="section-4.1-2.8.1"><span class="bcp14">REQUIRED</span> - Unique ID of this JWT as defined in <span><a href="https://rfc-editor.org/rfc/rfc7519#section-4.1.7" class="relref">Section 4.1.7</a> of [<a href="#RFC7519" class="cite xref">RFC7519</a>]</span>.<a href="#section-4.1-2.8.1" class="pilcrow">¶</a></p>
+<dt id="section-5.1-1.7">
+<code>exp</code>, <code>iat</code>, <code>jti</code>
+</dt>
+          <dd style="margin-left: 1.5em" id="section-5.1-1.8">
+            <p id="section-5.1-1.8.1"><span class="bcp14">REQUIRED</span> - As defined in <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span>.<a href="#section-5.1-1.8.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-4.1-2.9">
-<code>exp</code>:</dt>
-          <dd style="margin-left: 1.5em" id="section-4.1-2.10">
-            <p id="section-4.1-2.10.1"><span class="bcp14">REQUIRED</span> - as defined in <span><a href="https://rfc-editor.org/rfc/rfc7519#section-4.1.4" class="relref">Section 4.1.4</a> of [<a href="#RFC7519" class="cite xref">RFC7519</a>]</span>.<a href="#section-4.1-2.10.1" class="pilcrow">¶</a></p>
-</dd>
-          <dd class="break"></dd>
-<dt id="section-4.1-2.11">
-<code>iat</code>:</dt>
-          <dd style="margin-left: 1.5em" id="section-4.1-2.12">
-            <p id="section-4.1-2.12.1"><span class="bcp14">REQUIRED</span> - as defined in <span><a href="https://rfc-editor.org/rfc/rfc7519#section-4.1.6" class="relref">Section 4.1.6</a> of [<a href="#RFC7519" class="cite xref">RFC7519</a>]</span>.<a href="#section-4.1-2.12.1" class="pilcrow">¶</a></p>
+<dt id="section-5.1-1.9"><code>scope</code></dt>
+          <dd style="margin-left: 1.5em" id="section-5.1-1.10">
+            <p id="section-5.1-1.10.1"><span class="bcp14">OPTIONAL</span> - A space-separated list of scopes (<span>[<a href="#RFC6749" class="cite xref">RFC6749</a>], <a href="https://rfc-editor.org/rfc/rfc6749#section-3.3" class="relref">Section 3.3</a></span>) the Platform asserts for this request, as in <span>[<a href="#IDJAG" class="cite xref">IDJAG</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04#section-3.1" class="relref">Section 3.1</a></span>.  The Authorization Server decides under its own policy which of them to grant, and <span class="bcp14">MAY</span> grant a subset (<span>[<a href="#IDJAG" class="cite xref">IDJAG</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04#section-4.4.1" class="relref">Section 4.4.1</a></span>).<a href="#section-5.1-1.10.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 </dl>
-<p id="section-4.1-3">The assertion is signed under a key in
-the issuer's published JWK Set <span>[<a href="#RFC7517" class="cite xref">RFC7517</a>]</span>.  The Authorization Server <span class="bcp14">MUST</span>
-resolve the signing key by iss (<a href="#trust" class="auto internal xref">Section 5.1</a>), not via a client registration.
-The assertion carries the Agent's Properties (<a href="#properties" class="auto internal xref">Section 5.3</a>), and the
-Authorization Server <span class="bcp14">MUST</span> make them available to the Resource Server's
-authorization decision.<a href="#section-4.1-3" class="pilcrow">¶</a></p>
-<p id="section-4.1-4">An Agent Property records what the Platform asserted when it issued the
-authorization grant.  The grant's signature authenticates that assertion;
-<code>iat</code> records when it was made, and <code>exp</code> bounds how long the grant can be
-accepted.  Those checks do not by themselves establish that a mutable
-Property remains true when the grant is presented or when an access token is
-used.  If a local authorization rule requires a Property to remain true at
-one of those later times, the deployment <span class="bcp14">MUST</span> obtain evidence current for
-that time.  Otherwise, the deployment <span class="bcp14">MUST</span> bound its exposure to stale
-Properties through the grant and access token lifetimes.<a href="#section-4.1-4" class="pilcrow">¶</a></p>
-<p id="section-4.1-5">Authorization Servers accepting Workload Authorization Grants <span class="bcp14">MUST</span>
-include <code>urn:ietf:params:oauth:grant-type:jwt-bearer</code> in <code>grant_types_supported</code>
-in their metadata <span>[<a href="#RFC8414" class="cite xref">RFC8414</a>]</span>.<a href="#section-4.1-5" class="pilcrow">¶</a></p>
-</section>
-</div>
-<div id="presentation">
-<section id="section-4.2">
-        <h3 id="name-presentation">
-<a href="#section-4.2" class="section-number selfRef">4.2. </a><a href="#name-presentation" class="section-name selfRef">Presentation</a>
-        </h3>
-<p id="section-4.2-1"><a href="#fig-token-request" class="auto internal xref">Figure 2</a> shows an example token request (with extra line
-breaks for display purposes only):<a href="#section-4.2-1" class="pilcrow">¶</a></p>
-<span id="name-example-token-request"></span><div id="fig-token-request">
-<figure id="figure-2">
-          <div class="alignLeft art-text artwork" id="section-4.2-2.1">
-<pre>
-POST /token HTTP/1.1
-Host: as.saas.example
-Content-Type: application/x-www-form-urlencoded
-
-grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer
-&amp;assertion=eyJhbGciOiJFUzI1NiIsImtpZCI6IjIwMjYtMDctMTQi...
-&amp;resource=https%3A%2F%2Fapi.saas.example%2F
-</pre>
-</div>
-<figcaption><a href="#figure-2" class="selfRef">Figure 2</a>:
-<a href="#name-example-token-request" class="selfRef">Example token request</a>
-          </figcaption></figure>
-</div>
-<p id="section-4.2-3"><a href="#fig-assertion-claims" class="auto internal xref">Figure 3</a> shows the decoded claims of the assertion carried
-in that request; name, namespace, groups, roles, and ctx are Agent
-Properties (<a href="#properties" class="auto internal xref">Section 5.3</a>):<a href="#section-4.2-3" class="pilcrow">¶</a></p>
-<span id="name-example-assertion-claims"></span><div id="fig-assertion-claims">
-<figure id="figure-3">
-          <div class="alignLeft art-text artwork" id="section-4.2-4.1">
-<pre>
+<p id="section-5.1-2">The assertion is signed under a key configured from the Platform (see <a href="#issuer-keys" class="auto internal xref">Section 6.1</a>) and <span class="bcp14">MAY</span> carry further claims about the Agent. An Authorization Server that publishes metadata <span>[<a href="#RFC8414" class="cite xref">RFC8414</a>]</span> <span class="bcp14">SHOULD</span> list the <code>urn:ietf:params:oauth:grant-type:jwt-bearer</code> grant type in <code>grant_types_supported</code>.<a href="#section-5.1-2" class="pilcrow">¶</a></p>
+<p id="section-5.1-3"><code>
 {
   "iss": "https://acme.agents.platform.example",
-  "sub": "wimse://acme.agents.platform.example/agent/7f3d9a2e",
-  "aud": ["https://as.saas.example",
-          "https://as.saas.example/token"],
+  "sub": "agent/7f3d9as3",
+  "aud": "https://as.saas.example",
   "exp": 1785271980,
   "iat": 1785271680,
   "jti": "7d0f5a2b-93c8-4f0e-9c33-1b6a0e6d5f10",
-  "name": "Support Triage Agent",
-  "namespace": "acme/support",
-  "groups": ["support-eng"],
-  "roles": ["responder"],
-  "ctx": "channel:C0123456789"
+  "scope": "issues:read issues:write"
 }
-</pre>
-</div>
-<figcaption><a href="#figure-3" class="selfRef">Figure 3</a>:
-<a href="#name-example-assertion-claims" class="selfRef">Example assertion claims</a>
-          </figcaption></figure>
-</div>
-<p id="section-4.2-5">The Authorization Server <span class="bcp14">MUST NOT</span> issue refresh tokens, as access tokens are short-lived and
-audience-restricted <span>[<a href="#RFC8707" class="cite xref">RFC8707</a>]</span>.  Assertion lifetimes <span class="bcp14">SHOULD</span> be as short as
-system availability constraints allow.<a href="#section-4.2-5" class="pilcrow">¶</a></p>
-<p id="section-4.2-6">TODO: proof-of-possession -- the assertion is a bearer grant; options are
-sender-constrained access tokens, or attestation-based client authentication
-<span>[<a href="#ATTEST-CLIENT-AUTH" class="cite xref">ATTEST-CLIENT-AUTH</a>]</span> (Platform as client attester, agent instance signs the
-PoP JWT) if agent instances hold keys.<a href="#section-4.2-6" class="pilcrow">¶</a></p>
+</code><a href="#section-5.1-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
 </div>
-<div id="deployment">
-<section id="section-5">
-      <h2 id="name-deployment">
-<a href="#section-5" class="section-number selfRef">5. </a><a href="#name-deployment" class="section-name selfRef">Deployment</a>
+<div id="platform-registration">
+<section id="section-6">
+      <h2 id="name-platform-registration">
+<a href="#section-6" class="section-number selfRef">6. </a><a href="#name-platform-registration" class="section-name selfRef">Platform Registration</a>
       </h2>
-<p id="section-5-1"><a href="#overview" class="auto internal xref">Section 3.1</a> shows the three steps end to end: one-time trust establishment
-by the Customer Administrator (<a href="#trust" class="auto internal xref">Section 5.1</a>); agent creation by end users with
-no interaction with the Resource Server (<a href="#instantiation" class="auto internal xref">Section 5.2</a>); and the
-per-request JWT authorization grant (<a href="#workload-authorization-grant" class="auto internal xref">Section 4</a>).
-This section specifies the first two and the authorization model that
-connects them.<a href="#section-5-1" class="pilcrow">¶</a></p>
-<div id="trust">
-<section id="section-5.1">
-        <h3 id="name-trust-establishment">
-<a href="#section-5.1" class="section-number selfRef">5.1. </a><a href="#name-trust-establishment" class="section-name selfRef">Trust Establishment</a>
+<p id="section-6-1">Prior to presenting a WAG to an Authorization Server, an administrator registers the Platform at the Authorization Server. During this registration step, the Authorization Server obtains the Platform's issuer identifier, the issuer's key, and tenant information (see <a href="#tenants" class="auto internal xref">Section 6.3</a>). The Authorization Server also decides on authorization policy for the Platform including optionally mapping claims provided by the platform to permissions. The specifics of this registration step are outside the scope of this document. It is not a client registration <span>[<a href="#RFC7591" class="cite xref">RFC7591</a>]</span> and yields no client identifier or credential.<a href="#section-6-1" class="pilcrow">¶</a></p>
+<div id="issuer-keys">
+<section id="section-6.1">
+        <h3 id="name-issuer-keys">
+<a href="#section-6.1" class="section-number selfRef">6.1. </a><a href="#name-issuer-keys" class="section-name selfRef">Issuer Keys</a>
         </h3>
-<p id="section-5.1-1">The Customer Administrator once records, at the Authorization Server, an
-allowlist entry binding one issuer to one tenancy: the issuer identifier, from which
-the issuer's metadata and JWK Set location are discovered per
-<span>[<a href="#OIDC-DISCOVERY" class="cite xref">OIDC-DISCOVERY</a>]</span> (retrieved over https <span>[<a href="#RFC9525" class="cite xref">RFC9525</a>]</span>), and the tenancy's initial
-Property-to-permission mapping for the Resource Server (<a href="#properties" class="auto internal xref">Section 5.3</a>).  Establishment is by
-reference; no keys or secrets are transferred, and key rotation is by JWK Set
-update alone.  Platforms serving multiple customers <span class="bcp14">MUST</span> use a distinct
-issuer per tenancy: the issuer is the trust boundary the allowlist expresses,
-and a shared issuer would move tenancy enforcement into claim evaluation at
-every Authorization Server -- including relying parties that can evaluate
-only subject and audience (<a href="#oi" class="auto internal xref">Section 6</a>).  The proposed MCP Workload Identity
-Federation extension <span>[<a href="#MCP-WIF" class="cite xref">MCP-WIF</a>]</span> recommends (<span class="bcp14">SHOULD</span>) that authorization
-servers rely only on issuing keys bound to a single tenant; this document deliberately tightens that boundary to a
-per-tenancy issuer <span class="bcp14">MUST</span>.<a href="#section-5.1-1" class="pilcrow">¶</a></p>
-<p id="section-5.1-2">Multi-issuer operation is scoped by issuer throughout.  An Authorization
-Server <span class="bcp14">MUST</span> resolve and cache keys per allowlist entry and <span class="bcp14">MUST NOT</span> merge
-key sets across issuers, and it <span class="bcp14">MUST</span> interpret sub and jti only within the scope of the presenting
-iss.  A Resource Server that keeps a Property-to-permission mapping
-(<a href="#properties" class="auto internal xref">Section 5.3</a>) likewise scopes it by iss.
-An Agent Identifier is unique within its issuer, not globally: policy and
-audit records are keyed on the (iss, sub) pair, or on the complete URI-form
-identifier, which carries the tenancy in its authority component.<a href="#section-5.1-2" class="pilcrow">¶</a></p>
-</section>
-</div>
-<div id="instantiation">
-<section id="section-5.2">
-        <h3 id="name-agent-instantiation">
-<a href="#section-5.2" class="section-number selfRef">5.2. </a><a href="#name-agent-instantiation" class="section-name selfRef">Agent Instantiation</a>
-        </h3>
-<p id="section-5.2-1">Creating an Agent is Platform-internal and <span class="bcp14">MUST NOT</span> require any
-ahead-of-time interaction with the Resource Server, the Authorization
-Server, an Enterprise IdP, or the Customer Administrator.  The Authorization
-Server first learns that an Agent exists when the Agent presents its first
-authorization grant: it <span class="bcp14">MUST</span> accept a previously-unseen Agent Identifier
-presented as sub under an allowlisted issuer, and authorization -- at the
-Authorization Server and the Resource Server alike -- is via <a href="#properties" class="auto internal xref">Section 5.3</a>,
-never identifier structure.  Agents are not
-dynamically registered clients <span>[<a href="#RFC7591" class="cite xref">RFC7591</a>]</span>.<a href="#section-5.2-1" class="pilcrow">¶</a></p>
-<p id="section-5.2-2">Optionally, a Platform <span class="bcp14">MAY</span> project Agents into an Enterprise IdP (e.g., as
-<span>[<a href="#SCIM-AGENT" class="cite xref">SCIM-AGENT</a>]</span> resources) for inventory and lifecycle governance.  Such
-projection <span class="bcp14">MUST NOT</span> be required ahead of time: performing it just in time,
-including synchronously during first token issuance, is acceptable.  TODO:
-BYO-IdP deployment model.<a href="#section-5.2-2" class="pilcrow">¶</a></p>
+<p id="section-6.1-1">As part of a Platform registration, the Authorization Server needs to record an issuer identifier and obtain the public keys associated with that issuer.<a href="#section-6.1-1" class="pilcrow">¶</a></p>
+<p id="section-6.1-2">A Platform may provide its public key via: a JWK Set <span>[<a href="#RFC7517" class="cite xref">RFC7517</a>]</span> entered directly, a JWK Set URL the Authorization Server fetches over HTTPS <span>[<a href="#RFC9525" class="cite xref">RFC9525</a>]</span>, or the <code>jwks_uri</code> in metadata the issuer publishes under its issuer identifier (<span>[<a href="#RFC8414" class="cite xref">RFC8414</a>], <a href="https://rfc-editor.org/rfc/rfc8414#section-3" class="relref">Section 3</a></span> or <span>[<a href="#OIDC-DISCOVERY" class="cite xref">OIDC-DISCOVERY</a>]</span>).  An Authorization Server that uses issuer metadata <span class="bcp14">MUST NOT</span> use a document whose <code>issuer</code> value is not identical to the registration's issuer identifier (<span>[<a href="#RFC8414" class="cite xref">RFC8414</a>], <a href="https://rfc-editor.org/rfc/rfc8414#section-3.3" class="relref">Section 3.3</a></span>).  A Platform <span class="bcp14">SHOULD</span> publish its keys at a URL, so that keys can rotate without administrator action.<a href="#section-6.1-2" class="pilcrow">¶</a></p>
+<p id="section-6.1-3">On each assertion the Authorization Server finds the Platform registration the assertion matches: <code>iss</code> equals the registration's issuer identifier by Simple String Comparison (<span>[<a href="#RFC7523" class="cite xref">RFC7523</a>], <a href="https://rfc-editor.org/rfc/rfc7523#section-3" class="relref">Section 3</a></span>) and, where the registration names a claim (<a href="#tenants" class="auto internal xref">Section 6.3</a>), the assertion carries that claim with the registered value.  An Authorization Server <span class="bcp14">MUST</span> ensure that an assertion can match at most one of its Platform registrations.  The Authorization Server <span class="bcp14">MUST</span> reject an assertion that matches no Platform registration, <span class="bcp14">MUST</span> verify the signature only under a key configured or retrieved for the matched registration's issuer identifier - never under key material or key locations carried in the assertion (<span>[<a href="#RFC8725" class="cite xref">RFC8725</a>], <a href="https://rfc-editor.org/rfc/rfc8725#section-3.8" class="relref">Section 3.8</a></span> and <span>[<a href="#RFC8725" class="cite xref">RFC8725</a>], <a href="https://rfc-editor.org/rfc/rfc8725#section-3.10" class="relref">Section 3.10</a></span>) - and <span class="bcp14">MUST</span> interpret <code>sub</code> and <code>jti</code> only within the scope of the matched Platform registration.<a href="#section-6.1-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="properties">
-<section id="section-5.3">
-        <h3 id="name-agent-properties-and-author">
-<a href="#section-5.3" class="section-number selfRef">5.3. </a><a href="#name-agent-properties-and-author" class="section-name selfRef">Agent Properties and Authorization</a>
+<section id="section-6.2">
+        <h3 id="name-permissions">
+<a href="#section-6.2" class="section-number selfRef">6.2. </a><a href="#name-permissions" class="section-name selfRef">Permissions</a>
         </h3>
-<p id="section-5.3-1">TODO.  Initial standard property claims: name, a human-readable display
-name as in an OpenID Connect ID Token <span>[<a href="#OIDC-CORE" class="cite xref">OIDC-CORE</a>]</span> (mutable, and never a
-key for authorization or attribution -- that is the Agent Identifier);
-namespace, groups, roles, and an optional ctx naming the collaboration
-context; additional attributes use collision-resistant claim names per
-<span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span>, Section 4.3.  TODO: whether an Agent needs a human-usable,
-"@"-referenceable address within the Platform, analogous to sharing a
-document with an email address, distinct from both name and the opaque
-Agent Identifier; noted here, deliberately unsolved.  A Resource
-Server keeps a local, administrator-controlled mapping from Property
-predicates to permissions; possession of a Property is not itself
-authorization.  Property names and values cross a trust boundary as
-issuer assertions, not as portable permission assignments.  A Resource
-Server <span class="bcp14">MUST</span> interpret them under its own issuer-scoped mapping and <span class="bcp14">MUST NOT</span>
-assume that a role, group, entitlement, or similarly named value has the
-same meaning in another issuer's domain.  Deny semantics do not travel.
-TODO: worked example.<a href="#section-5.3-1" class="pilcrow">¶</a></p>
+<p id="section-6.2-1">During Platform registration, the Authorization Server sets local policy for what permissions to assign an access token given in return for a WAG.  This policy <span class="bcp14">MAY</span> involve consulting claims the Platform asserts about the Agent in the WAG. A claim is an assertion by the Platform, meaningful only within the context of that Platform, and an Authorization Server <span class="bcp14">MUST NOT</span> assume that a similarly named value from another Platform means the same thing.<a href="#section-6.2-1" class="pilcrow">¶</a></p>
+<p id="section-6.2-2">The specific claims a Platform provides, and what permissions an Authorization Server decides to grant are outside the scope of this document.<a href="#section-6.2-2" class="pilcrow">¶</a></p>
 </section>
 </div>
-<div id="attribution">
-<section id="section-5.4">
-        <h3 id="name-attribution">
-<a href="#section-5.4" class="section-number selfRef">5.4. </a><a href="#name-attribution" class="section-name selfRef">Attribution</a>
+<div id="tenants">
+<section id="section-6.3">
+        <h3 id="name-multi-tenancy">
+<a href="#section-6.3" class="section-number selfRef">6.3. </a><a href="#name-multi-tenancy" class="section-name selfRef">Multi-Tenancy</a>
         </h3>
-<p id="section-5.4-1">TODO.  The Authorization Server logs jti at token issuance; Resource
-Servers log the Agent Identifier (sub) and referenced Properties; internal fan-out via <span>[<a href="#TXN-TOKENS" class="cite xref">TXN-TOKENS</a>]</span> rather than
-forwarding the access token.<a href="#section-5.4-1" class="pilcrow">¶</a></p>
+<p id="section-6.3-1">In many cases, a deployment (Platform or AS/RS) will partition its infrastructure by customer organizations, or tenants.  For the purposes of this document, a Platform and Authorization Server / Resource Server refers to a single partition belonging to a single organization (<a href="#conventions" class="auto internal xref">Section 2</a>). A Platform that knows the organization's identifier at the Authorization Server can carry it in the assertion, as the <code>aud_tenant</code> claim of <span>[<a href="#IDJAG" class="cite xref">IDJAG</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04#section-3.1" class="relref">Section 3.1</a></span> does; this document does not require it.<a href="#section-6.3-1" class="pilcrow">¶</a></p>
+<p id="section-6.3-2">Where each Platform has its own issuer identifier, the issuer identifier alone identifies the Platform and nothing further in this section applies.  Where several Platforms share one issuer identifier, a claim in the assertion tells them apart.  Existing issuers use different claims for this, so this document does not fix the claim's name: the Platform registration includes the claim and the value it carries for that Platform, and the Authorization Server applies both when matching an assertion (<a href="#issuer-keys" class="auto internal xref">Section 6.1</a>).  An assertion that lacks the named claim, or carries another value, does not match that registration.<a href="#section-6.3-2" class="pilcrow">¶</a></p>
+<p id="section-6.3-3">It is <span class="bcp14">RECOMMENDED</span> that deployments use dedicated issuers for partitions. If that's not possible, it is <span class="bcp14">RECOMMENDED</span> to use the <code>tenant</code> claim (<span>[<a href="#IDJAG" class="cite xref">IDJAG</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04#section-3.1" class="relref">Section 3.1</a></span>) in order to simplify interoperability.<a href="#section-6.3-3" class="pilcrow">¶</a></p>
+<p id="section-6.3-4">How an Authorization Server determines whether a Platform needs a differentiating claim, and which, is left to be discovered out of band of this specification.<a href="#section-6.3-4" class="pilcrow">¶</a></p>
 </section>
 </div>
-<div id="lifecycle">
-<section id="section-5.5">
-        <h3 id="name-retirement-and-lifecycle">
-<a href="#section-5.5" class="section-number selfRef">5.5. </a><a href="#name-retirement-and-lifecycle" class="section-name selfRef">Retirement and Lifecycle</a>
-        </h3>
-<p id="section-5.5-1">Retirement is expressed by cessation: the Platform stops signing assertions
-for a retired Agent, so residual access is bounded by the remaining lifetime
-of any outstanding assertion plus the lifetime of any access token already
-issued.  Assertion and access-token lifetimes <span class="bcp14">SHOULD</span> be chosen with this
-bound in mind.  No signal yet informs an Authorization Server that an Agent
-Identifier is permanently retired; that gap is shared with neighboring
-workload identity ecosystems, whose common baseline is likewise short
-credential lifetimes plus ceasing issuance (<a href="#oi" class="auto internal xref">Section 6</a>).<a href="#section-5.5-1" class="pilcrow">¶</a></p>
-<p id="section-5.5-2">Broader lifecycle management is out of scope for this document.  In
-particular, resources that come to be owned by an Agent (documents, records,
-long-lived artifacts) need succession planning when the Agent is retired;
-this document makes the retirement event's access consequences legible, but
-does not manage its downstream effects.<a href="#section-5.5-2" class="pilcrow">¶</a></p>
 </section>
 </div>
+<div id="errors">
+<section id="section-7">
+      <h2 id="name-error-responses">
+<a href="#section-7" class="section-number selfRef">7. </a><a href="#name-error-responses" class="section-name selfRef">Error Responses</a>
+      </h2>
+<p id="section-7-1">When a token request fails, the Authorization Server <span class="bcp14">SHOULD</span> indicate in <code>error_description</code> (<span>[<a href="#RFC6749" class="cite xref">RFC6749</a>], <a href="https://rfc-editor.org/rfc/rfc6749#section-5.2" class="relref">Section 5.2</a></span>) who must act: an administrator of the Authorization Server, if the Platform is not trusted or the Agent holds no permission for the request; or the Platform, if the assertion is invalid.  An untrusted Platform or an invalid assertion yields <code>invalid_grant</code> (<span>[<a href="#RFC7523" class="cite xref">RFC7523</a>], <a href="https://rfc-editor.org/rfc/rfc7523#section-3.1" class="relref">Section 3.1</a></span>); a missing permission yields <code>invalid_scope</code> or <code>invalid_target</code> (<span>[<a href="#RFC8707" class="cite xref">RFC8707</a>]</span>) where a specific scope or resource is refused, otherwise <code>invalid_grant</code>.  When an action can be taken to resolve the issue, the Authorization Server <span class="bcp14">SHOULD</span> include a link in <code>error_uri</code>.<a href="#section-7-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="oi">
-<section id="section-6">
+<section id="section-8">
       <h2 id="name-open-issues">
-<a href="#section-6" class="section-number selfRef">6. </a><a href="#name-open-issues" class="section-name selfRef">Open Issues</a>
+<a href="#section-8" class="section-number selfRef">8. </a><a href="#name-open-issues" class="section-name selfRef">Open Issues</a>
       </h2>
 <ul class="normal">
-<li class="normal" id="section-6-1.1">
-          <p id="section-6-1.1.1">Relying parties that authorize only on subject and audience (e.g., cloud
-IAM federation trust policies) and cannot evaluate Property predicates;
-URI-form Agent Identifiers (<a href="#identity-model" class="auto internal xref">Section 3.2</a>) carry the tenancy inside
-the identifier for this case, but the residual gap is unassessed.<a href="#section-6-1.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-8-1.1">
+          <p id="section-8-1.1.1">Agent ownership: see issue #13.<a href="#section-8-1.1.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-6-1.2">
-          <p id="section-6-1.2.1">Proof-of-possession: the authorization grant is bearer; see
-<a href="#workload-authorization-grant" class="auto internal xref">Section 4</a>.<a href="#section-6-1.2.1" class="pilcrow">¶</a></p>
+        <li class="normal" id="section-8-1.2">
+          <p id="section-8-1.2.1">Proof of possession: the grant is a bearer assertion and no client authentication is required; whether to name a hardening (sender-constrained access tokens, authenticating the presenting instance, or the Platform authenticating as a client) and which, if any, to require.<a href="#section-8-1.2.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-6-1.3">
-          <p id="section-6-1.3.1">Issuer placement: issuer operated by the Platform versus by the Enterprise
-IdP, with the Platform obtaining assertions by token exchange <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>
-with the IdP; client authentication is redundant in the former case and
-load-bearing in the latter; what, if anything, client_id means in each
-case.<a href="#section-6-1.3.1" class="pilcrow">¶</a></p>
+        <li class="normal" id="section-8-1.3">
+          <p id="section-8-1.3.1">JWT type: whether to define an explicit <code>typ</code> for this grant (<span>[<a href="#RFC8725" class="cite xref">RFC8725</a>], <a href="https://rfc-editor.org/rfc/rfc8725#section-3.11" class="relref">Section 3.11</a></span>), so that another kind of JWT signed by the same issuer for the same audience cannot be taken for it.<a href="#section-8-1.3.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-6-1.4">
-          <p id="section-6-1.4.1">Staleness and retirement signaling in place of per-agent revocation
-(issuer- or Property-scoped epoch versus event push versus lifetime
-alone, <a href="#lifecycle" class="auto internal xref">Section 5.5</a>); a gap shared with neighboring workload identity
-ecosystems.<a href="#section-6-1.4.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="section-6-1.5">
-          <p id="section-6-1.5.1">Addressing: whether an Agent needs a human-usable, "@"-referenceable
-address (to share a resource with an agent the way one shares with an
-email address), distinct from the display name and the Agent Identifier.<a href="#section-6-1.5.1" class="pilcrow">¶</a></p>
+        <li class="normal" id="section-8-1.4">
+          <p id="section-8-1.4.1">Replay: whether an Authorization Server is required to reject a <code>jti</code> it has already accepted while the assertion is still valid, or whether that stays optional as in <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>], <a href="https://rfc-editor.org/rfc/rfc7523#section-3" class="relref">Section 3</a></span>.<a href="#section-8-1.4.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
 </section>
 </div>
-<div id="privacy-considerations">
-<section id="section-7">
-      <h2 id="name-privacy-considerations">
-<a href="#section-7" class="section-number selfRef">7. </a><a href="#name-privacy-considerations" class="section-name selfRef">Privacy Considerations</a>
-    </h2>
-</section>
-</div>
 <div id="security-considerations">
-<section id="section-8">
+<section id="section-9">
       <h2 id="name-security-considerations">
-<a href="#section-8" class="section-number selfRef">8. </a><a href="#name-security-considerations" class="section-name selfRef">Security Considerations</a>
+<a href="#section-9" class="section-number selfRef">9. </a><a href="#name-security-considerations" class="section-name selfRef">Security Considerations</a>
       </h2>
-<p id="section-8-1">TODO: unseen agent identifiers under trusted issuers; issuer allowlist as the
-trust boundary; tenant confusion at multi-issuer Authorization Servers (<a href="#trust" class="auto internal xref">Section 5.1</a>);
-bearer-assertion theft and assertion lifetime; Platform as root of trust;
-credential non-exposure to the model; automated trust establishment.<a href="#section-8-1" class="pilcrow">¶</a></p>
-<p id="section-8-2">Property freshness is distinct from JWT validity.  A valid signature proves
-that the Platform made the assertion, while <code>exp</code> only limits how long the
-grant may be accepted.  Neither proves that mutable runtime, posture, group,
-role, or entitlement state still holds at presentation or access time.  A
-deployment that authorizes on such state needs a current-status mechanism or
-lifetimes short enough for its risk bound.  Failure to obtain required
-current-status evidence <span class="bcp14">MUST NOT</span> be treated as evidence that the Property
-still holds.<a href="#section-8-2" class="pilcrow">¶</a></p>
+<p id="section-9-1">This revision lists the considerations it is aware of; a fuller treatment will follow.<a href="#section-9-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-9-2.1">
+          <p id="section-9-2.1.1">Agents are accepted on their first assertion, so the set of acceptable Agents grows at the Platform with no action at the Authorization Server, and each new Agent creates state there; an Authorization Server can cap new Agents per Platform registration.<a href="#section-9-2.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-9-2.2">
+          <p id="section-9-2.2.1">The assertion is a bearer credential: a short lifetime, its <code>aud</code> and, where the Authorization Server enforces it, single use by <code>jti</code> bound what a stolen assertion is worth.<a href="#section-9-2.2.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-9-2.3">
+          <p id="section-9-2.3.1">Keys are held per issuer identifier, so that one issuer's key never verifies another's assertion (<a href="#issuer-keys" class="auto internal xref">Section 6.1</a>); whoever controls an issuer identifier, or the DNS name under it, controls what every trusting Authorization Server accepts.<a href="#section-9-2.3.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-9-2.4">
+          <p id="section-9-2.4.1">Platforms under a shared issuer identifier share its keys, so the claim that tells them apart (<a href="#tenants" class="auto internal xref">Section 6.3</a>) is only as trustworthy as the party signing for all of them, and a Platform registration for a shared issuer identifier that names no claim trusts every Platform under it.<a href="#section-9-2.4.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-9-2.5">
+          <p id="section-9-2.5.1">Where one Authorization Server serves several organizations, a Platform registration created by the wrong organization routes another organization's Agents to it; who may register a given Platform is out of scope.<a href="#section-9-2.5.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-9-2.6">
+          <p id="section-9-2.6.1">Error responses (<a href="#errors" class="auto internal xref">Section 7</a>) tell any presenter which Platforms an Authorization Server trusts, and <code>error_uri</code> hands a link to an unauthenticated presenter.<a href="#section-9-2.6.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-9-2.7">
+          <p id="section-9-2.7.1">This document defines no explicit JWT type, so an issuer that signs other kinds of JWT for the same audience risks one being taken for this grant (<span>[<a href="#RFC8725" class="cite xref">RFC8725</a>], <a href="https://rfc-editor.org/rfc/rfc8725#section-3.11" class="relref">Section 3.11</a></span>).<a href="#section-9-2.7.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
 </section>
 </div>
 <div id="iana-considerations">
-<section id="section-9">
+<section id="section-10">
       <h2 id="name-iana-considerations">
-<a href="#section-9" class="section-number selfRef">9. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
+<a href="#section-10" class="section-number selfRef">10. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
       </h2>
-<p id="section-9-1">This document has no IANA actions at this time; provisional claim names
-(<a href="#properties" class="auto internal xref">Section 5.3</a>) may be registered in a future revision.<a href="#section-9-1" class="pilcrow">¶</a></p>
+<p id="section-10-1">This document has no IANA actions.<a href="#section-10-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="sec-combined-references">
-<section id="section-10">
+<section id="section-11">
       <h2 id="name-references">
-<a href="#section-10" class="section-number selfRef">10. </a><a href="#name-references" class="section-name selfRef">References</a>
+<a href="#section-11" class="section-number selfRef">11. </a><a href="#name-references" class="section-name selfRef">References</a>
       </h2>
 <div id="sec-normative-references">
-<section id="section-10.1">
+<section id="section-11.1">
         <h3 id="name-normative-references">
-<a href="#section-10.1" class="section-number selfRef">10.1. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
+<a href="#section-11.1" class="section-number selfRef">11.1. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
         </h3>
 <dl class="references">
 <dt id="OIDC-DISCOVERY">[OIDC-DISCOVERY]</dt>
@@ -1940,6 +1533,10 @@ still holds.<a href="#section-8-2" class="pilcrow">¶</a></p>
 <dt id="RFC2119">[RFC2119]</dt>
         <dd>
 <span class="refAuthor">Bradner, S.</span>, <span class="refTitle">"Key words for use in RFCs to Indicate Requirement Levels"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 2119</span>, <span class="seriesInfo">DOI 10.17487/RFC2119</span>, <time datetime="1997-03" class="refDate">March 1997</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc2119">https://www.rfc-editor.org/rfc/rfc2119</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC6749">[RFC6749]</dt>
+        <dd>
+<span class="refAuthor">Hardt, D., Ed.</span>, <span class="refTitle">"The OAuth 2.0 Authorization Framework"</span>, <span class="seriesInfo">RFC 6749</span>, <span class="seriesInfo">DOI 10.17487/RFC6749</span>, <time datetime="2012-10" class="refDate">October 2012</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc6749">https://www.rfc-editor.org/rfc/rfc6749</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC7517">[RFC7517]</dt>
         <dd>
@@ -1969,46 +1566,26 @@ still holds.<a href="#section-8-2" class="pilcrow">¶</a></p>
         <dd>
 <span class="refAuthor">Campbell, B.</span>, <span class="refAuthor">Bradley, J.</span>, and <span class="refAuthor">H. Tschofenig</span>, <span class="refTitle">"Resource Indicators for OAuth 2.0"</span>, <span class="seriesInfo">RFC 8707</span>, <span class="seriesInfo">DOI 10.17487/RFC8707</span>, <time datetime="2020-02" class="refDate">February 2020</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8707">https://www.rfc-editor.org/rfc/rfc8707</a>&gt;</span>. </dd>
 <dd class="break"></dd>
-<dt id="RFC9525">[RFC9525]</dt>
+<dt id="RFC8725">[RFC8725]</dt>
         <dd>
-<span class="refAuthor">Saint-Andre, P.</span> and <span class="refAuthor">R. Salz</span>, <span class="refTitle">"Service Identity in TLS"</span>, <span class="seriesInfo">RFC 9525</span>, <span class="seriesInfo">DOI 10.17487/RFC9525</span>, <time datetime="2023-11" class="refDate">November 2023</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9525">https://www.rfc-editor.org/rfc/rfc9525</a>&gt;</span>. </dd>
+<span class="refAuthor">Sheffer, Y.</span>, <span class="refAuthor">Hardt, D.</span>, and <span class="refAuthor">M. Jones</span>, <span class="refTitle">"JSON Web Token Best Current Practices"</span>, <span class="seriesInfo">BCP 225</span>, <span class="seriesInfo">RFC 8725</span>, <span class="seriesInfo">DOI 10.17487/RFC8725</span>, <time datetime="2020-02" class="refDate">February 2020</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8725">https://www.rfc-editor.org/rfc/rfc8725</a>&gt;</span>. </dd>
 <dd class="break"></dd>
-<dt id="WIMSE-ID">[WIMSE-ID]</dt>
+<dt id="RFC9525">[RFC9525]</dt>
       <dd>
-<span class="refAuthor">Rosomakho, Y.</span> and <span class="refAuthor">J. A. Salowey</span>, <span class="refTitle">"Workload Identifier"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-wimse-identifier-03</span>, <time datetime="2026-07-06" class="refDate">6 July 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-wimse-identifier-03">https://datatracker.ietf.org/doc/html/draft-ietf-wimse-identifier-03</a>&gt;</span>. </dd>
+<span class="refAuthor">Saint-Andre, P.</span> and <span class="refAuthor">R. Salz</span>, <span class="refTitle">"Service Identity in TLS"</span>, <span class="seriesInfo">RFC 9525</span>, <span class="seriesInfo">DOI 10.17487/RFC9525</span>, <time datetime="2023-11" class="refDate">November 2023</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9525">https://www.rfc-editor.org/rfc/rfc9525</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 </dl>
 </section>
 </div>
 <div id="sec-informative-references">
-<section id="section-10.2">
+<section id="section-11.2">
         <h3 id="name-informative-references">
-<a href="#section-10.2" class="section-number selfRef">10.2. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
+<a href="#section-11.2" class="section-number selfRef">11.2. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
         </h3>
 <dl class="references">
-<dt id="AIMS">[AIMS]</dt>
-        <dd>
-<span class="refAuthor">Kasselman, P.</span>, <span class="refAuthor">Lombardo, J.</span>, <span class="refAuthor">Rosomakho, Y.</span>, <span class="refAuthor">Campbell, B.</span>, <span class="refAuthor">Steele, N.</span>, and <span class="refAuthor">A. Parecki</span>, <span class="refTitle">"AI Agent Authentication and Authorization"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-klrc-aiagent-auth-03</span>, <time datetime="2026-07-06" class="refDate">6 July 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-klrc-aiagent-auth-03">https://datatracker.ietf.org/doc/html/draft-klrc-aiagent-auth-03</a>&gt;</span>. </dd>
-<dd class="break"></dd>
-<dt id="ATTEST-CLIENT-AUTH">[ATTEST-CLIENT-AUTH]</dt>
-        <dd>
-<span class="refAuthor">Looker, T.</span>, <span class="refAuthor">Bastian, P.</span>, and <span class="refAuthor">C. Bormann</span>, <span class="refTitle">"OAuth 2.0 Attestation-Based Client Authentication"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-oauth-attestation-based-client-auth-11</span>, <time datetime="2026-09-03" class="refDate">3 September 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-attestation-based-client-auth-11">https://datatracker.ietf.org/doc/html/draft-ietf-oauth-attestation-based-client-auth-11</a>&gt;</span>. </dd>
-<dd class="break"></dd>
-<dt id="CIMD">[CIMD]</dt>
-        <dd>
-<span class="refAuthor">Parecki, A.</span> and <span class="refAuthor">E. Smith</span>, <span class="refTitle">"OAuth Client ID Metadata Document"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-oauth-client-id-metadata-document-02</span>, <time datetime="2026-07-06" class="refDate">6 July 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-02">https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-02</a>&gt;</span>. </dd>
-<dd class="break"></dd>
 <dt id="IDJAG">[IDJAG]</dt>
         <dd>
 <span class="refAuthor">Parecki, A.</span>, <span class="refAuthor">McGuinness, K.</span>, and <span class="refAuthor">B. Campbell</span>, <span class="refTitle">"Identity Assertion JWT Authorization Grant"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-oauth-identity-assertion-authz-grant-04</span>, <time datetime="2026-05-21" class="refDate">21 May 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04">https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04</a>&gt;</span>. </dd>
-<dd class="break"></dd>
-<dt id="MCP-WIF">[MCP-WIF]</dt>
-        <dd>
-<span class="refAuthor">Model Context Protocol Community</span>, <span class="refTitle">"Workload Identity Federation (proposed Model Context Protocol ext-auth extension, pull request 10)"</span>, <span>n.d.</span>, <span>&lt;<a href="https://github.com/modelcontextprotocol/ext-auth/pull/10">https://github.com/modelcontextprotocol/ext-auth/pull/10</a>&gt;</span>. </dd>
-<dd class="break"></dd>
-<dt id="OIDC-CORE">[OIDC-CORE]</dt>
-        <dd>
-<span class="refAuthor">Sakimura, N.</span>, <span class="refAuthor">Bradley, J.</span>, <span class="refAuthor">Jones, M.</span>, <span class="refAuthor">de Medeiros, B.</span>, and <span class="refAuthor">C. Mortimore</span>, <span class="refTitle">"OpenID Connect Core 1.0 incorporating errata set 2"</span>, <time datetime="2023-12" class="refDate">December 2023</time>, <span>&lt;<a href="https://openid.net/specs/openid-connect-core-1_0.html">https://openid.net/specs/openid-connect-core-1_0.html</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC7523BIS">[RFC7523BIS]</dt>
         <dd>
@@ -2018,21 +1595,9 @@ still holds.<a href="#section-8-2" class="pilcrow">¶</a></p>
         <dd>
 <span class="refAuthor">Richer, J., Ed.</span>, <span class="refAuthor">Jones, M.</span>, <span class="refAuthor">Bradley, J.</span>, <span class="refAuthor">Machulak, M.</span>, and <span class="refAuthor">P. Hunt</span>, <span class="refTitle">"OAuth 2.0 Dynamic Client Registration Protocol"</span>, <span class="seriesInfo">RFC 7591</span>, <span class="seriesInfo">DOI 10.17487/RFC7591</span>, <time datetime="2015-07" class="refDate">July 2015</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc7591">https://www.rfc-editor.org/rfc/rfc7591</a>&gt;</span>. </dd>
 <dd class="break"></dd>
-<dt id="RFC8693">[RFC8693]</dt>
-        <dd>
-<span class="refAuthor">Jones, M.</span>, <span class="refAuthor">Nadalin, A.</span>, <span class="refAuthor">Campbell, B., Ed.</span>, <span class="refAuthor">Bradley, J.</span>, and <span class="refAuthor">C. Mortimore</span>, <span class="refTitle">"OAuth 2.0 Token Exchange"</span>, <span class="seriesInfo">RFC 8693</span>, <span class="seriesInfo">DOI 10.17487/RFC8693</span>, <time datetime="2020-01" class="refDate">January 2020</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8693">https://www.rfc-editor.org/rfc/rfc8693</a>&gt;</span>. </dd>
-<dd class="break"></dd>
-<dt id="SCIM-AGENT">[SCIM-AGENT]</dt>
-        <dd>
-<span class="refAuthor">Wahl, M.</span>, <span class="refAuthor">Zollner, D.</span>, <span class="refAuthor">Dingle, P.</span>, and <span class="refAuthor">I. Kazzouzi</span>, <span class="refTitle">"AI Agent Resource Extension for the System for Cross-domain Identity Management (SCIM)"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-wzdk-scim-agent-resource-00</span>, <time datetime="2026-06-05" class="refDate">5 June 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-wzdk-scim-agent-resource-00">https://datatracker.ietf.org/doc/html/draft-wzdk-scim-agent-resource-00</a>&gt;</span>. </dd>
-<dd class="break"></dd>
-<dt id="TXN-TOKENS">[TXN-TOKENS]</dt>
-        <dd>
-<span class="refAuthor">Tulshibagwale, A.</span>, <span class="refAuthor">Fletcher, G.</span>, and <span class="refAuthor">P. Kasselman</span>, <span class="refTitle">"Transaction Tokens"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-oauth-transaction-tokens-11</span>, <time datetime="2026-07-30" class="refDate">30 July 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-transaction-tokens-11">https://datatracker.ietf.org/doc/html/draft-ietf-oauth-transaction-tokens-11</a>&gt;</span>. </dd>
-<dd class="break"></dd>
-<dt id="WIMSE-ARCH">[WIMSE-ARCH]</dt>
+<dt id="RFC8628">[RFC8628]</dt>
       <dd>
-<span class="refAuthor">Salowey, J. A.</span>, <span class="refAuthor">Rosomakho, Y.</span>, and <span class="refAuthor">H. Tschofenig</span>, <span class="refTitle">"Workload Identity in a Multi System Environment (WIMSE) Architecture"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-wimse-arch-08</span>, <time datetime="2026-07-06" class="refDate">6 July 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-wimse-arch-08">https://datatracker.ietf.org/doc/html/draft-ietf-wimse-arch-08</a>&gt;</span>. </dd>
+<span class="refAuthor">Denniss, W.</span>, <span class="refAuthor">Bradley, J.</span>, <span class="refAuthor">Jones, M.</span>, and <span class="refAuthor">H. Tschofenig</span>, <span class="refTitle">"OAuth 2.0 Device Authorization Grant"</span>, <span class="seriesInfo">RFC 8628</span>, <span class="seriesInfo">DOI 10.17487/RFC8628</span>, <time datetime="2019-08" class="refDate">August 2019</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8628">https://www.rfc-editor.org/rfc/rfc8628</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 </dl>
 </section>
@@ -2044,10 +1609,7 @@ still holds.<a href="#section-8-2" class="pilcrow">¶</a></p>
       <h2 id="name-acknowledgments">
 <a href="#name-acknowledgments" class="section-name selfRef">Acknowledgments</a>
       </h2>
-<p id="appendix-A-1">The editors thank Pieter Kasselman, Karl McGuinness, Kevin Kelley, Emily
-Lauber, and Maxwell Gerber for discussions that shaped this document.  The
-conceptual model of agents as workloads in <span>[<a href="#AIMS" class="cite xref">AIMS</a>]</span> informed this design.
-Further acknowledgments will be added in a future revision.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
+<p id="appendix-A-1">The editors thank Pieter Kasselman, Karl McGuinness, Kevin Kelley, Emily Lauber, and Maxwell Gerber for discussions that shaped this document.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="authors-addresses">
