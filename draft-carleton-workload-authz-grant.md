@@ -62,8 +62,6 @@ normative:
 
 informative:
   RFC7591:
-  RFC9068:
-  RFC7643:
   RFC8628:
   RFC7523BIS: I-D.ietf-oauth-rfc7523bis
   IDJAG: I-D.ietf-oauth-identity-assertion-authz-grant
@@ -209,19 +207,7 @@ On each assertion the Authorization Server finds the Platform registration the a
 ## Permissions {#properties}
 During Platform registration, the Authorization Server sets local policy for what permissions to assign an access token given in return for a WAG.  This policy MAY involve consulting claims the Platform asserts about the Agent in the WAG. A claim is an assertion by the Platform, meaningful only within the context of that Platform, and an Authorization Server MUST NOT assume that a similarly named value from another Platform means the same thing.
 
-The specific claims a Platform provides, and what permissions an Authorization Server decides to grant are outside the scope of this document.  Below is an illustrative example of one shape this permission decision can take.
-
-### Permissions Example {#permissions-example}
-
-This example is non-normative.
-
-* The Platform is configured to include a claim such as `"roles": ["developer"]` in its assertions, where each role represents a group of humans in the customer's organization.
-* The Authorization Server has its own concept of groups and permissions.
-* An administrator configures the Platform so that people with the Developer role can create Agents that carry that role as well.
-* An administrator configures the Authorization Server so that a `roles` claim containing `developer` corresponds to a set of permissions at the Authorization Server.
-* A developer creates an Agent.  On its first assertion, the Agent receives an access token carrying the permissions mapped to `developer`, and can reach the resources it needs without further registration.
-
-For this example the `roles`, `groups` and `entitlements` claim names were taken from {{RFC9068, Section 2.2.3.1}}, which take them from the SCIM core schema ({{RFC7643, Section 4.1.2}}), however the claim names are used for illustrative purposes only. Inclusion of such claims are optional and Platforms may define specific claims, depending on their deployment, supported access control models and ecosystem.
+The specific claims a Platform provides, and what permissions an Authorization Server decides to grant are outside the scope of this document.
 
 ## Multi-Tenancy {#tenants}
 
