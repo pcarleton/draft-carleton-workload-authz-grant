@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2026-09-20T04:03:47.638179+00:00",
+  "timestamp": "2026-09-22T03:58:32.116599+00:00",
   "repo": "pcarleton/draft-carleton-workload-authz-grant",
   "labels": [
     {
@@ -492,7 +492,7 @@
       "labels": [],
       "body": "Proposed -01 text, cut down to be only what's required for interop.\r\n\r\n**Changed**\r\n\r\n- `aud` is the authorization server's issuer identifier, a single value\r\n- The Agent Identifier is an opaque string\r\n- JWK can be manually entered\r\n- \"Platform\" is one tenant; \"Platform registration\" is the authorization server's record of one trusted Platform. Under a shared issuer identifier the registration needs a claim that tells Platforms apart (`tenant` RECOMMENDED for new shared issuers). (Relates to #7)\r\n\r\n**Small normative additions**\r\n\r\n- `resource` REQUIRED\r\n- optional `scope` claim as in ID-JAG\r\n- no refresh tokens\r\n- first-seen stated as \"MUST NOT reject solely because the `sub` is unseen\"\r\n- error responses say who must act, using existing error codes;\r\n\r\n**Cut**\r\n\r\n- AIMS correspondence table (the Overview and figure stay, shortened)\r\n- Scope section (now in the abstract)\r\n- retirement prose (now the lifetime rule)\r\n- the property vocabulary (points at the `roles`/`groups`/`entitlements` names already in use, defines none). Unused references removed.\r\n\r\n**Added**\r\nSecurity Considerations is a list for now; a fuller treatment is coming separately.\r\n",
       "createdAt": "2026-09-10T18:11:00Z",
-      "updatedAt": "2026-09-18T20:33:40Z",
+      "updatedAt": "2026-09-21T14:18:52Z",
       "baseRepository": "pcarleton/draft-carleton-workload-authz-grant",
       "baseRefName": "main",
       "baseRefOid": "2c5222b411c6ff73bed92ec94622d0b2c8717bce",
@@ -1422,6 +1422,106 @@
               "body": "```suggestion\nOn each assertion the Authorization Server finds the Platform registration the assertion matches: `iss` equals the registration's issuer identifier by Simple String Comparison ({{RFC7523, Section 3}}) and, where the registration names a claim ({{tenants}}), the assertion carries that claim with the registered value.  An Authorization Server MUST ensure that an assertion can match at most one of its Platform registrations.  The Authorization Server MUST reject an assertion that matches no Platform registration, MUST verify the signature only under a key configured or retrieved for the matched registration's issuer identifier - never under key material or key locations carried in the assertion ({{RFC8725, Section 3.8}} and {{RFC8725, Section 3.10}}) - and MUST interpret `sub` and `jti` only within the scope of the matched Platform registration.\n```",
               "createdAt": "2026-09-18T20:30:30Z",
               "updatedAt": "2026-09-18T20:31:40Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABOd73Ew",
+          "commit": {
+            "abbreviatedOid": "519fd30"
+          },
+          "author": "PieterKas",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-21T11:07:06Z",
+          "updatedAt": "2026-09-21T11:07:06Z",
+          "comments": [
+            {
+              "originalPosition": 225,
+              "body": "Yeah, that makes sense - I have scarring from shared issuers across tenants (the healthier practice is to at least have unique keys per tenant). But shared issuers exists, so let's not ignore that (deployed infrastructure etc). So, in the case your thinking of, it is the same issuer, but the point we want to make is that the tenants should still be distinguisable?\r\n\r\nI that case, maybe something like this:\r\n\r\n'''\r\nPlatform: the party that instantiates and manages the lifecycle of workloads (\"Agents\"). \r\n\r\nWorkload Authorization Grant Issuer (WAGI): The component in the Platform that issues Workload Authorization Grants. Where a provider serves several customer organizations under one issuer identifier, each customer's partition must be uniquely identified (see {{tenants}}).\r\n'''",
+              "createdAt": "2026-09-21T11:07:06Z",
+              "updatedAt": "2026-09-21T11:07:06Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABOd9YWw",
+          "commit": {
+            "abbreviatedOid": "519fd30"
+          },
+          "author": "PieterKas",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-21T11:10:20Z",
+          "updatedAt": "2026-09-21T11:10:21Z",
+          "comments": [
+            {
+              "originalPosition": 225,
+              "body": "Alternate phrasing based on comment above (GitHub did not let me make the \"suggestion\" there and I did not want to mess with the original suggestion, because then we loose context.\n\n```suggestion\nPlatform: the party that instantiates and manages the lifecycle of workloads (\"Agents\"). \n\nWorkload Authorization Grant Issuer (WAGI): The component in the Platform that issues Workload Authorization Grants.  Where a provider serves several customer organizations under one issuer identifier, each customer's partition must be uniquely identified (see {{tenants}}).\n```",
+              "createdAt": "2026-09-21T11:10:21Z",
+              "updatedAt": "2026-09-21T11:11:24Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABOfqP2Q",
+          "commit": {
+            "abbreviatedOid": "dd5bbfc"
+          },
+          "author": "pcarleton",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-21T14:16:51Z",
+          "updatedAt": "2026-09-21T14:16:51Z",
+          "comments": [
+            {
+              "originalPosition": 307,
+              "body": "(added)",
+              "createdAt": "2026-09-21T14:16:51Z",
+              "updatedAt": "2026-09-21T14:16:51Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABOfqqUA",
+          "commit": {
+            "abbreviatedOid": "dd5bbfc"
+          },
+          "author": "pcarleton",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-21T14:17:30Z",
+          "updatedAt": "2026-09-21T14:17:30Z",
+          "comments": [
+            {
+              "originalPosition": 384,
+              "body": "\u2702\ufe0f ",
+              "createdAt": "2026-09-21T14:17:30Z",
+              "updatedAt": "2026-09-21T14:17:30Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABOfrjJQ",
+          "commit": {
+            "abbreviatedOid": "dd5bbfc"
+          },
+          "author": "pcarleton",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-21T14:18:52Z",
+          "updatedAt": "2026-09-21T14:18:52Z",
+          "comments": [
+            {
+              "originalPosition": 366,
+              "body": "I added the immutable wording, lmk if you think it needs more emphasis (will resolve here, since this is old commit, new line if you want it is here:\r\nhttps://github.com/pcarleton/draft-carleton-workload-authz-grant/pull/12/changes#diff-bb0889e6dbc37a9f5e932d7e01ea37c77c3050dad77c3025100628c55a549f95R157\r\n)",
+              "createdAt": "2026-09-21T14:18:52Z",
+              "updatedAt": "2026-09-21T14:18:52Z"
             }
           ]
         }
