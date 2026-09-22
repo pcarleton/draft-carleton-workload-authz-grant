@@ -5,14 +5,14 @@
 Network Working Group                                   P. Carleton, Ed.
 Internet-Draft                                                 Anthropic
 Intended status: Informational                                 N. Steele
-Expires: 22 March 2027                                            OpenAI
+Expires: 26 March 2027                                            OpenAI
                                                               A. Parecki
                                                                     Okta
                                                       A. Schwenkschuster
                                                         Defakto Security
                                                              B. Campbell
                                                            Ping Identity
-                                                       18 September 2026
+                                                       22 September 2026
 
 
                       Workload Authorization Grant
@@ -26,7 +26,7 @@ Abstract
    authorization server without requiring an administrator to perform a
    per-workload provisioning step.  Each workload is identified by an
    opaque identifier that is never reassigned.  The platform signs a JWT
-   authorization grant (RFC 7523) that names one workload, and the
+   authorization grant ([RFC7523]) that names one workload, and the
    workload presents it at the token endpoint of an authorization server
    that has been configured, once, to trust that platform.  The
    authorization server does not reject a workload because it has not
@@ -76,7 +76,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 22 March 2027.
+   This Internet-Draft will expire on 26 March 2027.
 
 Copyright Notice
 
@@ -103,7 +103,6 @@ Table of Contents
    6.  Platform Registration
      6.1.  Issuer Keys
      6.2.  Permissions
-       6.2.1.  Permissions Example
      6.3.  Multi-Tenancy
    7.  Error Responses
    8.  Open Issues
@@ -117,10 +116,11 @@ Table of Contents
 
 1.  Introduction
 
-   Agent platforms host many agents per customer, created and retired at
-   the pace of the customer's work -- one per channel, repository, or
-   pipeline.  The person creating an agent is rarely someone who can
-   provision credentials at the services it will use, so in practice
+   Agent platforms host many agents per customer, instantiated and torn
+   down as appropriate for the context of the customer's work
+   environment -- one per channel, repository, or pipeline.  Registering
+   each agent individually at the Authorization Servers it uses is
+   impractical and creates a heavy maintenance burden.  In practice
    every agent of an installation ends up sharing one credential, at the
    cost of any attribution of an individual agent's actions.
 
@@ -163,7 +163,10 @@ Table of Contents
    exist is out of scope (note: this is not a client registration
    [RFC7591] and yields no client identifier or credential).
 
-   Authorization Server, Resource Server: as in [RFC6749].
+   Authorization Server, Resource Server: as in [RFC6749].  Where an
+   Authorization Server serves several customer organizations under one
+   issuer identifier, each customer's partition is a separate
+   Authorization Server (Section 6.3).
 
 3.  Overview
 
@@ -180,9 +183,8 @@ Table of Contents
    3.  Per access: the Agent presents a Workload Authorization Grant in
        an ordinary OAuth token request.  The Authorization Server
        matches it to a Platform registration, verifies it under that
-       Platform's keys, does not reject it for carrying a sub it has not
-       seen before, and issues an access token under its own policy
-       (Section 6.2).
+       Platform's keys, allowing for previously unseen sub values, and
+       issues an access token under its own policy (Section 6.2).
 
          Platform                    Authorization        Resource
          (issuer; Agents)            Server (AS)          Server (RS)
@@ -203,12 +205,12 @@ Table of Contents
 4.  Agent Identity
 
    An Agent is identified by its Agent Identifier, carried as the sub
-   claim in the assertion.  The Agent Identifier is opaque; it MUST be
-   unique among all Agent Identifiers issued under the same Platform,
-   MUST NOT be reassigned to a different Agent, and is compared as a
-   case-sensitive string [RFC7519], Section 2.  An Authorization Server
-   MUST associate records for an Agent with its Platform and sub value,
-   never on its sub value alone.
+   claim in the assertion.  The Agent Identifier is opaque and
+   immutable; it MUST be unique among all Agent Identifiers issued under
+   the same Platform, MUST NOT be reassigned to a different Agent, and
+   is compared as a case-sensitive string [RFC7519], Section 2.  An
+   Authorization Server MUST associate records for an Agent with its
+   Platform and sub value, never on its sub value alone.
 
 5.  Workload Authorization Grant
 
@@ -224,9 +226,7 @@ Table of Contents
    Section 2).  An Agent MAY make the token request without client
    authentication ([RFC7523], Section 3.1), and this specification
    attaches no meaning to client_id.  An Authorization Server MUST NOT
-   require a client registration per Agent.  It MAY require the Platform
-   to authenticate as a client, for example to apply quotas or to cut
-   off a Platform.
+   require a client registration per Agent.
 
    Assertions SHOULD be short-lived.  The Authorization Server MUST NOT
    issue refresh tokens for this grant and SHOULD NOT issue access
@@ -306,9 +306,9 @@ Table of Contents
    reject an assertion that matches no Platform registration, MUST
    verify the signature only under a key configured or retrieved for the
    matched registration's issuer identifier - never under key material
-   or key locations carried in the assertion ([RFC8725] §3.8 and §3.10)
-   - and MUST interpret sub and jti only within the scope of the matched
-   Platform registration.
+   or key locations carried in the assertion ([RFC8725], Section 3.8 and
+   [RFC8725], Section 3.10) - and MUST interpret sub and jti only within
+   the scope of the matched Platform registration.
 
 6.2.  Permissions
 
@@ -322,27 +322,7 @@ Table of Contents
 
    The specific claims a Platform provides, and what permissions an
    Authorization Server decides to grant are outside the scope of this
-   document.  Below is an illustrative example of one shape this
-   permission decision can take.
-
-6.2.1.  Permissions Example
-
-   TODO: include non-normative example here w/ claims, and roles -
-   Platform configured to provide claims like "roles": ["developer"]
-   which represent human groups - Authorization Server also has a
-   concept of groups - Administrator configures in the Platform that
-   folks with the Developer role are allowed to create agents with that
-   role as well. - Administrator configures in the Authorization Server
-   that a "role" claim of "developer" corresponds to a set of
-   permissions in the platform - A developer creates an agent that is
-   able to access useful things in the Authorization Server
-
-   For this example the roles, groups and entitlements claim names were
-   taken from [RFC9068], Section 2.2.3.1, which take them from the SCIM
-   core schema ([RFC7643], Section 4.1.2), however the claim names are
-   used for illustrative purposes only.  Inclusion of such claims are
-   optional and Platforms may define specific claims, depending on their
-   deployment, supported access control models and ecosystem.
+   document.
 
 6.3.  Multi-Tenancy
 
@@ -530,19 +510,10 @@ Table of Contents
               RFC 7591, DOI 10.17487/RFC7591, July 2015,
               <https://www.rfc-editor.org/rfc/rfc7591>.
 
-   [RFC7643]  Hunt, P., Ed., Grizzle, K., Wahlstroem, E., and C.
-              Mortimore, "System for Cross-domain Identity Management:
-              Core Schema", RFC 7643, DOI 10.17487/RFC7643, September
-              2015, <https://www.rfc-editor.org/rfc/rfc7643>.
-
    [RFC8628]  Denniss, W., Bradley, J., Jones, M., and H. Tschofenig,
               "OAuth 2.0 Device Authorization Grant", RFC 8628,
               DOI 10.17487/RFC8628, August 2019,
               <https://www.rfc-editor.org/rfc/rfc8628>.
-
-   [RFC9068]  Bertocci, V., "JSON Web Token (JWT) Profile for OAuth 2.0
-              Access Tokens", RFC 9068, DOI 10.17487/RFC9068, October
-              2021, <https://www.rfc-editor.org/rfc/rfc9068>.
 
 Acknowledgments
 
