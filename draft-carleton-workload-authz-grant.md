@@ -131,7 +131,7 @@ Authorization Server, Resource Server: as in {{RFC6749}}. Where an Authorization
    Server or the Resource Server.
 3. Per access: the Agent presents a Workload Authorization Grant in an
    ordinary OAuth token request.  The Authorization Server matches it to a
-   Platform registration, verifies it under that Platform's keys, 
+   Platform registration, verifies it under that Platform's keys,
    allowing for previously unseen `sub` values,
    and issues an access token under its own policy ({{properties}}).
 
