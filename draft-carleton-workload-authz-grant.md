@@ -212,12 +212,14 @@ During Platform registration, the Authorization Server sets local policy for wha
 The specific claims a Platform provides, and what permissions an Authorization Server decides to grant are outside the scope of this document.  Below is an illustrative example of one shape this permission decision can take.
 
 ### Permissions Example {#permissions-example}
-TODO: include non-normative example here w/ claims, and roles
-- Platform configured to provide claims like `"roles": ["developer"]` which represent human groups
-- Authorization Server also has a concept of groups
-- Administrator configures in the Platform that folks with the Developer role are allowed to create agents with that role as well.
-- Administrator configures in the Authorization Server that a "role" claim of "developer" corresponds to a set of permissions in the platform
-- A developer creates an agent that is able to access useful things in the Authorization Server
+
+This example is non-normative.
+
+* The Platform is configured to include a claim such as `"roles": ["developer"]` in its assertions, where each role represents a group of humans in the customer's organization.
+* The Authorization Server has its own concept of groups and permissions.
+* An administrator configures the Platform so that people with the Developer role can create Agents that carry that role as well.
+* An administrator configures the Authorization Server so that a `roles` claim containing `developer` corresponds to a set of permissions at the Authorization Server.
+* A developer creates an Agent.  On its first assertion, the Agent receives an access token carrying the permissions mapped to `developer`, and can reach the resources it needs without further registration.
 
 For this example the `roles`, `groups` and `entitlements` claim names were taken from {{RFC9068, Section 2.2.3.1}}, which take them from the SCIM core schema ({{RFC7643, Section 4.1.2}}), however the claim names are used for illustrative purposes only. Inclusion of such claims are optional and Platforms may define specific claims, depending on their deployment, supported access control models and ecosystem.
 
