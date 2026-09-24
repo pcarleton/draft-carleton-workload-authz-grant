@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2026-09-22T03:58:32.116599+00:00",
+  "timestamp": "2026-09-24T03:49:15.836621+00:00",
   "repo": "pcarleton/draft-carleton-workload-authz-grant",
   "labels": [
     {
@@ -485,24 +485,26 @@
       "id": "PR_kwDOTlTgBM8AAAABDCRm9w",
       "title": "draft-01: slim down",
       "url": "https://github.com/pcarleton/draft-carleton-workload-authz-grant/pull/12",
-      "state": "OPEN",
+      "state": "MERGED",
       "author": "pcarleton",
       "authorAssociation": "OWNER",
       "assignees": [],
       "labels": [],
       "body": "Proposed -01 text, cut down to be only what's required for interop.\r\n\r\n**Changed**\r\n\r\n- `aud` is the authorization server's issuer identifier, a single value\r\n- The Agent Identifier is an opaque string\r\n- JWK can be manually entered\r\n- \"Platform\" is one tenant; \"Platform registration\" is the authorization server's record of one trusted Platform. Under a shared issuer identifier the registration needs a claim that tells Platforms apart (`tenant` RECOMMENDED for new shared issuers). (Relates to #7)\r\n\r\n**Small normative additions**\r\n\r\n- `resource` REQUIRED\r\n- optional `scope` claim as in ID-JAG\r\n- no refresh tokens\r\n- first-seen stated as \"MUST NOT reject solely because the `sub` is unseen\"\r\n- error responses say who must act, using existing error codes;\r\n\r\n**Cut**\r\n\r\n- AIMS correspondence table (the Overview and figure stay, shortened)\r\n- Scope section (now in the abstract)\r\n- retirement prose (now the lifetime rule)\r\n- the property vocabulary (points at the `roles`/`groups`/`entitlements` names already in use, defines none). Unused references removed.\r\n\r\n**Added**\r\nSecurity Considerations is a list for now; a fuller treatment is coming separately.\r\n",
       "createdAt": "2026-09-10T18:11:00Z",
-      "updatedAt": "2026-09-21T14:18:52Z",
+      "updatedAt": "2026-09-22T17:10:13Z",
       "baseRepository": "pcarleton/draft-carleton-workload-authz-grant",
       "baseRefName": "main",
       "baseRefOid": "2c5222b411c6ff73bed92ec94622d0b2c8717bce",
       "headRepository": "pcarleton/draft-carleton-workload-authz-grant",
       "headRefName": "wag-01",
-      "headRefOid": "fcb429e61da4fe7c58095681968a802c2b746a74",
-      "closedAt": null,
-      "mergedAt": null,
-      "mergedBy": null,
-      "mergeCommit": null,
+      "headRefOid": "3b295d0a56da76d6f503e311b847e5a66f7a1c4f",
+      "closedAt": "2026-09-22T17:09:10Z",
+      "mergedAt": "2026-09-22T17:09:10Z",
+      "mergedBy": "pcarleton",
+      "mergeCommit": {
+        "oid": "5569960c75457fef08d35f39e84f31d9ff3d031e"
+      },
       "comments": [],
       "reviews": [
         {
@@ -511,7 +513,7 @@
             "abbreviatedOid": "dd5bbfc"
           },
           "author": "arndt-s",
-          "authorAssociation": "NONE",
+          "authorAssociation": "CONTRIBUTOR",
           "state": "COMMENTED",
           "body": "",
           "createdAt": "2026-09-18T12:56:23Z",
@@ -567,7 +569,7 @@
             "abbreviatedOid": "dd5bbfc"
           },
           "author": "arndt-s",
-          "authorAssociation": "NONE",
+          "authorAssociation": "CONTRIBUTOR",
           "state": "COMMENTED",
           "body": "",
           "createdAt": "2026-09-18T13:30:40Z",
@@ -667,7 +669,7 @@
             "abbreviatedOid": "dd5bbfc"
           },
           "author": "arndt-s",
-          "authorAssociation": "NONE",
+          "authorAssociation": "CONTRIBUTOR",
           "state": "COMMENTED",
           "body": "",
           "createdAt": "2026-09-18T15:30:07Z",
@@ -707,7 +709,7 @@
             "abbreviatedOid": "519fd30"
           },
           "author": "PieterKas",
-          "authorAssociation": "NONE",
+          "authorAssociation": "CONTRIBUTOR",
           "state": "COMMENTED",
           "body": "",
           "createdAt": "2026-09-18T17:08:13Z",
@@ -787,7 +789,7 @@
             "abbreviatedOid": "519fd30"
           },
           "author": "PieterKas",
-          "authorAssociation": "NONE",
+          "authorAssociation": "CONTRIBUTOR",
           "state": "COMMENTED",
           "body": "",
           "createdAt": "2026-09-18T17:59:59Z",
@@ -847,7 +849,7 @@
             "abbreviatedOid": "1522641"
           },
           "author": "PieterKas",
-          "authorAssociation": "NONE",
+          "authorAssociation": "CONTRIBUTOR",
           "state": "COMMENTED",
           "body": "",
           "createdAt": "2026-09-18T18:06:30Z",
@@ -907,7 +909,7 @@
             "abbreviatedOid": "519fd30"
           },
           "author": "PieterKas",
-          "authorAssociation": "NONE",
+          "authorAssociation": "CONTRIBUTOR",
           "state": "COMMENTED",
           "body": "",
           "createdAt": "2026-09-18T18:47:23Z",
@@ -1431,7 +1433,7 @@
             "abbreviatedOid": "519fd30"
           },
           "author": "PieterKas",
-          "authorAssociation": "NONE",
+          "authorAssociation": "CONTRIBUTOR",
           "state": "COMMENTED",
           "body": "",
           "createdAt": "2026-09-21T11:07:06Z",
@@ -1451,7 +1453,7 @@
             "abbreviatedOid": "519fd30"
           },
           "author": "PieterKas",
-          "authorAssociation": "NONE",
+          "authorAssociation": "CONTRIBUTOR",
           "state": "COMMENTED",
           "body": "",
           "createdAt": "2026-09-21T11:10:20Z",
@@ -1524,8 +1526,140 @@
               "updatedAt": "2026-09-21T14:18:52Z"
             }
           ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABOsm4pg",
+          "commit": {
+            "abbreviatedOid": "519fd30"
+          },
+          "author": "pcarleton",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-09-22T17:10:13Z",
+          "updatedAt": "2026-09-22T17:10:13Z",
+          "comments": [
+            {
+              "originalPosition": 225,
+              "body": "Okay I'm going to merge without this fix for now, and then follow up with a PR to work through it, since I want to get `01` out and I also want to get this change right.  If we can get happy with it quickly, we can do a fast follow.\r\n\r\nI also removed teh TODO example section which I want to get in to the next version as well.",
+              "createdAt": "2026-09-22T17:10:13Z",
+              "updatedAt": "2026-09-22T17:10:13Z"
+            }
+          ]
         }
       ]
+    },
+    {
+      "number": 14,
+      "id": "PR_kwDOTlTgBM8AAAABEnga5w",
+      "title": "Split Platform and Workload Identity Provider terminology, restore permissions example",
+      "url": "https://github.com/pcarleton/draft-carleton-workload-authz-grant/pull/14",
+      "state": "CLOSED",
+      "author": "pcarleton",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "Follow-up to #12, which deferred both of these.\n\n- Defines Platform and Workload Identity Provider separately, starting from the wording in https://github.com/pcarleton/draft-carleton-workload-authz-grant/pull/12#discussion_r4061555334. The second commit renames the term from WAGI to Workload Identity Provider and applies it through the draft (registration, keys, claims, tenancy, errors, security considerations, overview figure). Platform now only means the party that creates and hosts Agents.\n- Restores the permissions example as a bulleted list, with the two references it cites (RFC 9068, RFC 7643).\n\nTo drop the rename and keep the WAGI wording, revert the last commit.",
+      "createdAt": "2026-09-22T17:15:07Z",
+      "updatedAt": "2026-09-22T17:33:27Z",
+      "baseRepository": "pcarleton/draft-carleton-workload-authz-grant",
+      "baseRefName": "main",
+      "baseRefOid": "5569960c75457fef08d35f39e84f31d9ff3d031e",
+      "headRepository": "pcarleton/draft-carleton-workload-authz-grant",
+      "headRefName": "paulc/wagi-terminology-and-permissions-example",
+      "headRefOid": "ce1a8130601a29468b4dfb35dd81600da8dbe3d1",
+      "closedAt": "2026-09-22T17:33:27Z",
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [
+        {
+          "author": "pcarleton",
+          "authorAssociation": "OWNER",
+          "body": "Split into two independent PRs: #15 (Platform / Workload Identity Provider terminology) and #16 (permissions example).",
+          "createdAt": "2026-09-22T17:33:26Z",
+          "updatedAt": "2026-09-22T17:33:26Z"
+        }
+      ],
+      "reviews": []
+    },
+    {
+      "number": 15,
+      "id": "PR_kwDOTlTgBM8AAAABEnl-jA",
+      "title": "Split Platform and Workload Identity Provider terminology",
+      "url": "https://github.com/pcarleton/draft-carleton-workload-authz-grant/pull/15",
+      "state": "OPEN",
+      "author": "pcarleton",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "Follow-up to #12, which deferred this.\n\nDefines Platform and Workload Identity Provider separately, starting from the wording in https://github.com/pcarleton/draft-carleton-workload-authz-grant/pull/12#discussion_r4061555334. The second commit renames the term from WAGI to Workload Identity Provider and applies it through the draft (registration, keys, claims, tenancy, errors, security considerations, overview figure). Platform now only means the party that creates and hosts Agents.\n\nTo keep the WAGI wording instead, revert the last commit.",
+      "createdAt": "2026-09-22T17:25:35Z",
+      "updatedAt": "2026-09-22T17:25:35Z",
+      "baseRepository": "pcarleton/draft-carleton-workload-authz-grant",
+      "baseRefName": "main",
+      "baseRefOid": "5569960c75457fef08d35f39e84f31d9ff3d031e",
+      "headRepository": "pcarleton/draft-carleton-workload-authz-grant",
+      "headRefName": "paulc/workload-identity-provider-terminology",
+      "headRefOid": "abb135e3ec88cf94de1b6ada921c70b3788a05ff",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [],
+      "reviews": []
+    },
+    {
+      "number": 16,
+      "id": "PR_kwDOTlTgBM8AAAABEnpMAA",
+      "title": "Add a non-normative permissions example",
+      "url": "https://github.com/pcarleton/draft-carleton-workload-authz-grant/pull/16",
+      "state": "OPEN",
+      "author": "pcarleton",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "Follow-up to #12, which dropped the unfinished example from -01.\r\n\r\nAdds the example back as a bulleted list under Permissions, marked non-normative, with the two references it cites (RFC 9068, RFC 7643).",
+      "createdAt": "2026-09-22T17:31:37Z",
+      "updatedAt": "2026-09-22T17:32:06Z",
+      "baseRepository": "pcarleton/draft-carleton-workload-authz-grant",
+      "baseRefName": "main",
+      "baseRefOid": "5569960c75457fef08d35f39e84f31d9ff3d031e",
+      "headRepository": "pcarleton/draft-carleton-workload-authz-grant",
+      "headRefName": "paulc/permissions-example",
+      "headRefOid": "43f4d9b7ce9304882824de7484f62b60ca4915c8",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [],
+      "reviews": []
+    },
+    {
+      "number": 17,
+      "id": "PR_kwDOTlTgBM8AAAABEnsU1w",
+      "title": "Fix idnits findings from the -01 submission",
+      "url": "https://github.com/pcarleton/draft-carleton-workload-authz-grant/pull/17",
+      "state": "OPEN",
+      "author": "pcarleton",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "Addresses two of the three idnits findings on the -01 submission.\n\n- `SUBMISSION_TYPE_UNEXPECTED`: removes `submissiontype: IETF` from the front matter. That key is the only thing that puts a `submissionType` attribute on the `rfc` element, and the datatracker has no stream for this individual draft.\n- `REFERENCE_NOT_USED`: removes RFC 8628 from the informative references. The text never cites it.\n\nNot fixed: `LINE_PI`. The `<?line N?>` processing instructions are emitted by kramdown-rfc itself (one per `---` section, plus one after the BCP 14 boilerplate) and there is no option to suppress them, so it would affect any draft built this way. It is a warning only.\n\nNot verified locally: the fixes were reasoned from the submitted XML and the kramdown-rfc and xml2rfc sources, and I could not run a build here. The next submission's idnits result will confirm.",
+      "createdAt": "2026-09-22T17:37:41Z",
+      "updatedAt": "2026-09-22T17:37:41Z",
+      "baseRepository": "pcarleton/draft-carleton-workload-authz-grant",
+      "baseRefName": "main",
+      "baseRefOid": "5569960c75457fef08d35f39e84f31d9ff3d031e",
+      "headRepository": "pcarleton/draft-carleton-workload-authz-grant",
+      "headRefName": "paulc/idnits-fixes",
+      "headRefOid": "c3b0eb132cb86ad45e065b909ddbdcf495a4d621",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [],
+      "reviews": []
     }
   ]
 }
