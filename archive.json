@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2026-09-24T03:49:15.836621+00:00",
+  "timestamp": "2026-09-27T04:24:02.774798+00:00",
   "repo": "pcarleton/draft-carleton-workload-authz-grant",
   "labels": [
     {
@@ -93,12 +93,12 @@
       "labels": [],
       "body": "We want:\n* A small set of claims that are common among implementations (target: max of 3)\n* extensibility to add more claims if a platform and resource want\n* Clearly specify which claims can be trusted for policy decisions, and clarify that others cannot\n* ability to re-use existing authz modeling where appropriate (i.e. I want this agent to have the same permissions as humans on this team)\n\nThe leading candidate is `roles`, `groups` and `entitlements` from https://datatracker.ietf.org/doc/html/rfc7643#section-4.1.2 / https://datatracker.ietf.org/doc/html/rfc9068#section-2.2.3.1\n\nIf that does end up being what we do, we need to:\n* play out an example of the agent platform giving claims like roles / groups if they're not specific to the platform\n* decide whether they need to be namespaced by FQDN (or if issuer namespacing is sufficient)\n* explain relationship to #3 ",
       "createdAt": "2026-08-14T16:12:42Z",
-      "updatedAt": "2026-09-08T04:56:54Z",
+      "updatedAt": "2026-09-24T17:32:55Z",
       "closedAt": null,
       "comments": [
         {
           "author": "PieterKas",
-          "authorAssociation": "NONE",
+          "authorAssociation": "CONTRIBUTOR",
           "body": "It may be good to elaborate on the problem we are trying to solve by picking any additional claims beyond what is defined in RFC 7523 and/or ID-JAG? What is the specific use case?\n\nMy first instinct is that we should not make any claims beyond what is needed by RFC 7523 REQUIRED in this draft. That would maximise compatibility with existing infrastructure and minimise the assumptions about the deployment. What mandatory values would we need beyond what is described already?\n\nFor the examples of roles, groups and entitlements my concern would be that values for those claims are things that may have meaning on one platform, but once you cross a trust boundary, it may have different meaning in a different domain. It also assumes a certain kind of underlying RBAC system, which although common, may not be universal.\n\nIn terms of optional claims, the three claims you describe feel like something that falls under the ID-JAG \"authorization_details\" claim and can be described in a RAR object (which may still need to be defined, but perhaps that is something that gets profiled elsewhere?).\n\nI am also curious about the choice of picking values from SCIM as claims - is there specific upside we expect from that (other than these values matching attributes provisioned for users through SICM)?",
           "createdAt": "2026-08-19T15:28:35Z",
           "updatedAt": "2026-08-19T15:28:35Z"
@@ -137,6 +137,13 @@
           "body": "I'd like to get more clarity on emitting agent groups, here is where I'd land this section, building on the thread above:\n\n- `groups` (and `roles`) are opaque strings, unique and stable within the issuing tenancy: within `iss`, or within (`iss`, `tenant`) on a shared issuer. The platform documents how they're formed. It can be computed (all agents in a tenancy, all agents in one chat app workspace) or admin-assigned groups.\n- They are assertions, not permissions. The AS/RS maps (iss, tenant, value) to local teams or roles through a mapping the customer's admin sets up at trust establishment. No mapping, no access. Never merged with human groups that happen to share a name.\n- If the relying party wants a directory object for sharing UIs or access reviews, that's the SCIM agent group (I-D.wzdk-scim-agent-resource) carrying the same id in `externalId`; the claim is then the per-request proof of membership.\n- Request-specific authorization data stays in `authorization_details`, as discussed above.\n\nHappy to send this as PR text with a worked example if it matches where everyone is.",
           "createdAt": "2026-09-08T04:56:54Z",
           "updatedAt": "2026-09-08T04:56:54Z"
+        },
+        {
+          "author": "jtrochet-openai",
+          "authorAssociation": "NONE",
+          "body": "I concur with @jiyun-ant that an explicit mapping between assertion and permission is an important step. In a multi-issuer environment, the authority to grant permissions typically does not vest in the issuer, and is instead mediated by some other party. The mapping step gives us the ability to state the group claims that a given issuer may legitimately state, and specifically exclude group claims that should not be respected from that issuer.\n\nFor workflows where the authority has the ability to change the authorizing behavior of internal audiences, permission metadata can be delivered sideband rather than within the credential, allowing audiences to trust identity claims from identity domains while using authorization ground truth from elsewhere. Here, we have less flexibility.\n\nI would avoid stating both `groups` and `roles` in the specification, favoring `groups` as the single field. `groups` is aligned with existing SCIM parlance, and I find it rare for any one platform to have separately well-defined `group` and `role` semantics. We should define exactly one, and audiences can choose which in-system primitive to map it to. Including both, I believe, will lead to ambiguity in practice, and could lead to security vulnerabilities when platforms try to work around that ambiguity.\n\nFor example, if systems use the two different claims in ways that are usually semantically similar, an issuer might always issue the same values for both claims, rather than trying to configure which claim any given audience uses. Under this regime, tokens issued for an SP that uses both claims distinctly could overgrant privileges.",
+          "createdAt": "2026-09-24T17:32:55Z",
+          "updatedAt": "2026-09-24T17:32:55Z"
         }
       ]
     },
@@ -244,9 +251,17 @@
       "labels": [],
       "body": "AS's accept an Agent on its first assertion, this leaves a question of: who in the authorization server's organization answers for an Agent, and how is that established without an administrator?\n\nThe point of the Agent acting as itself is that access survives org changes (the person who set it up leaves, nothing breaks). Tying it to one person brings that fragility back; not tying it to anyone leaves the resource side with a potential gap in terms of audit and compliance.\n\nSome options to consider, although not clear they need to be specified in this document:\n1. Implicit from a Platform claim (e.g. team \u2192 that team's responsible person).\n2. Adoption on first use by any user. No access until a user takes it on. One extra interaction, still self-service; still has the hand-off problem when that user changes teams or leaves.\n3. An owner claim from the Platform. Simple on the wire, but the value is from the Platform's domain and the authorization server likely can't map it to one of its users.\n\nDoes the document need more than the open issue here, and if so, mechanism (2/3) or guidance (1)?",
       "createdAt": "2026-09-11T10:56:06Z",
-      "updatedAt": "2026-09-11T10:56:06Z",
+      "updatedAt": "2026-09-24T17:12:16Z",
       "closedAt": null,
-      "comments": []
+      "comments": [
+        {
+          "author": "jtrochet-openai",
+          "authorAssociation": "NONE",
+          "body": "Generally, from an internal identity perspective, we'd have discrete trust domains, and then broadly delegate issuing authority over those trust domains to the operating teams. From there, we'd set some internal standard for how a trust domain tracks accountability, without that attribution necessarily being part of the credential. Given XAA already provides a very good solution for agents that are accountable to individual users (and derive their access from those users), I don't think WAG needs to invent anything specific here; a Customer Administrator is implicitly responsible for establishing an accountability contract with the issuers they choose to configure.",
+          "createdAt": "2026-09-24T17:12:16Z",
+          "updatedAt": "2026-09-24T17:12:16Z"
+        }
+      ]
     }
   ],
   "pulls": [
