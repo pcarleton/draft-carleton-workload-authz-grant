@@ -5,14 +5,14 @@
 Network Working Group                                   P. Carleton, Ed.
 Internet-Draft                                                 Anthropic
 Intended status: Informational                                 N. Steele
-Expires: 26 March 2027                                            OpenAI
+Expires: 2 April 2027                                             OpenAI
                                                               A. Parecki
                                                                     Okta
                                                       A. Schwenkschuster
                                                         Defakto Security
                                                              B. Campbell
                                                            Ping Identity
-                                                       22 September 2026
+                                                       29 September 2026
 
 
                       Workload Authorization Grant
@@ -76,7 +76,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 26 March 2027.
+   This Internet-Draft will expire on 2 April 2027.
 
 Copyright Notice
 
@@ -509,11 +509,6 @@ Table of Contents
               P. Hunt, "OAuth 2.0 Dynamic Client Registration Protocol",
               RFC 7591, DOI 10.17487/RFC7591, July 2015,
               <https://www.rfc-editor.org/rfc/rfc7591>.
-
-   [RFC8628]  Denniss, W., Bradley, J., Jones, M., and H. Tschofenig,
-              "OAuth 2.0 Device Authorization Grant", RFC 8628,
-              DOI 10.17487/RFC8628, August 2019,
-              <https://www.rfc-editor.org/rfc/rfc8628>.
 
 Acknowledgments
 
