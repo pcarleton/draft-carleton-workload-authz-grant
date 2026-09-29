@@ -4,7 +4,6 @@ abbrev: "WAG"
 category: info
 
 docname: draft-carleton-workload-authz-grant-latest
-submissiontype: IETF
 number:
 date:
 v: 3
@@ -62,7 +61,6 @@ normative:
 
 informative:
   RFC7591:
-  RFC8628:
   RFC7523BIS: I-D.ietf-oauth-rfc7523bis
   IDJAG: I-D.ietf-oauth-identity-assertion-authz-grant
 
