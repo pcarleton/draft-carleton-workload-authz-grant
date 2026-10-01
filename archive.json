@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2026-09-27T04:24:02.774798+00:00",
+  "timestamp": "2026-10-01T04:53:46.958134+00:00",
   "repo": "pcarleton/draft-carleton-workload-authz-grant",
   "labels": [
     {
@@ -1655,24 +1655,26 @@
       "id": "PR_kwDOTlTgBM8AAAABEnsU1w",
       "title": "Fix idnits findings from the -01 submission",
       "url": "https://github.com/pcarleton/draft-carleton-workload-authz-grant/pull/17",
-      "state": "OPEN",
+      "state": "MERGED",
       "author": "pcarleton",
       "authorAssociation": "OWNER",
       "assignees": [],
       "labels": [],
       "body": "Addresses two of the three idnits findings on the -01 submission.\n\n- `SUBMISSION_TYPE_UNEXPECTED`: removes `submissiontype: IETF` from the front matter. That key is the only thing that puts a `submissionType` attribute on the `rfc` element, and the datatracker has no stream for this individual draft.\n- `REFERENCE_NOT_USED`: removes RFC 8628 from the informative references. The text never cites it.\n\nNot fixed: `LINE_PI`. The `<?line N?>` processing instructions are emitted by kramdown-rfc itself (one per `---` section, plus one after the BCP 14 boilerplate) and there is no option to suppress them, so it would affect any draft built this way. It is a warning only.\n\nNot verified locally: the fixes were reasoned from the submitted XML and the kramdown-rfc and xml2rfc sources, and I could not run a build here. The next submission's idnits result will confirm.",
       "createdAt": "2026-09-22T17:37:41Z",
-      "updatedAt": "2026-09-22T17:37:41Z",
+      "updatedAt": "2026-09-29T14:35:24Z",
       "baseRepository": "pcarleton/draft-carleton-workload-authz-grant",
       "baseRefName": "main",
       "baseRefOid": "5569960c75457fef08d35f39e84f31d9ff3d031e",
       "headRepository": "pcarleton/draft-carleton-workload-authz-grant",
       "headRefName": "paulc/idnits-fixes",
       "headRefOid": "c3b0eb132cb86ad45e065b909ddbdcf495a4d621",
-      "closedAt": null,
-      "mergedAt": null,
-      "mergedBy": null,
-      "mergeCommit": null,
+      "closedAt": "2026-09-29T14:35:23Z",
+      "mergedAt": "2026-09-29T14:35:23Z",
+      "mergedBy": "pcarleton",
+      "mergeCommit": {
+        "oid": "69581c1d5b32a9094e4976b9da0fc160d393e4eb"
+      },
       "comments": [],
       "reviews": []
     }
