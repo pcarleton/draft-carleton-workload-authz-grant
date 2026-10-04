@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2026-10-01T04:53:46.958134+00:00",
+  "timestamp": "2026-10-04T04:57:27.107810+00:00",
   "repo": "pcarleton/draft-carleton-workload-authz-grant",
   "labels": [
     {
@@ -262,6 +262,22 @@
           "updatedAt": "2026-09-24T17:12:16Z"
         }
       ]
+    },
+    {
+      "number": 18,
+      "id": "I_kwDOTlTgBM8AAAABUhzQbA",
+      "title": "Retirement signalling: Section 8 open issue dropped in the -01 slim-down",
+      "url": "https://github.com/pcarleton/draft-carleton-workload-authz-grant/issues/18",
+      "state": "OPEN",
+      "author": "girishkvs",
+      "authorAssociation": "NONE",
+      "assignees": [],
+      "labels": [],
+      "body": "## Description\n\nRestore **retirement signalling** to Section 8 as an open issue. #12 lists `retirement prose (now the lifetime rule)` under Cut, and the lifetime rule bounds a different property than the -00 prose did.\n\n## Motivation\n\nA short assertion lifetime bounds how long one outstanding assertion stays usable after a Platform stops signing for an Agent. That is residual access, and Section 5 already keeps it short.\n\nSection 9 describes a different property: the set of acceptable Agents grows at the Platform with no action at the Authorization Server, and each new Agent creates state there. No assertion lifetime removes an entry from that set. Capping new Agents per Platform registration limits the arrival rate and never removes a member.\n\nSection 4 closes the reuse half with `MUST NOT be reassigned`. What is left is narrow: how does an Authorization Server learn an identifier is permanently done?\n\n### Options\n\n-00 Section 11 listed these; the -01 dropped them with Section 10.\n\n| Option | Behaviour under partition | Cost |\n| --- | --- | --- |\n| Epoch scoped to the issuer or a registered claim | Correct when nothing arrives; the Authorization Server compares a value it already holds | One claim, one comparison |\n| Event the Platform pushes | A dropped push is silent and looks exactly like no retirement | Delivery guarantees at the Authorization Server |\n| Assertion lifetime alone, the current -01 | Bounds residual access only; the Section 9 state still accumulates | None, but the question stays open |\n\n### Scope\n\nThis asks only for the Section 8 bullet. No new claim, no normative requirement, and no change to Sections 4, 5 or 9. Whether to specify a mechanism at all, and which one, stays open.\n\nHappy to open a PR with the bullet if it is wanted.",
+      "createdAt": "2026-10-02T03:47:31Z",
+      "updatedAt": "2026-10-02T03:47:31Z",
+      "closedAt": null,
+      "comments": []
     }
   ],
   "pulls": [
