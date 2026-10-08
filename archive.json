@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2026-10-04T04:57:27.107810+00:00",
+  "timestamp": "2026-10-08T05:11:35.051287+00:00",
   "repo": "pcarleton/draft-carleton-workload-authz-grant",
   "labels": [
     {
@@ -278,6 +278,30 @@
       "updatedAt": "2026-10-02T03:47:31Z",
       "closedAt": null,
       "comments": []
+    },
+    {
+      "number": 19,
+      "id": "I_kwDOTlTgBM8AAAABVfyLDA",
+      "title": "Platform scoping of `sub` stops at the Authorization Server",
+      "url": "https://github.com/pcarleton/draft-carleton-workload-authz-grant/issues/19",
+      "state": "OPEN",
+      "author": "appsdesh",
+      "authorAssociation": "NONE",
+      "assignees": [],
+      "labels": [],
+      "body": "> Authorization Server MUST associate records for an Agent with its Platform and sub value, never on its sub value alone.\n\nPlatform scoping is defined at the Authorization Server. It isn't carried through to the access token. An Authorization Server that copies the assertion's sub into a JWT access token, or returns it from introspection, gives the Resource Server a value that is only unique within one Platform. \n\nTwo Platforms registered at the same Authorization Server can each issue agent/123. The resource server may end up merging/colliding the logs/graphs for these 2 distinct agent identities.\n\n## Options\n\n1. Auth Server mints a unique `sub` within it's own issuer, single stable value. (May come with an additional state at AS)\n2. Keeps `sub` from the grant and platform `iss` to mint the `act` for the Access Token. That way Resource Server has the entire caller agent context and platform.\n3. Do not prescribe an access token details, callout as a security consideration",
+      "createdAt": "2026-10-07T00:56:16Z",
+      "updatedAt": "2026-10-07T06:54:02Z",
+      "closedAt": null,
+      "comments": [
+        {
+          "author": "arndt-s",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "It depends on the deployment, AS may just accept a single platform and with that uniqueness is given without having to consider the issuer. If multiple are accepted the risk you highlight exists if the AS only associates the agent by the subject alone.\n\nI believe that the current wording \n> Authorization Server MUST associate records for an Agent with its Platform and sub value, never on its sub value alone.\n\ncovers that in some way, but \"associate records\" leaves some room. Maybe we should change this to \"identify agents considering the platform and subject value, never on the subject value alone\" and add security considerations around it with what can happens if that isn't the case.",
+          "createdAt": "2026-10-07T06:54:02Z",
+          "updatedAt": "2026-10-07T06:54:02Z"
+        }
+      ]
     }
   ],
   "pulls": [
