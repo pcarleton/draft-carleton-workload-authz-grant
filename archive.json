@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2026-10-08T05:11:35.051287+00:00",
+  "timestamp": "2026-10-11T04:47:37.757558+00:00",
   "repo": "pcarleton/draft-carleton-workload-authz-grant",
   "labels": [
     {
@@ -93,7 +93,7 @@
       "labels": [],
       "body": "We want:\n* A small set of claims that are common among implementations (target: max of 3)\n* extensibility to add more claims if a platform and resource want\n* Clearly specify which claims can be trusted for policy decisions, and clarify that others cannot\n* ability to re-use existing authz modeling where appropriate (i.e. I want this agent to have the same permissions as humans on this team)\n\nThe leading candidate is `roles`, `groups` and `entitlements` from https://datatracker.ietf.org/doc/html/rfc7643#section-4.1.2 / https://datatracker.ietf.org/doc/html/rfc9068#section-2.2.3.1\n\nIf that does end up being what we do, we need to:\n* play out an example of the agent platform giving claims like roles / groups if they're not specific to the platform\n* decide whether they need to be namespaced by FQDN (or if issuer namespacing is sufficient)\n* explain relationship to #3 ",
       "createdAt": "2026-08-14T16:12:42Z",
-      "updatedAt": "2026-09-24T17:32:55Z",
+      "updatedAt": "2026-10-09T14:29:57Z",
       "closedAt": null,
       "comments": [
         {
@@ -144,6 +144,20 @@
           "body": "I concur with @jiyun-ant that an explicit mapping between assertion and permission is an important step. In a multi-issuer environment, the authority to grant permissions typically does not vest in the issuer, and is instead mediated by some other party. The mapping step gives us the ability to state the group claims that a given issuer may legitimately state, and specifically exclude group claims that should not be respected from that issuer.\n\nFor workflows where the authority has the ability to change the authorizing behavior of internal audiences, permission metadata can be delivered sideband rather than within the credential, allowing audiences to trust identity claims from identity domains while using authorization ground truth from elsewhere. Here, we have less flexibility.\n\nI would avoid stating both `groups` and `roles` in the specification, favoring `groups` as the single field. `groups` is aligned with existing SCIM parlance, and I find it rare for any one platform to have separately well-defined `group` and `role` semantics. We should define exactly one, and audiences can choose which in-system primitive to map it to. Including both, I believe, will lead to ambiguity in practice, and could lead to security vulnerabilities when platforms try to work around that ambiguity.\n\nFor example, if systems use the two different claims in ways that are usually semantically similar, an issuer might always issue the same values for both claims, rather than trying to configure which claim any given audience uses. Under this regime, tokens issued for an SP that uses both claims distinctly could overgrant privileges.",
           "createdAt": "2026-09-24T17:32:55Z",
           "updatedAt": "2026-09-24T17:32:55Z"
+        },
+        {
+          "author": "getglad",
+          "authorAssociation": "NONE",
+          "body": "A candidate for the small set: identifiers for the agent\u2019s software version and its running instance. My read is that a grant is issued per token request, so it\u2019s already per instance.\n\nThese let an authorization server, and anything downstream of it, narrow permissions in layers. `sub` is the constant. A version can have its own ceiling, which shifts as builds changes or configs are modified. An instance can be scoped below that without touching the agent\u2019s other instances. Think of the instance Bob started vs the one Jim started. This only narrows the workload/instance own permissions, allowing it to operating on behalf of itself while still shadowing the shape of whoever started it.\n\nThe DPoP and attestation shapes in request-shapes.html already treat the instance as distinct, because each binds a per-instance key. But the authorization server only sees that key\u2019s thumbprint, which it can\u2019t match to the Platform\u2019s records. An instance identifier lets both sides refer to the same running instance.\n\nEvery workload has a version and an instance; not every Platform has roles.\n\nThe authorization server would trust these only as far as it trusts the Platform. Support would be optional: a Platform may omit them, and an AS may ignore them. For gateways and resource servers to see them, the AS has to carry them into the access token so this relates to issue #19 as well.",
+          "createdAt": "2026-10-08T20:42:08Z",
+          "updatedAt": "2026-10-08T20:42:08Z"
+        },
+        {
+          "author": "pcarleton",
+          "authorAssociation": "OWNER",
+          "body": "I don't think it's given that you want the instance id or software version in this grant.  That is generally useful within a single trust boundary where you want to set policy, but across trust boundaries, the level of policy you want to enforce and the level of information you want to share is different.\n\ne.g. it makes sense for my internal service to reject requests from an out of date operating system from a cluster it knows about, that service knowing e.g. the EC2 instance id might be useful.  However, I may not want to expose compute details like that to a SaaS like Slack or Linear, and may prefer to write policies at a different level. ",
+          "createdAt": "2026-10-09T14:29:57Z",
+          "updatedAt": "2026-10-09T14:29:57Z"
         }
       ]
     },
@@ -251,7 +265,7 @@
       "labels": [],
       "body": "AS's accept an Agent on its first assertion, this leaves a question of: who in the authorization server's organization answers for an Agent, and how is that established without an administrator?\n\nThe point of the Agent acting as itself is that access survives org changes (the person who set it up leaves, nothing breaks). Tying it to one person brings that fragility back; not tying it to anyone leaves the resource side with a potential gap in terms of audit and compliance.\n\nSome options to consider, although not clear they need to be specified in this document:\n1. Implicit from a Platform claim (e.g. team \u2192 that team's responsible person).\n2. Adoption on first use by any user. No access until a user takes it on. One extra interaction, still self-service; still has the hand-off problem when that user changes teams or leaves.\n3. An owner claim from the Platform. Simple on the wire, but the value is from the Platform's domain and the authorization server likely can't map it to one of its users.\n\nDoes the document need more than the open issue here, and if so, mechanism (2/3) or guidance (1)?",
       "createdAt": "2026-09-11T10:56:06Z",
-      "updatedAt": "2026-09-24T17:12:16Z",
+      "updatedAt": "2026-10-08T20:42:17Z",
       "closedAt": null,
       "comments": [
         {
@@ -260,6 +274,13 @@
           "body": "Generally, from an internal identity perspective, we'd have discrete trust domains, and then broadly delegate issuing authority over those trust domains to the operating teams. From there, we'd set some internal standard for how a trust domain tracks accountability, without that attribution necessarily being part of the credential. Given XAA already provides a very good solution for agents that are accountable to individual users (and derive their access from those users), I don't think WAG needs to invent anything specific here; a Customer Administrator is implicitly responsible for establishing an accountability contract with the issuers they choose to configure.",
           "createdAt": "2026-09-24T17:12:16Z",
           "updatedAt": "2026-09-24T17:12:16Z"
+        },
+        {
+          "author": "getglad",
+          "authorAssociation": "NONE",
+          "body": "A fourth option, which splits accountability in two:\n\n1. Who defined the agent answers for its maximum capability: the tools it can call and its permission ceiling. That\u2019s usually a team, not one person. The grant carries a reference to a registration record (issuer, id, version) that names the team. The record can live in an external registry or on the Platform; either way, the AS resolves the reference. Ownership changes by updating the record, not the agent.\n2. Who launched the instance answers for what that run was driven to do. The Platform names the launcher alongside the instance identifier (see #2). This only has to hold for the life of the run.\n\nTo me, that resolves the tension in this issue. Durable access stays tied to a team record that can change hands, and a person is accountable only for the runs they start.",
+          "createdAt": "2026-10-08T20:42:17Z",
+          "updatedAt": "2026-10-08T20:42:17Z"
         }
       ]
     },
@@ -291,7 +312,7 @@
       "labels": [],
       "body": "> Authorization Server MUST associate records for an Agent with its Platform and sub value, never on its sub value alone.\n\nPlatform scoping is defined at the Authorization Server. It isn't carried through to the access token. An Authorization Server that copies the assertion's sub into a JWT access token, or returns it from introspection, gives the Resource Server a value that is only unique within one Platform. \n\nTwo Platforms registered at the same Authorization Server can each issue agent/123. The resource server may end up merging/colliding the logs/graphs for these 2 distinct agent identities.\n\n## Options\n\n1. Auth Server mints a unique `sub` within it's own issuer, single stable value. (May come with an additional state at AS)\n2. Keeps `sub` from the grant and platform `iss` to mint the `act` for the Access Token. That way Resource Server has the entire caller agent context and platform.\n3. Do not prescribe an access token details, callout as a security consideration",
       "createdAt": "2026-10-07T00:56:16Z",
-      "updatedAt": "2026-10-07T06:54:02Z",
+      "updatedAt": "2026-10-09T19:34:12Z",
       "closedAt": null,
       "comments": [
         {
@@ -300,6 +321,34 @@
           "body": "It depends on the deployment, AS may just accept a single platform and with that uniqueness is given without having to consider the issuer. If multiple are accepted the risk you highlight exists if the AS only associates the agent by the subject alone.\n\nI believe that the current wording \n> Authorization Server MUST associate records for an Agent with its Platform and sub value, never on its sub value alone.\n\ncovers that in some way, but \"associate records\" leaves some room. Maybe we should change this to \"identify agents considering the platform and subject value, never on the subject value alone\" and add security considerations around it with what can happens if that isn't the case.",
           "createdAt": "2026-10-07T06:54:02Z",
           "updatedAt": "2026-10-07T06:54:02Z"
+        },
+        {
+          "author": "pcarleton",
+          "authorAssociation": "OWNER",
+          "body": "some discussion of this here as well: https://github.com/pcarleton/draft-carleton-workload-authz-grant/issues/6#issuecomment-5437994702",
+          "createdAt": "2026-10-08T17:15:39Z",
+          "updatedAt": "2026-10-08T17:15:39Z"
+        },
+        {
+          "author": "getglad",
+          "authorAssociation": "NONE",
+          "body": "+1 to option 2. It keeps the workload's identity intact downstream for use across systems. An AS-minted sub on its own (option 1) breaks that link.\n\n`act` [nests](https://www.rfc-editor.org/rfc/rfc8693.html#section-4.1-5), so the same shape can cover a workload handing work to a sub-workload.\n\nThe same question applies to other agent claims, such as version and instance (see my comment in issue #2). Resource servers and gateways see only the access token, so whatever the AS drops there is lost for their decisions.",
+          "createdAt": "2026-10-08T20:42:12Z",
+          "updatedAt": "2026-10-08T20:42:12Z"
+        },
+        {
+          "author": "pcarleton",
+          "authorAssociation": "OWNER",
+          "body": "A central goal of the spec is to require the minimum number of changes to the authorization server, i.e. they should only have to change their token endpoint and not their resource server.  This has a few knock-on effects:\n\n1. We can't rely on changes to the Authorization Server's token format\n2. We can't assume the Authorization Server is using JWT tokens\n3. Therefore we can't assume the AS is using a `sub` value\n4. So we can't mandate how they manage `sub`'s.\n\nso in my view, the best we can do is option (3) (also mentioned in the comment linked above)",
+          "createdAt": "2026-10-09T14:19:48Z",
+          "updatedAt": "2026-10-09T14:19:48Z"
+        },
+        {
+          "author": "aaronpk",
+          "authorAssociation": "COLLABORATOR",
+          "body": "yeah agreed with #3, we can't assume an AS is using JWT access tokens. This is really just trying to say the same thing as OIDC says about issuer+subject uniqueness here: https://openid.net/specs/openid-connect-core-1_0.html#ClaimStability\n\n> The sub (subject) and iss (issuer) Claims from the ID Token, used together, are the only Claims that an RP can rely upon as a stable identifier for the End-User\n\nWe don't have any business talking about the relationship between an AS and RS here.\n",
+          "createdAt": "2026-10-09T19:32:26Z",
+          "updatedAt": "2026-10-09T19:34:12Z"
         }
       ]
     }
@@ -1650,7 +1699,7 @@
       "labels": [],
       "body": "Follow-up to #12, which deferred this.\n\nDefines Platform and Workload Identity Provider separately, starting from the wording in https://github.com/pcarleton/draft-carleton-workload-authz-grant/pull/12#discussion_r4061555334. The second commit renames the term from WAGI to Workload Identity Provider and applies it through the draft (registration, keys, claims, tenancy, errors, security considerations, overview figure). Platform now only means the party that creates and hosts Agents.\n\nTo keep the WAGI wording instead, revert the last commit.",
       "createdAt": "2026-09-22T17:25:35Z",
-      "updatedAt": "2026-09-22T17:25:35Z",
+      "updatedAt": "2026-10-09T14:45:20Z",
       "baseRepository": "pcarleton/draft-carleton-workload-authz-grant",
       "baseRefName": "main",
       "baseRefOid": "5569960c75457fef08d35f39e84f31d9ff3d031e",
@@ -1662,7 +1711,48 @@
       "mergedBy": null,
       "mergeCommit": null,
       "comments": [],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABRiFxRQ",
+          "commit": {
+            "abbreviatedOid": "abb135e"
+          },
+          "author": "pcarleton",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-10-09T14:42:11Z",
+          "updatedAt": "2026-10-09T14:42:11Z",
+          "comments": [
+            {
+              "originalPosition": 84,
+              "body": "potential confusion issue here",
+              "createdAt": "2026-10-09T14:42:11Z",
+              "updatedAt": "2026-10-09T14:42:11Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABRiH37Q",
+          "commit": {
+            "abbreviatedOid": "abb135e"
+          },
+          "author": "pcarleton",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-10-09T14:45:20Z",
+          "updatedAt": "2026-10-09T14:45:20Z",
+          "comments": [
+            {
+              "originalPosition": 84,
+              "body": "proposal:\nsplit out WIP and platform.\n\npotentially:\nremove platform word and use the word workload",
+              "createdAt": "2026-10-09T14:45:20Z",
+              "updatedAt": "2026-10-09T14:45:20Z"
+            }
+          ]
+        }
+      ]
     },
     {
       "number": 16,
