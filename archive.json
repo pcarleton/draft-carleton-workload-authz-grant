@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2026-10-11T04:47:37.757558+00:00",
+  "timestamp": "2026-10-13T06:02:37.339203+00:00",
   "repo": "pcarleton/draft-carleton-workload-authz-grant",
   "labels": [
     {
@@ -351,6 +351,22 @@
           "updatedAt": "2026-10-09T19:34:12Z"
         }
       ]
+    },
+    {
+      "number": 20,
+      "id": "I_kwDOTlTgBM8AAAABWqaZzQ",
+      "title": "Proof-of-Possession Considerations",
+      "url": "https://github.com/pcarleton/draft-carleton-workload-authz-grant/issues/20",
+      "state": "OPEN",
+      "author": "getglad",
+      "authorAssociation": "NONE",
+      "assignees": [],
+      "labels": [],
+      "body": "There is a proof-of-possession item in the docs Open Issues. In my mind, the scope is for workloads that can run code in the environment where their grant lands, such as coding agents with a shell.\n\nIn that setting, the agent's own runtime presents a leak. Code the model runs can read access tokens etc and use them in unintend ways - including worse case scenarios such as sending it to a malicous third party. A WAG within the agents reach is just as exposed. Short lifetimes and jti replay checks limit how long a leaked copy works, but they don't stop the leak.\n\nFor me, a primary concern isn't the agent being driven to use access it was explicitly granted, it's the grant or token being used from a different origin.\n\nI imagine the access token matters more than the grant. A grant is redeemed once, but the access token is reused until it expires.\n\nTwo paths could resolve it:\n1. Bind both to a key the instance holds. The grant names the instance's public key (cnf). The authorization server requires a DPoP proof signed with the matching private key, and issues a DPoP-bound token. A copied grant or token is useless without the key. request-shapes.html already notes this fix for stolen assertions. The cost is that resource servers must validate DPoP.\n2. Keep both out of the runtime. A gateway outside the runtime presents the grant, holds the token and makes the calls for the agent, and resource servers don't change. The draft currently says the Agent presents the grant; allowing a presenter acting for the Agent would cover this case.",
+      "createdAt": "2026-10-12T14:57:55Z",
+      "updatedAt": "2026-10-12T14:57:55Z",
+      "closedAt": null,
+      "comments": []
     }
   ],
   "pulls": [
