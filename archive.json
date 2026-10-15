@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2026-10-13T06:02:37.339203+00:00",
+  "timestamp": "2026-10-15T03:48:24.524192+00:00",
   "repo": "pcarleton/draft-carleton-workload-authz-grant",
   "labels": [
     {
@@ -93,7 +93,7 @@
       "labels": [],
       "body": "We want:\n* A small set of claims that are common among implementations (target: max of 3)\n* extensibility to add more claims if a platform and resource want\n* Clearly specify which claims can be trusted for policy decisions, and clarify that others cannot\n* ability to re-use existing authz modeling where appropriate (i.e. I want this agent to have the same permissions as humans on this team)\n\nThe leading candidate is `roles`, `groups` and `entitlements` from https://datatracker.ietf.org/doc/html/rfc7643#section-4.1.2 / https://datatracker.ietf.org/doc/html/rfc9068#section-2.2.3.1\n\nIf that does end up being what we do, we need to:\n* play out an example of the agent platform giving claims like roles / groups if they're not specific to the platform\n* decide whether they need to be namespaced by FQDN (or if issuer namespacing is sufficient)\n* explain relationship to #3 ",
       "createdAt": "2026-08-14T16:12:42Z",
-      "updatedAt": "2026-10-09T14:29:57Z",
+      "updatedAt": "2026-10-14T12:02:49Z",
       "closedAt": null,
       "comments": [
         {
@@ -158,6 +158,13 @@
           "body": "I don't think it's given that you want the instance id or software version in this grant.  That is generally useful within a single trust boundary where you want to set policy, but across trust boundaries, the level of policy you want to enforce and the level of information you want to share is different.\n\ne.g. it makes sense for my internal service to reject requests from an out of date operating system from a cluster it knows about, that service knowing e.g. the EC2 instance id might be useful.  However, I may not want to expose compute details like that to a SaaS like Slack or Linear, and may prefer to write policies at a different level. ",
           "createdAt": "2026-10-09T14:29:57Z",
           "updatedAt": "2026-10-09T14:29:57Z"
+        },
+        {
+          "author": "gondyb",
+          "authorAssociation": "NONE",
+          "body": "From the resource side, I believe `name` would be a good optional additional claim: It's already a registered JWT claim. Without it, a resource can only render the opaque `sub`, or has to callback into the Platform to resolve a display name, which isn't always possible across a trust boundary.\n\nIt's also a good example of a claim that must never be auth-bearing, since the name is user-picked.\n\n* `name` must not be used for authorization or as a key: everything must be keyed on `sub`, so that renaming the agent is safe, and copying another agent's name doesn't get you anything\n* Receivers should show the `sub` next to the name when it matters (audit trails, ...)\n* For the charset, I'm suggesting to use [PRECIS nickname profile](https://www.rfc-editor.org/rfc/rfc8266/), with 64 characters maximum (after normalization). Receivers will probably add a prefix or an icon - it needs to fit in a small UI chip\n\nHappy to help turn this into a PR if that's useful",
+          "createdAt": "2026-10-14T12:02:49Z",
+          "updatedAt": "2026-10-14T12:02:49Z"
         }
       ]
     },
@@ -1708,25 +1715,35 @@
       "id": "PR_kwDOTlTgBM8AAAABEnl-jA",
       "title": "Split Platform and Workload Identity Provider terminology",
       "url": "https://github.com/pcarleton/draft-carleton-workload-authz-grant/pull/15",
-      "state": "OPEN",
+      "state": "MERGED",
       "author": "pcarleton",
       "authorAssociation": "OWNER",
       "assignees": [],
       "labels": [],
       "body": "Follow-up to #12, which deferred this.\n\nDefines Platform and Workload Identity Provider separately, starting from the wording in https://github.com/pcarleton/draft-carleton-workload-authz-grant/pull/12#discussion_r4061555334. The second commit renames the term from WAGI to Workload Identity Provider and applies it through the draft (registration, keys, claims, tenancy, errors, security considerations, overview figure). Platform now only means the party that creates and hosts Agents.\n\nTo keep the WAGI wording instead, revert the last commit.",
       "createdAt": "2026-09-22T17:25:35Z",
-      "updatedAt": "2026-10-09T14:45:20Z",
+      "updatedAt": "2026-10-13T10:43:57Z",
       "baseRepository": "pcarleton/draft-carleton-workload-authz-grant",
       "baseRefName": "main",
       "baseRefOid": "5569960c75457fef08d35f39e84f31d9ff3d031e",
       "headRepository": "pcarleton/draft-carleton-workload-authz-grant",
       "headRefName": "paulc/workload-identity-provider-terminology",
       "headRefOid": "abb135e3ec88cf94de1b6ada921c70b3788a05ff",
-      "closedAt": null,
-      "mergedAt": null,
-      "mergedBy": null,
-      "mergeCommit": null,
-      "comments": [],
+      "closedAt": "2026-10-13T10:43:57Z",
+      "mergedAt": "2026-10-13T10:43:57Z",
+      "mergedBy": "pcarleton",
+      "mergeCommit": {
+        "oid": "5c5e31b6ad4c7db4696056fda3388ce170cb8748"
+      },
+      "comments": [
+        {
+          "author": "pcarleton",
+          "authorAssociation": "OWNER",
+          "body": "from discussion: we'll merge this as is, and deal with updating the diagram in a follow-up.",
+          "createdAt": "2026-10-13T10:43:50Z",
+          "updatedAt": "2026-10-13T10:43:50Z"
+        }
+      ],
       "reviews": [
         {
           "id": "PRR_kwDOTlTgBM8AAAABRiFxRQ",
