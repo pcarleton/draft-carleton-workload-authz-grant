@@ -237,9 +237,12 @@ A grant without `cnf` is a bearer credential: whoever holds a copy can redeem it
 
 When the assertion carries `cnf.jkt`, the token request MUST carry a DPoP proof ({{RFC9449, Section 4}}).  The Authorization Server:
 
-* MUST verify the proof as specified in {{RFC9449, Section 4.3}};
+* MUST reject the request with `invalid_grant` if it carries no DPoP proof;
+* MUST verify the proof as specified in {{RFC9449, Section 4.3}}, and MUST reject the request with `invalid_dpop_proof` if the proof is not valid;
 * MUST reject the request with `invalid_dpop_proof` unless the JWK SHA-256 Thumbprint ({{RFC7638}}) of the proof's `jwk` header parameter equals `cnf.jkt`;
 * MUST issue a DPoP-bound access token ({{RFC9449, Section 5}}) whose confirmation thumbprint equals `cnf.jkt`, and MUST NOT issue a bearer access token for a key-bound grant.
+
+A request with no proof does not meet the conditions of the grant, so it is an invalid grant.  A request with an invalid or mismatched proof has a problem with the proof, and `invalid_dpop_proof` ({{RFC9449, Section 5}}) tells the Platform to fix the proof or the key, not the grant.  {{IDJAG, Section 9.8}} defines the same key-bound shape for ID-JAG, and uses `invalid_grant` in all of these cases.  This document uses `invalid_grant` only for a missing proof, and so agrees with ID-JAG for that case.
 
 The key that `cnf` names verifies only the DPoP proof.  It never verifies the assertion, which the Authorization Server verifies only as specified in {{issuer-keys}}.
 
@@ -305,7 +308,7 @@ How an Authorization Server determines whether a Workload Identity Provider need
 
 # Error Responses {#errors}
 
-When a token request fails, the Authorization Server SHOULD indicate in `error_description` ({{RFC6749, Section 5.2}}) who must act: an administrator of the Authorization Server, if the Workload Identity Provider is not trusted or the Agent holds no permission for the request; or the Platform, if the assertion is invalid.  An untrusted Workload Identity Provider or an invalid assertion yields `invalid_grant` ({{RFC7523, Section 3.1}}); a missing permission yields `invalid_scope` or `invalid_target` ({{RFC8707}}) where a specific scope or resource is refused, otherwise `invalid_grant`.  A key-bound grant ({{key-bound}}) with a missing or mismatched DPoP proof yields `invalid_dpop_proof`, and a missing or expired nonce yields `use_dpop_nonce` ({{RFC9449}}); the Platform must act on both.  When an action can be taken to resolve the issue, the Authorization Server SHOULD include a link in `error_uri`.
+When a token request fails, the Authorization Server SHOULD indicate in `error_description` ({{RFC6749, Section 5.2}}) who must act: an administrator of the Authorization Server, if the Workload Identity Provider is not trusted or the Agent holds no permission for the request; or the Platform, if the assertion is invalid.  An untrusted Workload Identity Provider or an invalid assertion yields `invalid_grant` ({{RFC7523, Section 3.1}}); a missing permission yields `invalid_scope` or `invalid_target` ({{RFC8707}}) where a specific scope or resource is refused, otherwise `invalid_grant`.  For a key-bound grant ({{key-bound}}), a request with no DPoP proof yields `invalid_grant`; an invalid DPoP proof, or one whose key thumbprint does not equal `cnf.jkt`, yields `invalid_dpop_proof`; and a missing or expired nonce yields `use_dpop_nonce` ({{RFC9449}}).  The Platform must act on all three.  When an action can be taken to resolve the issue, the Authorization Server SHOULD include a link in `error_uri`.
 
 
 # Authorization Server Metadata {#as-metadata}
