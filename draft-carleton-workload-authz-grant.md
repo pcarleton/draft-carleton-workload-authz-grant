@@ -244,6 +244,8 @@ When the assertion carries `cnf.jkt`, the token request MUST carry a DPoP proof 
 
 A request with no proof does not meet the conditions of the grant, so it is an invalid grant.  A request with an invalid or mismatched proof has a problem with the proof, and `invalid_dpop_proof` ({{RFC9449, Section 5}}) tells the Platform to fix the proof or the key, not the grant.  {{IDJAG, Section 9.8}} defines the same key-bound shape for ID-JAG, and uses `invalid_grant` in all of these cases.  This document uses `invalid_grant` only for a missing proof, and so agrees with ID-JAG for that case.
 
+An Authorization Server that does not support key-bound grants MUST reject an assertion that carries `cnf`, with `invalid_grant`.  If it ignored `cnf`, it would redeem a key-bound grant as a bearer grant and issue a bearer access token, which defeats the binding.
+
 The key that `cnf` names verifies only the DPoP proof.  It never verifies the assertion, which the Authorization Server verifies only as specified in {{issuer-keys}}.
 
 An Authorization Server that supports key-bound grants SHOULD require a nonce that it provides at the token endpoint ({{RFC9449, Section 8}}), and MUST NOT accept a nonce after the lifetime it has set for that nonce.  An Authorization Server that publishes metadata {{RFC8414}} SHOULD list the algorithms it accepts in `dpop_signing_alg_values_supported` ({{RFC9449, Section 5.1}}).
