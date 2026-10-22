@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2026-10-15T03:48:24.524192+00:00",
+  "timestamp": "2026-10-22T03:51:14.243955+00:00",
   "repo": "pcarleton/draft-carleton-workload-authz-grant",
   "labels": [
     {
@@ -1838,6 +1838,32 @@
       "mergeCommit": {
         "oid": "69581c1d5b32a9094e4976b9da0fc160d393e4eb"
       },
+      "comments": [],
+      "reviews": []
+    },
+    {
+      "number": 21,
+      "id": "PR_kwDOTlTgBM8AAAABJx0F9g",
+      "title": "Add WAG type and URI",
+      "url": "https://github.com/pcarleton/draft-carleton-workload-authz-grant/pull/21",
+      "state": "OPEN",
+      "author": "arndt-s",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "Strongly type the WAG and be able to identify it using an OAuth URI.",
+      "createdAt": "2026-10-21T12:00:08Z",
+      "updatedAt": "2026-10-21T12:00:08Z",
+      "baseRepository": "pcarleton/draft-carleton-workload-authz-grant",
+      "baseRefName": "main",
+      "baseRefOid": "5c5e31b6ad4c7db4696056fda3388ce170cb8748",
+      "headRepository": "arndt-s/draft-carleton-workload-authz-grant",
+      "headRefName": "arndt/add_wag_type",
+      "headRefOid": "209fe2a5ea33966ab59d54fb4d40e1674f800003",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
       "comments": [],
       "reviews": []
     }
