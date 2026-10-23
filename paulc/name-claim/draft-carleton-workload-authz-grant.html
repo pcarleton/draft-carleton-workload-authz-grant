@@ -1397,9 +1397,9 @@ and issues an access token under its own policy (<a href="#properties" class="au
             <p id="section-5.1-1.10.1"><span class="bcp14">OPTIONAL</span> - A space-separated list of scopes (<span>[<a href="#RFC6749" class="cite xref">RFC6749</a>], <a href="https://rfc-editor.org/rfc/rfc6749#section-3.3" class="relref">Section 3.3</a></span>) the Workload Identity Provider asserts for this request, as in <span>[<a href="#IDJAG" class="cite xref">IDJAG</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04#section-3.1" class="relref">Section 3.1</a></span>.  The Authorization Server decides under its own policy which of them to grant, and <span class="bcp14">MAY</span> grant a subset (<span>[<a href="#IDJAG" class="cite xref">IDJAG</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04#section-4.4.1" class="relref">Section 4.4.1</a></span>).<a href="#section-5.1-1.10.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-5.1-1.11"><code>name</code></dt>
+<dt id="section-5.1-1.11"><code>nickname</code></dt>
           <dd style="margin-left: 1.5em" id="section-5.1-1.12">
-            <p id="section-5.1-1.12.1"><span class="bcp14">OPTIONAL</span> - A human-readable name for the Agent, for display only and never an input to authorization (<a href="#security-considerations" class="auto internal xref">Section 9</a>).  Issuers <span class="bcp14">SHOULD</span> limit <code>name</code> to 64 characters; recipients <span class="bcp14">MAY</span> truncate it for display or ignore it.<a href="#section-5.1-1.12.1" class="pilcrow">¶</a></p>
+            <p id="section-5.1-1.12.1"><span class="bcp14">OPTIONAL</span> - A human-readable nickname for the Agent, for display only and never an input to authorization (<a href="#security-considerations" class="auto internal xref">Section 9</a>).  Issuers <span class="bcp14">SHOULD</span> limit <code>nickname</code> to 64 characters; recipients <span class="bcp14">MAY</span> truncate it for display or ignore it.<a href="#section-5.1-1.12.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 </dl>
@@ -1408,7 +1408,7 @@ and issues an access token under its own policy (<a href="#properties" class="au
 {
   "iss": "https://acme.agents.platform.example",
   "sub": "agent/7f3d9as3",
-  "name": "Invoice triage",
+  "nickname": "Invoice triage",
   "aud": "https://as.saas.example",
   "exp": 1785271980,
   "iat": 1785271680,
@@ -1441,7 +1441,7 @@ and issues an access token under its own policy (<a href="#properties" class="au
         <h3 id="name-permissions">
 <a href="#section-6.2" class="section-number selfRef">6.2. </a><a href="#name-permissions" class="section-name selfRef">Permissions</a>
         </h3>
-<p id="section-6.2-1">During Workload Identity Provider registration, the Authorization Server sets local policy for what permissions to assign an access token given in return for a WAG.  This policy <span class="bcp14">MAY</span> involve consulting claims, other than <code>name</code>, that the Workload Identity Provider asserts about the Agent in the WAG. A claim is an assertion by the Workload Identity Provider, meaningful only within the context of that Workload Identity Provider, and an Authorization Server <span class="bcp14">MUST NOT</span> assume that a similarly named value from another Workload Identity Provider means the same thing.<a href="#section-6.2-1" class="pilcrow">¶</a></p>
+<p id="section-6.2-1">During Workload Identity Provider registration, the Authorization Server sets local policy for what permissions to assign an access token given in return for a WAG.  This policy <span class="bcp14">MAY</span> involve consulting claims, other than <code>nickname</code>, that the Workload Identity Provider asserts about the Agent in the WAG. A claim is an assertion by the Workload Identity Provider, meaningful only within the context of that Workload Identity Provider, and an Authorization Server <span class="bcp14">MUST NOT</span> assume that a similarly named value from another Workload Identity Provider means the same thing.<a href="#section-6.2-1" class="pilcrow">¶</a></p>
 <p id="section-6.2-2">The specific claims a Workload Identity Provider provides, and what permissions an Authorization Server decides to grant are outside the scope of this document.<a href="#section-6.2-2" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -1510,7 +1510,7 @@ and issues an access token under its own policy (<a href="#properties" class="au
           <p id="section-9-2.5.1">Where one Authorization Server serves several organizations, a Workload Identity Provider registration created by the wrong organization routes another organization's Agents to it; who may register a given Workload Identity Provider is out of scope.<a href="#section-9-2.5.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="section-9-2.6">
-          <p id="section-9-2.6.1">The <code>name</code> claim is free text set at the Platform: it is not unique, can change, and can imitate another Agent or a person, including with visually similar characters.  It <span class="bcp14">MUST NOT</span> be used in an authorization decision or as an identifier, by the Authorization Server or by any party it passes the name to; <a href="#identity-model" class="auto internal xref">Section 4</a> says what identifies an Agent.<a href="#section-9-2.6.1" class="pilcrow">¶</a></p>
+          <p id="section-9-2.6.1">The <code>nickname</code> claim is free text set at the Platform: it is not unique, can change, and can imitate another Agent or a person, including with visually similar characters.  It <span class="bcp14">MUST NOT</span> be used in an authorization decision or as an identifier, by the Authorization Server or by any party it passes the name to; <a href="#identity-model" class="auto internal xref">Section 4</a> says what identifies an Agent.<a href="#section-9-2.6.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="section-9-2.7">
           <p id="section-9-2.7.1">Error responses (<a href="#errors" class="auto internal xref">Section 7</a>) tell any presenter which Workload Identity Providers an Authorization Server trusts, and <code>error_uri</code> hands a link to an unauthenticated presenter.<a href="#section-9-2.7.1" class="pilcrow">¶</a></p>

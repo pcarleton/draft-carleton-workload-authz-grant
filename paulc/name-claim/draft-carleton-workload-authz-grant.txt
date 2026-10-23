@@ -269,10 +269,10 @@ Table of Contents
       decides under its own policy which of them to grant, and MAY grant
       a subset ([IDJAG], Section 4.4.1).
 
-   name  OPTIONAL - A human-readable name for the Agent, for display
-      only and never an input to authorization (Section 9).  Issuers
-      SHOULD limit name to 64 characters; recipients MAY truncate it for
-      display or ignore it.
+   nickname  OPTIONAL - A human-readable nickname for the Agent, for
+      display only and never an input to authorization (Section 9).
+      Issuers SHOULD limit nickname to 64 characters; recipients MAY
+      truncate it for display or ignore it.
 
    The assertion is signed under a key configured from the Workload
    Identity Provider (see Section 6.1) and MAY carry further claims
@@ -281,7 +281,7 @@ Table of Contents
    grant type in grant_types_supported.
 
    { "iss": "https://acme.agents.platform.example", "sub":
-   "agent/7f3d9as3", "name": "Invoice triage", "aud":
+   "agent/7f3d9as3", "nickname": "Invoice triage", "aud":
    "https://as.saas.example", "exp": 1785271980, "iat": 1785271680,
    "jti": "7d0f5a2b-93c8-4f0e-9c33-1b6a0e6d5f10", "scope": "issues:read
    issues:write" }
@@ -335,10 +335,10 @@ Table of Contents
    During Workload Identity Provider registration, the Authorization
    Server sets local policy for what permissions to assign an access
    token given in return for a WAG.  This policy MAY involve consulting
-   claims, other than name, that the Workload Identity Provider asserts
-   about the Agent in the WAG.  A claim is an assertion by the Workload
-   Identity Provider, meaningful only within the context of that
-   Workload Identity Provider, and an Authorization Server MUST NOT
+   claims, other than nickname, that the Workload Identity Provider
+   asserts about the Agent in the WAG.  A claim is an assertion by the
+   Workload Identity Provider, meaningful only within the context of
+   that Workload Identity Provider, and an Authorization Server MUST NOT
    assume that a similarly named value from another Workload Identity
    Provider means the same thing.
 
@@ -443,12 +443,12 @@ Table of Contents
       organization routes another organization's Agents to it; who may
       register a given Workload Identity Provider is out of scope.
 
-   *  The name claim is free text set at the Platform: it is not unique,
-      can change, and can imitate another Agent or a person, including
-      with visually similar characters.  It MUST NOT be used in an
-      authorization decision or as an identifier, by the Authorization
-      Server or by any party it passes the name to; Section 4 says what
-      identifies an Agent.
+   *  The nickname claim is free text set at the Platform: it is not
+      unique, can change, and can imitate another Agent or a person,
+      including with visually similar characters.  It MUST NOT be used
+      in an authorization decision or as an identifier, by the
+      Authorization Server or by any party it passes the name to;
+      Section 4 says what identifies an Agent.
 
    *  Error responses (Section 7) tell any presenter which Workload
       Identity Providers an Authorization Server trusts, and error_uri
