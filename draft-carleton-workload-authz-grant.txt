@@ -5,14 +5,14 @@
 Network Working Group                                   P. Carleton, Ed.
 Internet-Draft                                                 Anthropic
 Intended status: Informational                                 N. Steele
-Expires: 16 April 2027                                            OpenAI
+Expires: 26 April 2027                                            OpenAI
                                                               A. Parecki
                                                                     Okta
                                                       A. Schwenkschuster
                                                         Defakto Security
                                                              B. Campbell
                                                            Ping Identity
-                                                         13 October 2026
+                                                         23 October 2026
 
 
                       Workload Authorization Grant
@@ -78,7 +78,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 16 April 2027.
+   This Internet-Draft will expire on 26 April 2027.
 
 Copyright Notice
 
@@ -110,6 +110,8 @@ Table of Contents
    8.  Open Issues
    9.  Security Considerations
    10. IANA Considerations
+     10.1.  Media Types
+     10.2.  OAuth URI Registration
    11. References
      11.1.  Normative References
      11.2.  Informative References
@@ -246,7 +248,21 @@ Table of Contents
    tokens that outlive the assertion by a significant period ([RFC7521],
    Section 4.1).
 
+   Where a token type identifier is needed for a Workload Authorization
+   Grant, the value urn:ietf:params:oauth:token-type:wag (Section 10.2)
+   is used; for example, a Workload Identity Provider that issues
+   Workload Authorization Grants by token exchange [RFC8693] would use
+   it as requested_token_type and issued_token_type.  How an Agent
+   obtains a Workload Authorization Grant is otherwise out of scope.
+
 5.1.  JWT Syntax
+
+   The typ JOSE Header Parameter ([RFC7515], Section 4.1.9) of the JWT
+   MUST be oauth-wag+jwt (Section 10.1), as recommended by [RFC8725],
+   Section 3.11.  A Workload Identity Provider MUST NOT use this type
+   for any other kind of JWT.
+
+   The JWT Claims Set contains:
 
    iss  REQUIRED - The issuer identifier of the Workload Identity
       Provider (Section 6.1): a URL using the https scheme with no query
@@ -275,7 +291,11 @@ Table of Contents
    [RFC8414] SHOULD list the urn:ietf:params:oauth:grant-type:jwt-bearer
    grant type in grant_types_supported.
 
-   { "iss": "https://acme.agents.platform.example", "sub":
+   The following is a non-normative example of a JWT header and claims
+   set:
+
+   { "typ": "oauth-wag+jwt", "alg": "ES256", "kid": "Oct 21" } . {
+   "iss": "https://acme.agents.platform.example", "sub":
    "agent/7f3d9as3", "aud": "https://as.saas.example", "exp":
    1785271980, "iat": 1785271680, "jti": "7d0f5a2b-93c8-4f0e-
    9c33-1b6a0e6d5f10", "scope": "issues:read issues:write" }
@@ -317,6 +337,8 @@ Table of Contents
    (Section 6.3), the assertion carries that claim with the registered
    value.  An Authorization Server MUST ensure that an assertion can
    match at most one of its registrations.  The Authorization Server
+   MUST reject an assertion whose typ header is not oauth-wag+jwt
+   (Section 5.1), comparing as described in [RFC7515], Section 4.1.9,
    MUST reject an assertion that matches no registration, MUST verify
    the signature only under a key configured or retrieved for the
    matched registration's issuer identifier - never under key material
@@ -397,10 +419,6 @@ Table of Contents
       or the Platform authenticating as a client) and which, if any, to
       require.
 
-   *  JWT type: whether to define an explicit typ for this grant
-      ([RFC8725], Section 3.11), so that another kind of JWT signed by
-      the same issuer for the same audience cannot be taken for it.
-
    *  Replay: whether an Authorization Server is required to reject a
       jti it has already accepted while the assertion is still valid, or
       whether that stays optional as in [RFC7523], Section 3.
@@ -441,13 +459,28 @@ Table of Contents
       Identity Providers an Authorization Server trusts, and error_uri
       hands a link to an unauthenticated presenter.
 
-   *  This document defines no explicit JWT type, so an issuer that
-      signs other kinds of JWT for the same audience risks one being
-      taken for this grant ([RFC8725], Section 3.11).
-
 10.  IANA Considerations
 
-   This document has no IANA actions.
+10.1.  Media Types
+
+   This section registers oauth-wag+jwt, a new media type [RFC2046] in
+   the "Media Types" registry [IANA.media-types] in the manner described
+   in [RFC6838].  It can be used to indicate that the content is a
+   Workload Authorization Grant.
+
+10.2.  OAuth URI Registration
+
+   This section registers urn:ietf:params:oauth:token-type:wag in the
+   "OAuth URI" subregistry of the "OAuth Parameters" registry
+   [IANA.oauth-parameters].
+
+   *  URN: urn:ietf:params:oauth:token-type:wag
+
+   *  Common Name: Token type URI for a Workload Authorization Grant
+
+   *  Change Controller: IETF
+
+   *  Specification Document: This document
 
 11.  References
 
@@ -459,6 +492,11 @@ Table of Contents
               December 2023, <https://openid.net/specs/openid-connect-
               discovery-1_0.html>.
 
+   [RFC2046]  Freed, N. and N. Borenstein, "Multipurpose Internet Mail
+              Extensions (MIME) Part Two: Media Types", RFC 2046,
+              DOI 10.17487/RFC2046, November 1996,
+              <https://www.rfc-editor.org/rfc/rfc2046>.
+
    [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
               Requirement Levels", BCP 14, RFC 2119,
               DOI 10.17487/RFC2119, March 1997,
@@ -467,6 +505,15 @@ Table of Contents
    [RFC6749]  Hardt, D., Ed., "The OAuth 2.0 Authorization Framework",
               RFC 6749, DOI 10.17487/RFC6749, October 2012,
               <https://www.rfc-editor.org/rfc/rfc6749>.
+
+   [RFC6838]  Freed, N., Klensin, J., and T. Hansen, "Media Type
+              Specifications and Registration Procedures", BCP 13,
+              RFC 6838, DOI 10.17487/RFC6838, January 2013,
+              <https://www.rfc-editor.org/rfc/rfc6838>.
+
+   [RFC7515]  Jones, M., Bradley, J., and N. Sakimura, "JSON Web
+              Signature (JWS)", RFC 7515, DOI 10.17487/RFC7515, May
+              2015, <https://www.rfc-editor.org/rfc/rfc7515>.
 
    [RFC7517]  Jones, M., "JSON Web Key (JWK)", RFC 7517,
               DOI 10.17487/RFC7517, May 2015,
@@ -510,6 +557,14 @@ Table of Contents
 
 11.2.  Informative References
 
+   [IANA.media-types]
+              IANA, "Media Types",
+              <https://www.iana.org/assignments/media-types>.
+
+   [IANA.oauth-parameters]
+              IANA, "OAuth Parameters",
+              <https://www.iana.org/assignments/oauth-parameters>.
+
    [IDJAG]    Parecki, A., McGuinness, K., and B. Campbell, "Identity
               Assertion JWT Authorization Grant", Work in Progress,
               Internet-Draft, draft-ietf-oauth-identity-assertion-authz-
@@ -530,6 +585,11 @@ Table of Contents
               P. Hunt, "OAuth 2.0 Dynamic Client Registration Protocol",
               RFC 7591, DOI 10.17487/RFC7591, July 2015,
               <https://www.rfc-editor.org/rfc/rfc7591>.
+
+   [RFC8693]  Jones, M., Nadalin, A., Campbell, B., Ed., Bradley, J.,
+              and C. Mortimore, "OAuth 2.0 Token Exchange", RFC 8693,
+              DOI 10.17487/RFC8693, January 2020,
+              <https://www.rfc-editor.org/rfc/rfc8693>.
 
 Acknowledgments
 
