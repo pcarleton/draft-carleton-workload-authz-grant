@@ -5,14 +5,14 @@
 Network Working Group                                   P. Carleton, Ed.
 Internet-Draft                                                 Anthropic
 Intended status: Informational                                 N. Steele
-Expires: 26 March 2027                                            OpenAI
+Expires: 26 April 2027                                            OpenAI
                                                               A. Parecki
                                                                     Okta
                                                       A. Schwenkschuster
                                                         Defakto Security
                                                              B. Campbell
                                                            Ping Identity
-                                                       22 September 2026
+                                                         23 October 2026
 
 
                       Workload Authorization Grant
@@ -78,7 +78,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 26 March 2027.
+   This Internet-Draft will expire on 26 April 2027.
 
 Copyright Notice
 
@@ -105,7 +105,6 @@ Table of Contents
    6.  Workload Identity Provider Registration
      6.1.  Issuer Keys
      6.2.  Permissions
-       6.2.1.  Permissions Example
      6.3.  Multi-Tenancy
    7.  Error Responses
    8.  Open Issues
@@ -270,6 +269,11 @@ Table of Contents
       decides under its own policy which of them to grant, and MAY grant
       a subset ([IDJAG], Section 4.4.1).
 
+   name  OPTIONAL - A human-readable name for the Agent, for display
+      only and never an input to authorization (Section 9).  Issuers
+      SHOULD limit name to 64 characters; recipients MAY truncate it for
+      display or ignore it.
+
    The assertion is signed under a key configured from the Workload
    Identity Provider (see Section 6.1) and MAY carry further claims
    about the Agent.  An Authorization Server that publishes metadata
@@ -277,9 +281,10 @@ Table of Contents
    grant type in grant_types_supported.
 
    { "iss": "https://acme.agents.platform.example", "sub":
-   "agent/7f3d9as3", "aud": "https://as.saas.example", "exp":
-   1785271980, "iat": 1785271680, "jti": "7d0f5a2b-93c8-4f0e-
-   9c33-1b6a0e6d5f10", "scope": "issues:read issues:write" }
+   "agent/7f3d9as3", "name": "Invoice triage", "aud":
+   "https://as.saas.example", "exp": 1785271980, "iat": 1785271680,
+   "jti": "7d0f5a2b-93c8-4f0e-9c33-1b6a0e6d5f10", "scope": "issues:read
+   issues:write" }
 
 6.  Workload Identity Provider Registration
 
@@ -330,48 +335,16 @@ Table of Contents
    During Workload Identity Provider registration, the Authorization
    Server sets local policy for what permissions to assign an access
    token given in return for a WAG.  This policy MAY involve consulting
-   claims the Workload Identity Provider asserts about the Agent in the
-   WAG.  A claim is an assertion by the Workload Identity Provider,
-   meaningful only within the context of that Workload Identity
-   Provider, and an Authorization Server MUST NOT assume that a
-   similarly named value from another Workload Identity Provider means
-   the same thing.
+   claims, other than name, that the Workload Identity Provider asserts
+   about the Agent in the WAG.  A claim is an assertion by the Workload
+   Identity Provider, meaningful only within the context of that
+   Workload Identity Provider, and an Authorization Server MUST NOT
+   assume that a similarly named value from another Workload Identity
+   Provider means the same thing.
 
    The specific claims a Workload Identity Provider provides, and what
    permissions an Authorization Server decides to grant are outside the
-   scope of this document.  Below is an illustrative example of one
-   shape this permission decision can take.
-
-6.2.1.  Permissions Example
-
-   This example is non-normative.
-
-   *  The Workload Identity Provider is configured to include a claim
-      such as "roles": ["developer"] in its assertions, where each role
-      represents a group of humans in the customer's organization.
-
-   *  The Authorization Server has its own concept of groups and
-      permissions.
-
-   *  An administrator configures the Platform so that people with the
-      Developer role can create Agents that carry that role as well.
-
-   *  An administrator configures the Authorization Server so that a
-      roles claim containing developer corresponds to a set of
-      permissions at the Authorization Server.
-
-   *  A developer creates an Agent.  On its first assertion, the Agent
-      receives an access token carrying the permissions mapped to
-      developer, and can reach the resources it needs without further
-      registration.
-
-   For this example the roles, groups and entitlements claim names were
-   taken from [RFC9068], Section 2.2.3.1, which take them from the SCIM
-   core schema ([RFC7643], Section 4.1.2), however the claim names are
-   used for illustrative purposes only.  Inclusion of such claims are
-   optional and Workload Identity Providers may define specific claims,
-   depending on their deployment, supported access control models and
-   ecosystem.
+   scope of this document.
 
 6.3.  Multi-Tenancy
 
@@ -470,6 +443,13 @@ Table of Contents
       organization routes another organization's Agents to it; who may
       register a given Workload Identity Provider is out of scope.
 
+   *  The name claim is free text set at the Platform: it is not unique,
+      can change, and can imitate another Agent or a person, including
+      with visually similar characters.  It MUST NOT be used in an
+      authorization decision or as an identifier, by the Authorization
+      Server or by any party it passes the name to; Section 4 says what
+      identifies an Agent.
+
    *  Error responses (Section 7) tell any presenter which Workload
       Identity Providers an Authorization Server trusts, and error_uri
       hands a link to an unauthenticated presenter.
@@ -563,20 +543,6 @@ Table of Contents
               P. Hunt, "OAuth 2.0 Dynamic Client Registration Protocol",
               RFC 7591, DOI 10.17487/RFC7591, July 2015,
               <https://www.rfc-editor.org/rfc/rfc7591>.
-
-   [RFC7643]  Hunt, P., Ed., Grizzle, K., Wahlstroem, E., and C.
-              Mortimore, "System for Cross-domain Identity Management:
-              Core Schema", RFC 7643, DOI 10.17487/RFC7643, September
-              2015, <https://www.rfc-editor.org/rfc/rfc7643>.
-
-   [RFC8628]  Denniss, W., Bradley, J., Jones, M., and H. Tschofenig,
-              "OAuth 2.0 Device Authorization Grant", RFC 8628,
-              DOI 10.17487/RFC8628, August 2019,
-              <https://www.rfc-editor.org/rfc/rfc8628>.
-
-   [RFC9068]  Bertocci, V., "JSON Web Token (JWT) Profile for OAuth 2.0
-              Access Tokens", RFC 9068, DOI 10.17487/RFC9068, October
-              2021, <https://www.rfc-editor.org/rfc/rfc9068>.
 
 Acknowledgments
 

@@ -36,18 +36,18 @@ in which the workload is the actor.
 <meta content="draft-carleton-workload-authz-grant-latest" name="ietf.draft">
 <!-- Generator version information:
   xml2rfc 3.34.1
-    Python 3.14.7
-    ConfigArgParse 1.7.7
+    Python 3.14.8
+    ConfigArgParse 1.8.0
     google-i18n-address 3.1.1
     intervaltree 3.2.1
     Jinja2 3.1.6
     lxml 6.1.1
     natsort 8.4.0
-    platformdirs 4.11.10
+    platformdirs 4.13.4
     pycountry 24.6.1
     PyYAML 6.0.3
     requests 2.33.1
-    wcwidth 0.8.4
+    wcwidth 0.9.2
 -->
 <link href="draft-carleton-workload-authz-grant.xml" rel="alternate" type="application/rfc+xml">
 <link href="#copyright" rel="license">
@@ -1063,11 +1063,11 @@ svg {
 <thead><tr>
 <td class="left">Internet-Draft</td>
 <td class="center">WAG</td>
-<td class="right">September 2026</td>
+<td class="right">October 2026</td>
 </tr></thead>
 <tfoot><tr>
 <td class="left">Carleton, et al.</td>
-<td class="center">Expires 26 March 2027</td>
+<td class="center">Expires 26 April 2027</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1080,12 +1080,12 @@ svg {
 <dd class="internet-draft">draft-carleton-workload-authz-grant-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2026-09-22" class="published">22 September 2026</time>
+<time datetime="2026-10-23" class="published">23 October 2026</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Informational</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2027-03-26">26 March 2027</time></dd>
+<dd class="expires"><time datetime="2027-04-26">26 April 2027</time></dd>
 <dt class="label-authors">Authors:</dt>
 <dd class="authors">
 <div class="author">
@@ -1174,7 +1174,7 @@ https://github.com/pcarleton/draft-carleton-workload-authz-grant.<a href="#secti
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 26 March 2027.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 26 April 2027.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1231,11 +1231,6 @@ https://github.com/pcarleton/draft-carleton-workload-authz-grant.<a href="#secti
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.2">
                 <p id="section-toc.1-1.6.2.2.1"><a href="#section-6.2" class="auto internal xref">6.2</a>.  <a href="#name-permissions" class="internal xref">Permissions</a></p>
-<ul class="compact toc ulBare ulEmpty">
-<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.2.2.1">
-                    <p id="section-toc.1-1.6.2.2.2.1.1"><a href="#section-6.2.1" class="auto internal xref">6.2.1</a>.  <a href="#name-permissions-example" class="internal xref">Permissions Example</a></p>
-</li>
-                </ul>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.3">
                 <p id="section-toc.1-1.6.2.3.1"><a href="#section-6.3" class="auto internal xref">6.3</a>.  <a href="#name-multi-tenancy" class="internal xref">Multi-Tenancy</a></p>
@@ -1401,6 +1396,11 @@ and issues an access token under its own policy (<a href="#properties" class="au
           <dd style="margin-left: 1.5em" id="section-5.1-1.10">
             <p id="section-5.1-1.10.1"><span class="bcp14">OPTIONAL</span> - A space-separated list of scopes (<span>[<a href="#RFC6749" class="cite xref">RFC6749</a>], <a href="https://rfc-editor.org/rfc/rfc6749#section-3.3" class="relref">Section 3.3</a></span>) the Workload Identity Provider asserts for this request, as in <span>[<a href="#IDJAG" class="cite xref">IDJAG</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04#section-3.1" class="relref">Section 3.1</a></span>.  The Authorization Server decides under its own policy which of them to grant, and <span class="bcp14">MAY</span> grant a subset (<span>[<a href="#IDJAG" class="cite xref">IDJAG</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04#section-4.4.1" class="relref">Section 4.4.1</a></span>).<a href="#section-5.1-1.10.1" class="pilcrow">¶</a></p>
 </dd>
+          <dd class="break"></dd>
+<dt id="section-5.1-1.11"><code>name</code></dt>
+          <dd style="margin-left: 1.5em" id="section-5.1-1.12">
+            <p id="section-5.1-1.12.1"><span class="bcp14">OPTIONAL</span> - A human-readable name for the Agent, for display only and never an input to authorization (<a href="#security-considerations" class="auto internal xref">Section 9</a>).  Issuers <span class="bcp14">SHOULD</span> limit <code>name</code> to 64 characters; recipients <span class="bcp14">MAY</span> truncate it for display or ignore it.<a href="#section-5.1-1.12.1" class="pilcrow">¶</a></p>
+</dd>
         <dd class="break"></dd>
 </dl>
 <p id="section-5.1-2">The assertion is signed under a key configured from the Workload Identity Provider (see <a href="#issuer-keys" class="auto internal xref">Section 6.1</a>) and <span class="bcp14">MAY</span> carry further claims about the Agent. An Authorization Server that publishes metadata <span>[<a href="#RFC8414" class="cite xref">RFC8414</a>]</span> <span class="bcp14">SHOULD</span> list the <code>urn:ietf:params:oauth:grant-type:jwt-bearer</code> grant type in <code>grant_types_supported</code>.<a href="#section-5.1-2" class="pilcrow">¶</a></p>
@@ -1408,6 +1408,7 @@ and issues an access token under its own policy (<a href="#properties" class="au
 {
   "iss": "https://acme.agents.platform.example",
   "sub": "agent/7f3d9as3",
+  "name": "Invoice triage",
   "aud": "https://as.saas.example",
   "exp": 1785271980,
   "iat": 1785271680,
@@ -1440,34 +1441,8 @@ and issues an access token under its own policy (<a href="#properties" class="au
         <h3 id="name-permissions">
 <a href="#section-6.2" class="section-number selfRef">6.2. </a><a href="#name-permissions" class="section-name selfRef">Permissions</a>
         </h3>
-<p id="section-6.2-1">During Workload Identity Provider registration, the Authorization Server sets local policy for what permissions to assign an access token given in return for a WAG.  This policy <span class="bcp14">MAY</span> involve consulting claims the Workload Identity Provider asserts about the Agent in the WAG. A claim is an assertion by the Workload Identity Provider, meaningful only within the context of that Workload Identity Provider, and an Authorization Server <span class="bcp14">MUST NOT</span> assume that a similarly named value from another Workload Identity Provider means the same thing.<a href="#section-6.2-1" class="pilcrow">¶</a></p>
-<p id="section-6.2-2">The specific claims a Workload Identity Provider provides, and what permissions an Authorization Server decides to grant are outside the scope of this document.  Below is an illustrative example of one shape this permission decision can take.<a href="#section-6.2-2" class="pilcrow">¶</a></p>
-<div id="permissions-example">
-<section id="section-6.2.1">
-          <h4 id="name-permissions-example">
-<a href="#section-6.2.1" class="section-number selfRef">6.2.1. </a><a href="#name-permissions-example" class="section-name selfRef">Permissions Example</a>
-          </h4>
-<p id="section-6.2.1-1">This example is non-normative.<a href="#section-6.2.1-1" class="pilcrow">¶</a></p>
-<ul class="normal">
-<li class="normal" id="section-6.2.1-2.1">
-              <p id="section-6.2.1-2.1.1">The Workload Identity Provider is configured to include a claim such as <code>"roles": ["developer"]</code> in its assertions, where each role represents a group of humans in the customer's organization.<a href="#section-6.2.1-2.1.1" class="pilcrow">¶</a></p>
-</li>
-            <li class="normal" id="section-6.2.1-2.2">
-              <p id="section-6.2.1-2.2.1">The Authorization Server has its own concept of groups and permissions.<a href="#section-6.2.1-2.2.1" class="pilcrow">¶</a></p>
-</li>
-            <li class="normal" id="section-6.2.1-2.3">
-              <p id="section-6.2.1-2.3.1">An administrator configures the Platform so that people with the Developer role can create Agents that carry that role as well.<a href="#section-6.2.1-2.3.1" class="pilcrow">¶</a></p>
-</li>
-            <li class="normal" id="section-6.2.1-2.4">
-              <p id="section-6.2.1-2.4.1">An administrator configures the Authorization Server so that a <code>roles</code> claim containing <code>developer</code> corresponds to a set of permissions at the Authorization Server.<a href="#section-6.2.1-2.4.1" class="pilcrow">¶</a></p>
-</li>
-            <li class="normal" id="section-6.2.1-2.5">
-              <p id="section-6.2.1-2.5.1">A developer creates an Agent.  On its first assertion, the Agent receives an access token carrying the permissions mapped to <code>developer</code>, and can reach the resources it needs without further registration.<a href="#section-6.2.1-2.5.1" class="pilcrow">¶</a></p>
-</li>
-          </ul>
-<p id="section-6.2.1-3">For this example the <code>roles</code>, <code>groups</code> and <code>entitlements</code> claim names were taken from <span>[<a href="#RFC9068" class="cite xref">RFC9068</a>], <a href="https://rfc-editor.org/rfc/rfc9068#section-2.2.3.1" class="relref">Section 2.2.3.1</a></span>, which take them from the SCIM core schema (<span>[<a href="#RFC7643" class="cite xref">RFC7643</a>], <a href="https://rfc-editor.org/rfc/rfc7643#section-4.1.2" class="relref">Section 4.1.2</a></span>), however the claim names are used for illustrative purposes only. Inclusion of such claims are optional and Workload Identity Providers may define specific claims, depending on their deployment, supported access control models and ecosystem.<a href="#section-6.2.1-3" class="pilcrow">¶</a></p>
-</section>
-</div>
+<p id="section-6.2-1">During Workload Identity Provider registration, the Authorization Server sets local policy for what permissions to assign an access token given in return for a WAG.  This policy <span class="bcp14">MAY</span> involve consulting claims, other than <code>name</code>, that the Workload Identity Provider asserts about the Agent in the WAG. A claim is an assertion by the Workload Identity Provider, meaningful only within the context of that Workload Identity Provider, and an Authorization Server <span class="bcp14">MUST NOT</span> assume that a similarly named value from another Workload Identity Provider means the same thing.<a href="#section-6.2-1" class="pilcrow">¶</a></p>
+<p id="section-6.2-2">The specific claims a Workload Identity Provider provides, and what permissions an Authorization Server decides to grant are outside the scope of this document.<a href="#section-6.2-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="tenants">
@@ -1535,10 +1510,13 @@ and issues an access token under its own policy (<a href="#properties" class="au
           <p id="section-9-2.5.1">Where one Authorization Server serves several organizations, a Workload Identity Provider registration created by the wrong organization routes another organization's Agents to it; who may register a given Workload Identity Provider is out of scope.<a href="#section-9-2.5.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="section-9-2.6">
-          <p id="section-9-2.6.1">Error responses (<a href="#errors" class="auto internal xref">Section 7</a>) tell any presenter which Workload Identity Providers an Authorization Server trusts, and <code>error_uri</code> hands a link to an unauthenticated presenter.<a href="#section-9-2.6.1" class="pilcrow">¶</a></p>
+          <p id="section-9-2.6.1">The <code>name</code> claim is free text set at the Platform: it is not unique, can change, and can imitate another Agent or a person, including with visually similar characters.  It <span class="bcp14">MUST NOT</span> be used in an authorization decision or as an identifier, by the Authorization Server or by any party it passes the name to; <a href="#identity-model" class="auto internal xref">Section 4</a> says what identifies an Agent.<a href="#section-9-2.6.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="section-9-2.7">
-          <p id="section-9-2.7.1">This document defines no explicit JWT type, so an issuer that signs other kinds of JWT for the same audience risks one being taken for this grant (<span>[<a href="#RFC8725" class="cite xref">RFC8725</a>], <a href="https://rfc-editor.org/rfc/rfc8725#section-3.11" class="relref">Section 3.11</a></span>).<a href="#section-9-2.7.1" class="pilcrow">¶</a></p>
+          <p id="section-9-2.7.1">Error responses (<a href="#errors" class="auto internal xref">Section 7</a>) tell any presenter which Workload Identity Providers an Authorization Server trusts, and <code>error_uri</code> hands a link to an unauthenticated presenter.<a href="#section-9-2.7.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-9-2.8">
+          <p id="section-9-2.8.1">This document defines no explicit JWT type, so an issuer that signs other kinds of JWT for the same audience risks one being taken for this grant (<span>[<a href="#RFC8725" class="cite xref">RFC8725</a>], <a href="https://rfc-editor.org/rfc/rfc8725#section-3.11" class="relref">Section 3.11</a></span>).<a href="#section-9-2.8.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
 </section>
@@ -1628,20 +1606,8 @@ and issues an access token under its own policy (<a href="#properties" class="au
 <span class="refAuthor">Jones, M. B.</span>, <span class="refAuthor">Campbell, B.</span>, <span class="refAuthor">Mortimore, C.</span>, and <span class="refAuthor">F. Skokan</span>, <span class="refTitle">"Updates to OAuth 2.0 JSON Web Token (JWT) Client Authentication and Assertion-Based Authorization Grants"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-oauth-rfc7523bis-11</span>, <time datetime="2026-04-28" class="refDate">28 April 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-rfc7523bis-11">https://datatracker.ietf.org/doc/html/draft-ietf-oauth-rfc7523bis-11</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC7591">[RFC7591]</dt>
-        <dd>
-<span class="refAuthor">Richer, J., Ed.</span>, <span class="refAuthor">Jones, M.</span>, <span class="refAuthor">Bradley, J.</span>, <span class="refAuthor">Machulak, M.</span>, and <span class="refAuthor">P. Hunt</span>, <span class="refTitle">"OAuth 2.0 Dynamic Client Registration Protocol"</span>, <span class="seriesInfo">RFC 7591</span>, <span class="seriesInfo">DOI 10.17487/RFC7591</span>, <time datetime="2015-07" class="refDate">July 2015</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc7591">https://www.rfc-editor.org/rfc/rfc7591</a>&gt;</span>. </dd>
-<dd class="break"></dd>
-<dt id="RFC7643">[RFC7643]</dt>
-        <dd>
-<span class="refAuthor">Hunt, P., Ed.</span>, <span class="refAuthor">Grizzle, K.</span>, <span class="refAuthor">Wahlstroem, E.</span>, and <span class="refAuthor">C. Mortimore</span>, <span class="refTitle">"System for Cross-domain Identity Management: Core Schema"</span>, <span class="seriesInfo">RFC 7643</span>, <span class="seriesInfo">DOI 10.17487/RFC7643</span>, <time datetime="2015-09" class="refDate">September 2015</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc7643">https://www.rfc-editor.org/rfc/rfc7643</a>&gt;</span>. </dd>
-<dd class="break"></dd>
-<dt id="RFC8628">[RFC8628]</dt>
-        <dd>
-<span class="refAuthor">Denniss, W.</span>, <span class="refAuthor">Bradley, J.</span>, <span class="refAuthor">Jones, M.</span>, and <span class="refAuthor">H. Tschofenig</span>, <span class="refTitle">"OAuth 2.0 Device Authorization Grant"</span>, <span class="seriesInfo">RFC 8628</span>, <span class="seriesInfo">DOI 10.17487/RFC8628</span>, <time datetime="2019-08" class="refDate">August 2019</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8628">https://www.rfc-editor.org/rfc/rfc8628</a>&gt;</span>. </dd>
-<dd class="break"></dd>
-<dt id="RFC9068">[RFC9068]</dt>
       <dd>
-<span class="refAuthor">Bertocci, V.</span>, <span class="refTitle">"JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens"</span>, <span class="seriesInfo">RFC 9068</span>, <span class="seriesInfo">DOI 10.17487/RFC9068</span>, <time datetime="2021-10" class="refDate">October 2021</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9068">https://www.rfc-editor.org/rfc/rfc9068</a>&gt;</span>. </dd>
+<span class="refAuthor">Richer, J., Ed.</span>, <span class="refAuthor">Jones, M.</span>, <span class="refAuthor">Bradley, J.</span>, <span class="refAuthor">Machulak, M.</span>, and <span class="refAuthor">P. Hunt</span>, <span class="refTitle">"OAuth 2.0 Dynamic Client Registration Protocol"</span>, <span class="seriesInfo">RFC 7591</span>, <span class="seriesInfo">DOI 10.17487/RFC7591</span>, <time datetime="2015-07" class="refDate">July 2015</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc7591">https://www.rfc-editor.org/rfc/rfc7591</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 </dl>
 </section>
