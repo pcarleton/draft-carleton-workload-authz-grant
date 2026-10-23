@@ -447,7 +447,7 @@ Table of Contents
       unique, can change, and can imitate another Agent or a person,
       including with visually similar characters.  It MUST NOT be used
       in an authorization decision or as an identifier, by the
-      Authorization Server or by any party it passes the name to;
+      Authorization Server or by any party it passes the nickname to;
       Section 4 says what identifies an Agent.
 
    *  Error responses (Section 7) tell any presenter which Workload
