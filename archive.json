@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2026-10-22T03:51:14.243955+00:00",
+  "timestamp": "2026-10-25T03:48:50.098472+00:00",
   "repo": "pcarleton/draft-carleton-workload-authz-grant",
   "labels": [
     {
@@ -1846,26 +1846,131 @@
       "id": "PR_kwDOTlTgBM8AAAABJx0F9g",
       "title": "Add WAG type and URI",
       "url": "https://github.com/pcarleton/draft-carleton-workload-authz-grant/pull/21",
-      "state": "OPEN",
+      "state": "MERGED",
       "author": "arndt-s",
       "authorAssociation": "CONTRIBUTOR",
       "assignees": [],
       "labels": [],
       "body": "Strongly type the WAG and be able to identify it using an OAuth URI.",
       "createdAt": "2026-10-21T12:00:08Z",
-      "updatedAt": "2026-10-21T12:00:08Z",
+      "updatedAt": "2026-10-23T14:49:28Z",
       "baseRepository": "pcarleton/draft-carleton-workload-authz-grant",
       "baseRefName": "main",
       "baseRefOid": "5c5e31b6ad4c7db4696056fda3388ce170cb8748",
       "headRepository": "arndt-s/draft-carleton-workload-authz-grant",
       "headRefName": "arndt/add_wag_type",
       "headRefOid": "209fe2a5ea33966ab59d54fb4d40e1674f800003",
-      "closedAt": null,
-      "mergedAt": null,
-      "mergedBy": null,
-      "mergeCommit": null,
+      "closedAt": "2026-10-23T14:49:27Z",
+      "mergedAt": "2026-10-23T14:49:27Z",
+      "mergedBy": "pcarleton",
+      "mergeCommit": {
+        "oid": "56df698d39c1098ad5dbe53e348dd48c7c3ce613"
+      },
       "comments": [],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABTtwITg",
+          "commit": {
+            "abbreviatedOid": "209fe2a"
+          },
+          "author": "bc-pi",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-10-22T17:09:29Z",
+          "updatedAt": "2026-10-22T17:09:30Z",
+          "comments": [
+            {
+              "originalPosition": 81,
+              "body": "Eventually, though not necessarily right now, the whole media-type template is going to be needed. ",
+              "createdAt": "2026-10-22T17:09:30Z",
+              "updatedAt": "2026-10-22T17:10:02Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABT3o2mg",
+          "commit": {
+            "abbreviatedOid": "209fe2a"
+          },
+          "author": "pcarleton",
+          "authorAssociation": "OWNER",
+          "state": "APPROVED",
+          "body": "This looks good to me!",
+          "createdAt": "2026-10-23T12:44:36Z",
+          "updatedAt": "2026-10-23T12:44:36Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABT5KVpQ",
+          "commit": {
+            "abbreviatedOid": "209fe2a"
+          },
+          "author": "pcarleton",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-10-23T14:48:17Z",
+          "updatedAt": "2026-10-23T14:48:17Z",
+          "comments": [
+            {
+              "originalPosition": 57,
+              "body": "from discussion: this may be overly restrictive, but it does prevent e.g. presenting an `id_token` and having that mistakenly processed as a WAG when that was not intended (or malicious)",
+              "createdAt": "2026-10-23T14:48:17Z",
+              "updatedAt": "2026-10-23T14:48:17Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 22,
+      "id": "PR_kwDOTlTgBM8AAAABKRSIMg",
+      "title": "Add an optional display-only name claim",
+      "url": "https://github.com/pcarleton/draft-carleton-workload-authz-grant/pull/22",
+      "state": "MERGED",
+      "author": "pcarleton",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "One line in JWT Syntax, one security consideration saying it is never an authorization input or an identifier, a matching clause in Permissions. See issue #2.",
+      "createdAt": "2026-10-23T14:18:22Z",
+      "updatedAt": "2026-10-23T15:55:24Z",
+      "baseRepository": "pcarleton/draft-carleton-workload-authz-grant",
+      "baseRefName": "main",
+      "baseRefOid": "5c5e31b6ad4c7db4696056fda3388ce170cb8748",
+      "headRepository": "pcarleton/draft-carleton-workload-authz-grant",
+      "headRefName": "paulc/name-claim",
+      "headRefOid": "bfb76e36f48e72a2c99c9fa5d59e7473520698a5",
+      "closedAt": "2026-10-23T15:55:23Z",
+      "mergedAt": "2026-10-23T15:55:23Z",
+      "mergedBy": "pcarleton",
+      "mergeCommit": {
+        "oid": "493e045a666d3b4bb18b8fa3c772087400729cc7"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABT5N6vg",
+          "commit": {
+            "abbreviatedOid": "6bbfbef"
+          },
+          "author": "pcarleton",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-10-23T14:52:14Z",
+          "updatedAt": "2026-10-23T14:52:14Z",
+          "comments": [
+            {
+              "originalPosition": 4,
+              "body": "from discussion:\n- is `name` too close to being policy? could do `nickname`, `display_name`\n",
+              "createdAt": "2026-10-23T14:52:14Z",
+              "updatedAt": "2026-10-23T14:52:14Z"
+            }
+          ]
+        }
+      ]
     }
   ]
 }
