@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2026-10-25T03:48:50.098472+00:00",
+  "timestamp": "2026-10-27T04:14:37.728511+00:00",
   "repo": "pcarleton/draft-carleton-workload-authz-grant",
   "labels": [
     {
@@ -1853,7 +1853,7 @@
       "labels": [],
       "body": "Strongly type the WAG and be able to identify it using an OAuth URI.",
       "createdAt": "2026-10-21T12:00:08Z",
-      "updatedAt": "2026-10-23T14:49:28Z",
+      "updatedAt": "2026-10-26T10:29:46Z",
       "baseRepository": "pcarleton/draft-carleton-workload-authz-grant",
       "baseRefName": "main",
       "baseRefOid": "5c5e31b6ad4c7db4696056fda3388ce170cb8748",
@@ -1971,6 +1971,99 @@
           ]
         }
       ]
+    },
+    {
+      "number": 23,
+      "id": "PR_kwDOTlTgBM8AAAABKvrvdA",
+      "title": "Support AS metadata advertisement",
+      "url": "https://github.com/pcarleton/draft-carleton-workload-authz-grant/pull/23",
+      "state": "OPEN",
+      "author": "arndt-s",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "Add grant-profile URN for WAG and talk about its usage.",
+      "createdAt": "2026-10-26T10:40:41Z",
+      "updatedAt": "2026-10-26T10:47:26Z",
+      "baseRepository": "pcarleton/draft-carleton-workload-authz-grant",
+      "baseRefName": "main",
+      "baseRefOid": "493e045a666d3b4bb18b8fa3c772087400729cc7",
+      "headRepository": "arndt-s/draft-carleton-workload-authz-grant",
+      "headRefName": "arndt/advertised-support",
+      "headRefOid": "1d914e55986b50114bae45374d696521d9740edb",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABUNCW9w",
+          "commit": {
+            "abbreviatedOid": "1d914e5"
+          },
+          "author": "arndt-s",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-10-26T10:46:27Z",
+          "updatedAt": "2026-10-26T10:46:27Z",
+          "comments": [
+            {
+              "originalPosition": 4,
+              "body": "With `authorization_grant_profiles_supported` we have to move IDJAG to the normative references.",
+              "createdAt": "2026-10-26T10:46:27Z",
+              "updatedAt": "2026-10-26T10:46:27Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTlTgBM8AAAABUNDBdQ",
+          "commit": {
+            "abbreviatedOid": "1d914e5"
+          },
+          "author": "arndt-s",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-10-26T10:47:25Z",
+          "updatedAt": "2026-10-26T10:47:26Z",
+          "comments": [
+            {
+              "originalPosition": 34,
+              "body": "This paragraph is me trying to push for the \"no-registration\" part of WAG. What do you all think? Does it matter?",
+              "createdAt": "2026-10-26T10:47:25Z",
+              "updatedAt": "2026-10-26T10:47:26Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 24,
+      "id": "PR_kwDOTlTgBM8AAAABKvzpuw",
+      "title": "Move from CRLF to LF",
+      "url": "https://github.com/pcarleton/draft-carleton-workload-authz-grant/pull/24",
+      "state": "OPEN",
+      "author": "arndt-s",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "Just me being a developer :)",
+      "createdAt": "2026-10-26T10:51:20Z",
+      "updatedAt": "2026-10-26T10:51:20Z",
+      "baseRepository": "pcarleton/draft-carleton-workload-authz-grant",
+      "baseRefName": "main",
+      "baseRefOid": "493e045a666d3b4bb18b8fa3c772087400729cc7",
+      "headRepository": "arndt-s/draft-carleton-workload-authz-grant",
+      "headRefName": "arndt/use_only_lf",
+      "headRefOid": "64badb2203ebc985f3ed2cf964b320728ee0272c",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [],
+      "reviews": []
     }
   ]
 }
