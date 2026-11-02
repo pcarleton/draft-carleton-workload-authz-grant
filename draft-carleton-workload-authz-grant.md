@@ -64,7 +64,9 @@ normative:
 
 informative:
   RFC7591:
+  RFC7643:
   RFC8693:
+  RFC9068:
   IANA.media-types:
   IANA.oauth-parameters:
   RFC7523BIS: I-D.ietf-oauth-rfc7523bis
@@ -237,6 +239,18 @@ On each assertion the Authorization Server finds the Workload Identity Provider 
 During Workload Identity Provider registration, the Authorization Server sets local policy for what permissions to assign an access token given in return for a WAG.  This policy MAY involve consulting claims, other than `nickname`, that the Workload Identity Provider asserts about the Agent in the WAG. A claim is an assertion by the Workload Identity Provider, meaningful only within the context of that Workload Identity Provider, and an Authorization Server MUST NOT assume that a similarly named value from another Workload Identity Provider means the same thing.
 
 The specific claims a Workload Identity Provider provides, and what permissions an Authorization Server decides to grant are outside the scope of this document.
+
+### Permissions Example {#permissions-example}
+
+This example is non-normative.  It illustrates one shape the permission decision can take.
+
+* The Workload Identity Provider is configured to include a claim such as `"roles": ["developer"]` in its assertions, where each role represents a group of humans in the customer's organization.
+* The Authorization Server has its own concept of groups and permissions.
+* An administrator configures the Platform so that people with the Developer role can create Agents that carry that role as well.
+* An administrator configures the Authorization Server so that a `roles` claim containing `developer` corresponds to a set of permissions at the Authorization Server.
+* A developer creates an Agent.  On its first assertion, the Agent receives an access token carrying the permissions mapped to `developer`, and can reach the resources it needs without further registration.
+
+For this example the `roles`, `groups` and `entitlements` claim names were taken from {{RFC9068, Section 2.2.3.1}}, which take them from the SCIM core schema ({{RFC7643, Section 4.1.2}}), however the claim names are used for illustrative purposes only. Inclusion of such claims are optional and Workload Identity Providers may define specific claims, depending on their deployment, supported access control models and ecosystem.
 
 ## Multi-Tenancy {#tenants}
 
