@@ -48,9 +48,12 @@ normative:
   RFC7519:
   RFC7521:
   RFC7523:
+  RFC7638:
+  RFC7800:
   RFC8414:
   RFC8707:
   RFC8725:
+  RFC9449:
   RFC9525:
   OIDC-DISCOVERY:
     title: OpenID Connect Discovery 1.0 incorporating errata set 2
@@ -135,8 +138,8 @@ Authorization Server, Resource Server: as in {{RFC6749}}. Where an Authorization
    Identifier ({{identity-model}}).  Nothing is sent to the Authorization
    Server or the Resource Server.
 3. Per access: the Agent obtains a Workload Authorization Grant from the
-   Workload Identity Provider and presents it in an ordinary OAuth token
-   request.  The Authorization Server matches it to a
+   Workload Identity Provider.  The Agent, or a presenter acting for it,
+   presents it in an ordinary OAuth token request.  The Authorization Server matches it to a
    Workload Identity Provider registration, verifies it under that Workload Identity Provider's
    keys,
    allowing for previously unseen `sub` values,
@@ -169,6 +172,8 @@ An Agent is identified by its Agent Identifier, carried as the `sub` claim in th
 
 An Agent obtains an access token by presenting a JWT as an authorization grant per {{RFC7523, Section 2.1}}, issued by the Workload Identity Provider as a third party in the sense of {{RFC7521, Section 3}}. The token request carries `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer`, the JWT in the `assertion` parameter, and the target resource in the `resource` parameter {{RFC8707}}. The `resource` parameter {{RFC8707}} is RECOMMENDED; an Authorization Server SHOULD restrict the audience of the access token it issues to that resource and MAY refuse a request that lacks it with `invalid_target` ({{RFC8707, Section 2}}). An Agent MAY make the token request without client authentication ({{RFC7523, Section 3.1}}), and this specification attaches no meaning to `client_id`. An Authorization Server MUST NOT require a client registration per Agent.
 
+A presenter acting for the Agent, such as a gateway outside the Agent's runtime that holds the access token and makes requests for the Agent, MAY present the grant in place of the Agent.  The grant still names the Agent in `sub`, and the Authorization Server processes it as if the Agent presented it.
+
 Assertions SHOULD be short-lived.  The Authorization Server MUST NOT issue refresh tokens for this grant and SHOULD NOT issue access tokens that outlive the assertion by a significant period ({{RFC7521, Section 4.1}}).
 
 Where a token type identifier is needed for a Workload Authorization Grant, the value `urn:ietf:params:oauth:token-type:wag` ({{iana-uri}}) is used; for example, a Workload Identity Provider that issues Workload Authorization Grants by token exchange {{RFC8693}} would use it as `requested_token_type` and `issued_token_type`.  How an Agent obtains a Workload Authorization Grant is otherwise out of scope.
@@ -197,6 +202,9 @@ The JWT Claims Set contains:
 `nickname`
 : OPTIONAL - A human-readable nickname for the Agent, for display only and never an input to authorization ({{security-considerations}}).  Issuers SHOULD limit `nickname` to 64 characters; recipients MAY truncate it for display or ignore it.
 
+`cnf`
+: OPTIONAL - A confirmation claim ({{RFC7800}}) with a `jkt` member that holds the JWK SHA-256 Thumbprint ({{RFC7638}}) of a key held by the Agent instance.  An assertion that carries `cnf` is a key-bound grant ({{key-bound}}).
+
 
 The assertion is signed under a key configured from the Workload Identity Provider (see {{issuer-keys}}) and MAY carry further claims about the Agent.
 See {{as-metadata}} for details on how an Authorization Server advertises support for this grant.
@@ -222,6 +230,46 @@ The following is a non-normative example of a JWT header and claims set, as the 
   "scope": "tickets:read comments:write"
 }
 ~~~
+
+## Key-Bound Grants {#key-bound}
+
+A grant without `cnf` is a bearer credential at redemption, even when the resulting access token is DPoP-bound.  This optional profile ties both the grant and the access token to the key named by `cnf.jkt`, using DPoP {{RFC9449}}.  The Agent instance, or a presenter acting for it, holds that key.
+
+Before issuing or presenting a key-bound grant, the Platform or presenter MUST verify that the Authorization Server advertises `urn:ietf:params:oauth:grant-profile:wag-dpop` as specified in {{as-metadata}}.  If support is absent, it MUST NOT send the key-bound grant.  It MUST NOT fall back to an unbound grant unless an explicit policy permits the weaker flow.  A base-profile implementation can ignore an additional claim, so the presence of `cnf` alone does not establish this guarantee.
+
+When the assertion carries `cnf.jkt`, the token request MUST carry a DPoP proof ({{RFC9449, Section 4}}).  The Authorization Server:
+
+* MUST reject the request with `invalid_grant` if it carries no DPoP proof;
+* MUST verify the proof as specified in {{RFC9449, Section 4.3}}, and MUST reject the request with `invalid_dpop_proof` if the proof is not valid;
+* MUST reject the request with `invalid_dpop_proof` unless the JWK SHA-256 Thumbprint ({{RFC7638}}) of the proof's `jwk` header parameter equals `cnf.jkt`;
+* MUST issue a DPoP-bound access token ({{RFC9449, Section 5}}) whose confirmation thumbprint equals `cnf.jkt`, and MUST NOT issue a bearer access token for a key-bound grant.
+
+A request with no proof does not meet the conditions of the grant, so it is an invalid grant.  A request with an invalid or mismatched proof has a problem with the proof, and `invalid_dpop_proof` ({{RFC9449, Section 5}}) tells the Platform to fix the proof or the key, not the grant.  {{IDJAG, Section 9.8}} defines the same key-bound shape for ID-JAG, and uses `invalid_grant` in all of these cases.  This document uses `invalid_grant` only for a missing proof, and so agrees with ID-JAG for that case.
+
+An Authorization Server supporting this profile MUST reject an assertion with `invalid_grant` if its `cnf` does not contain a valid `jkt` confirmation method it supports.  It MUST NOT ignore an unsupported confirmation method and process the assertion as an unbound grant.  A Workload Identity Provider registration MAY require key-bound grants; the Authorization Server MUST reject an assertion without `cnf.jkt` for such a registration, with `invalid_grant`.
+
+The key that `cnf` names verifies only the DPoP proof.  It never verifies the assertion, which the Authorization Server verifies only as specified in {{issuer-keys}}.
+
+An Authorization Server supporting this profile SHOULD require a nonce that it provides at the token endpoint ({{RFC9449, Section 8}}), and MUST NOT accept a nonce after the lifetime it has set for that nonce.  It SHOULD check that the proof key matches `cnf.jkt` before issuing a nonce challenge.
+
+The Authorization Server MUST reject a DPoP proof it has already accepted at the token endpoint while that proof could otherwise still be accepted.  It can enforce this by tracking proof `jti` values scoped to the proof key, or by atomically consuming a single-use nonce.  A nonce accepted multiple times during its lifetime is not sufficient by itself.  This requirement is separate from whether the Authorization Server allows the same grant `jti` with a new valid proof, and does not require a different replay policy at the Resource Server.
+
+The Platform SHOULD hold the key where code that runs in the Agent's runtime cannot export it, for example behind a signing service or in a hardware security module, and sign DPoP proofs for the Agent on request.  If code in the runtime can read the key, a key-bound grant moves the exposure from the token to the key.  Non-exportability alone does not prevent an authorized runtime from requesting signatures or misusing its authority.  A presenter that keeps the grant and access token outside that runtime also needs policy governing the requests it makes for the Agent.
+
+A key-bound grant protects the access token only at a Resource Server that validates DPoP.  A Resource Server that accepts a DPoP-bound access token MUST reject it when it is presented as a bearer token ({{RFC9449, Section 7.2}}).
+
+```
+{
+  "iss": "https://acme.agents.platform.example",
+  "sub": "agent/7f3d9as3",
+  "aud": "https://as.saas.example",
+  "exp": 1785271980,
+  "iat": 1785271680,
+  "jti": "3c1e8b4d-2f6a-4d0e-8a71-5b9c0d2e7f43",
+  "scope": "issues:read",
+  "cnf": { "jkt": "0ZcOCORZNYy-DWpqq30jZyJGHTN0d2HglBV3uiguA4I" }
+}
+```
 
 # Workload Identity Provider Registration {#provider-registration}
 
@@ -266,14 +314,16 @@ How an Authorization Server determines whether a Workload Identity Provider need
 
 # Error Responses {#errors}
 
-When a token request fails, the Authorization Server SHOULD indicate in `error_description` ({{RFC6749, Section 5.2}}) who must act: an administrator of the Authorization Server, if the Workload Identity Provider is not trusted or the Agent holds no permission for the request; or the Platform, if the assertion is invalid.  An untrusted Workload Identity Provider or an invalid assertion yields `invalid_grant` ({{RFC7523, Section 3.1}}); a missing permission yields `invalid_scope` or `invalid_target` ({{RFC8707}}) where a specific scope or resource is refused, otherwise `invalid_grant`.  When an action can be taken to resolve the issue, the Authorization Server SHOULD include a link in `error_uri`.
+When a token request fails, the Authorization Server SHOULD indicate in `error_description` ({{RFC6749, Section 5.2}}) who must act: an administrator of the Authorization Server, if the Workload Identity Provider is not trusted or the Agent holds no permission for the request; or the Platform, if the assertion is invalid.  An untrusted Workload Identity Provider or an invalid assertion yields `invalid_grant` ({{RFC7523, Section 3.1}}); a missing permission yields `invalid_scope` or `invalid_target` ({{RFC8707}}) where a specific scope or resource is refused, otherwise `invalid_grant`.  For a key-bound grant ({{key-bound}}), a request with no DPoP proof yields `invalid_grant`; an invalid DPoP proof, or one whose key thumbprint does not equal `cnf.jkt`, yields `invalid_dpop_proof`; and a missing or expired nonce yields `use_dpop_nonce` ({{RFC9449}}).  The Platform must act on all three.  When an action can be taken to resolve the issue, the Authorization Server SHOULD include a link in `error_uri`.
 
 
 # Authorization Server Metadata {#as-metadata}
 
 An Authorization Server that publishes metadata {{RFC8414}} SHOULD include the value `urn:ietf:params:oauth:grant-profile:wag` ({{iana-uri}}) in its `authorization_grant_profiles_supported` metadata parameter ({{IDJAG, Section 7.2}}).  An Authorization Server that includes this value MUST also include `urn:ietf:params:oauth:grant-type:jwt-bearer` in `grant_types_supported`.
 
-The following is a non-normative example of Authorization Server metadata advertising support for this specification:
+An Authorization Server supporting {{key-bound}} MUST publish metadata that includes `urn:ietf:params:oauth:grant-profile:wag-dpop` in `authorization_grant_profiles_supported`, alongside the base WAG profile, and MUST list its accepted algorithms in `dpop_signing_alg_values_supported` ({{RFC9449, Section 5.1}}).  Advertising the base WAG profile alone does not advertise key-bound support.
+
+The following is a non-normative excerpt of Authorization Server metadata advertising support for the base specification and the optional key-bound profile.  Other metadata required by {{RFC8414}} is omitted:
 
 ~~~
 {
@@ -283,8 +333,10 @@ The following is a non-normative example of Authorization Server metadata advert
     "urn:ietf:params:oauth:grant-type:jwt-bearer"
   ],
   "authorization_grant_profiles_supported": [
-    "urn:ietf:params:oauth:grant-profile:wag"
-  ]
+    "urn:ietf:params:oauth:grant-profile:wag",
+    "urn:ietf:params:oauth:grant-profile:wag-dpop"
+  ],
+  "dpop_signing_alg_values_supported": ["ES256"]
 }
 ~~~
 
@@ -292,15 +344,17 @@ The following is a non-normative example of Authorization Server metadata advert
 # Open Issues {#oi}
 
 * Agent ownership: see issue #13.
-* Proof of possession: the grant is a bearer assertion and no client authentication is required; whether to name a hardening (sender-constrained access tokens, authenticating the presenting instance, or the Platform authenticating as a client) and which, if any, to require.
-* Replay: whether an Authorization Server is required to reject a `jti` it has already accepted while the assertion is still valid, or whether that stays optional as in {{RFC7523, Section 3}}.
+* Proof of possession: {{key-bound}} proposes an optional key-bound profile and a Workload Identity Provider registration policy.  Open: whether to adopt that profile and its discovery identifier, and whether other hardenings (authenticating the presenting instance, or the Platform authenticating as a client) also need text.
+* Replay: whether an Authorization Server is required to reject a grant `jti` it has already accepted while the assertion is still valid, or whether that stays optional as in {{RFC7523, Section 3}}.  For key-bound grants, replay of an already accepted DPoP proof is rejected independently ({{key-bound}}).
 
 # Security Considerations {#security-considerations}
 
 This revision lists the considerations it is aware of; a fuller treatment will follow.
 
 * Agents are accepted on their first assertion, so the set of acceptable Agents grows at the Platform with no action at the Authorization Server, and each new Agent creates state there; an Authorization Server can cap new Agents per Workload Identity Provider registration.
-* The assertion is a bearer credential: a short lifetime, its `aud` and, where the Authorization Server enforces it, single use by `jti` bound what a stolen assertion is worth.
+* Unless it is key-bound ({{key-bound}}), the assertion is a bearer credential: a short lifetime, its `aud` and, where the Authorization Server enforces it, single use by `jti` bound what a stolen assertion is worth.  A copied key-bound assertion alone cannot be redeemed without a valid proof from the key that `cnf` names.
+* A party that captures a whole token request for a key-bound grant also captures its DPoP proof.  The replay requirement in {{key-bound}} rejects a proof that has already been accepted, but does not prevent a captured request from being presented first ({{RFC9449, Section 11.1}}).
+* A key-bound access token is sender-constrained only at a Resource Server that validates DPoP.  A Resource Server that accepts it MUST enforce that binding; accepting it as a bearer token defeats the profile.
 * Keys are held per issuer identifier, so that one issuer's key never verifies another's assertion ({{issuer-keys}}); whoever controls an issuer identifier, or the DNS name under it, controls what every trusting Authorization Server accepts.
 * Workload Identity Providers under a shared issuer identifier share its keys, so the claim that tells them apart ({{tenants}}) is only as trustworthy as the party signing for all of them, and a Workload Identity Provider registration for a shared issuer identifier that names no claim trusts every Workload Identity Provider under it.
 * Where one Authorization Server serves several organizations, a Workload Identity Provider registration created by the wrong organization routes another organization's Agents to it; who may register a given Workload Identity Provider is out of scope.
@@ -328,6 +382,13 @@ This section registers `urn:ietf:params:oauth:grant-profile:wag` in the "OAuth U
 * Common Name: Authorization grant profile identifier for a Workload Authorization Grant
 * Change Controller: IETF
 * Specification Document: {{as-metadata}} of this document
+
+This section registers `urn:ietf:params:oauth:grant-profile:wag-dpop` in the "OAuth URI" subregistry of the "OAuth Parameters" registry {{IANA.oauth-parameters}}, for use in the `authorization_grant_profiles_supported` metadata parameter ({{as-metadata}}).
+
+* URN: urn:ietf:params:oauth:grant-profile:wag-dpop
+* Common Name: Authorization grant profile identifier for a key-bound Workload Authorization Grant
+* Change Controller: IETF
+* Specification Document: {{key-bound}} of this document
 
 --- back
 
